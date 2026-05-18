@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#ede3cc" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Field Guide" />
+<title>The Field Guide to Your Free Time</title>
+<link rel="manifest" id="pwa-manifest" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    min-height: 100vh;
+    background: linear-gradient(160deg, #f6eed8 0%, #ede3cc 40%, #f0e6d0 70%, #e8ddc5 100%);
+    background-attachment: fixed;
+    font-family: 'Crimson Text', serif;
+    position: relative;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: radial-gradient(circle, #a09060 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.06;
+    pointer-events: none;
+    z-index: 0;
+  }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #f5ede0; }
+  ::-webkit-scrollbar-thumb { background: #c4b090; border-radius: 3px; }
+  ::selection { background: #c49a3c40; }
+
+  #app {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 48px 24px 64px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  .header { text-align: center; margin-bottom: 36px; }
+  .vol-label {
+    font-family: 'Courier Prime', monospace;
+    font-size: 10px; color: #9a8a6a;
+    letter-spacing: 5px; text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .ornament-row {
+    display: flex; align-items: center; gap: 12px;
+    justify-content: center; margin-bottom: 20px;
+  }
+  .ornament-line {
+    flex: 1; height: 1px;
+  }
+  .ornament-line.left  { background: linear-gradient(to right, transparent, #c4b090); }
+  .ornament-line.right { background: linear-gradient(to left,  transparent, #c4b090); }
+  .ornament-star  { color: #b8860b; font-size: 18px; }
+  .ornament-dot   { color: #8a7a5a; font-size: 12px; font-family: 'Courier Prime', monospace; }
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 6vw, 42px);
+    font-weight: 700; color: #2a1a0e;
+    line-height: 1.15; margin-bottom: 10px;
+  }
+  h1 em { font-style: italic; }
+  .header-tagline {
+    font-family: 'Crimson Text', serif;
+    font-size: 16px; color: #6a5a42;
+    font-style: italic; line-height: 1.6;
+    max-width: 480px; margin: 0 auto 20px;
+  }
+  .entry-count {
+    font-family: 'Courier Prime', monospace;
+    font-size: 10px; color: #a09070; letter-spacing: 2px;
+  }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    background: rgba(255,255,255,0.4);
+    border: 1px solid #d4c4a8;
+    border-radius: 6px; padding: 14px 16px; margin-bottom: 8px;
+  }
+  .filter-label {
+    font-family: 'Courier Prime', monospace;
+    font-size: 9px; color: #9a8a6a;
+    letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .filter-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+  .filter-btn {
+    padding: 4px 14px; border-radius: 20px;
+    border: 1px solid #c4b090;
+    background: rgba(255,255,255,0.5);
+    color: #5a4a32;
+    font-family: 'Courier Prime', monospace;
+    font-size: 9.5px; letter-spacing: 1px;
+    text-transform: uppercase; font-weight: 400;
+    cursor: pointer; transition: all .18s ease;
+  }
+  .filter-btn.active { font-weight: 700; }
+
+  /* ── SECTION HEADER ── */
+  .section-header { margin-top: 40px; margin-bottom: 18px; }
+  .section-title-row {
+    display: flex; align-items: baseline; gap: 10px;
+    padding-bottom: 8px; margin-bottom: 5px;
+    border-bottom-width: 2px; border-bottom-style: solid;
+  }
+  .section-icon { font-size: 18px; line-height: 1; }
+  .section-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 700;
+    color: #2a1a0e; letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .section-name.offroad { font-size: 20px; letter-spacing: 2px; font-style: italic; }
+  .section-count {
+    font-family: 'Courier Prime', monospace;
+    font-size: 10px; color: #a09070;
+    margin-left: auto; white-space: nowrap;
+  }
+  .section-tagline {
+    font-family: 'Courier Prime', monospace;
+    font-size: 10.5px; color: #8a7a62;
+    font-style: italic; letter-spacing: .3px;
+  }
+
+  /* ── OFFROAD WARNING ── */
+  .offroad-warning {
+    background: rgba(120,58,42,.06);
+    border: 1px dashed #c4a88a;
+    border-radius: 5px; padding: 10px 14px; margin-bottom: 14px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 10px; color: #8a6a52;
+    font-style: italic; letter-spacing: .3px;
+  }
+
+  /* ── ACTIVITY CARD ── */
+  .card {
+    border: 1px solid #d4c4a8;
+    border-radius: 5px; padding: 16px 20px; margin-bottom: 10px;
+    transition: all .2s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+    position: relative;
+    cursor: default;
+  }
+  .card:not(.card-offroad) { background: rgba(255,255,255,0.55); }
+  .card.card-offroad { background: linear-gradient(135deg,rgba(250,243,232,.85)0%,rgba(245,236,220,.85)100%); }
+  .card:hover { transform: translateX(3px); }
+  .card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 700;
+    color: #2a1a0e; margin-bottom: 5px; letter-spacing: .2px;
+  }
+  .card-name.has-remove { padding-right: 24px; }
+  .custom-label {
+    font-family: 'Courier Prime', monospace;
+    font-size: 8px; color: #b8860b;
+    margin-left: 8px; letter-spacing: 1px;
+    text-transform: uppercase; vertical-align: middle;
+  }
+  .card-desc {
+    font-family: 'Crimson Text', serif;
+    font-size: 15px; color: #4a3828;
+    line-height: 1.65; margin-bottom: 12px;
+  }
+  .card-stats {
+    border-top: 1px dashed #c4b090;
+    padding-top: 9px; margin-bottom: 8px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 9.5px; color: #7a6a52;
+    letter-spacing: .8px; text-transform: uppercase;
+    display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center;
+  }
+  .card-stats strong { color: #4a3828; }
+  .energy-dots { letter-spacing: 2px; font-size: 9px; }
+  .dot-filled  { color: #8b4030; }
+  .dot-empty   { color: #c4b090; }
+  .card-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+  .badge {
+    padding: 2px 9px; border-radius: 20px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 9px; font-weight: 700;
+    letter-spacing: .8px; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .remove-btn {
+    position: absolute; top: 10px; right: 12px;
+    background: none; border: none;
+    color: #c4a88a; font-size: 13px;
+    font-family: 'Courier Prime', monospace;
+    cursor: pointer; opacity: 0;
+    transition: opacity .2s ease; padding: 0 2px;
+  }
+  .card:hover .remove-btn { opacity: 1; }
+
+  /* ── ADD BUTTON ── */
+  .add-section-btn {
+    width: 100%; padding: 10px;
+    background: transparent;
+    border-radius: 5px; border-style: dashed;
+    border-width: 1px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 10px; letter-spacing: 2px;
+    text-transform: uppercase; cursor: pointer;
+    margin-bottom: 4px; transition: all .2s ease;
+    display: block;
+  }
+
+  /* ── ADD FORM ── */
+  .add-form {
+    border-radius: 6px; padding: 20px; margin-bottom: 10px;
+    border-style: dashed; border-width: 1px;
+    background: rgba(255,255,255,.6);
+  }
+  .form-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .form-fields { display: flex; flex-direction: column; gap: 12px; }
+  .form-label {
+    font-family: 'Courier Prime', monospace;
+    font-size: 9px; color: #8a7a62;
+    letter-spacing: 2px; text-transform: uppercase;
+    display: block; margin-bottom: 4px;
+  }
+  .form-input, .form-textarea, .form-select {
+    width: 100%;
+    background: rgba(255,255,255,.7);
+    border: 1px solid #c4b090; border-radius: 4px;
+    padding: 8px 10px;
+    font-family: 'Crimson Text', serif;
+    font-size: 14px; color: #2a1a0e; outline: none;
+  }
+  .form-input:focus, .form-textarea:focus, .form-select:focus {
+    border-color: #c4b090;
+    box-shadow: 0 0 0 2px #c4b09030;
+  }
+  .form-textarea { resize: vertical; line-height: 1.6; }
+  .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .form-col-sm { flex: 1 1 140px; }
+  .form-col-xs { flex: 1 1 120px; }
+  .form-col-lg { flex: 2 1 200px; }
+  .badge-picker { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+  .badge-toggle {
+    padding: 3px 10px; border-radius: 20px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 9px; letter-spacing: .8px;
+    text-transform: uppercase; cursor: pointer;
+    transition: all .15s ease;
+    border-width: 1px; border-style: solid;
+  }
+  .form-error {
+    font-family: 'Courier Prime', monospace;
+    font-size: 10px; color: #8b2a1a; letter-spacing: .5px;
+  }
+  .form-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .btn-cancel {
+    padding: 7px 16px; background: transparent;
+    border: 1px solid #c4b090; border-radius: 4px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 10px; color: #8a7a62;
+    letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+  }
+  .btn-save {
+    padding: 7px 20px; border-radius: 4px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 10px; color: #f5ede0;
+    letter-spacing: 1px; text-transform: uppercase;
+    cursor: pointer; font-weight: 700;
+    border-width: 1px; border-style: solid;
+  }
+
+  /* ── BACKUP BAR ── */
+  .backup-bar {
+    background: rgba(255,255,255,0.4);
+    border: 1px solid #d4c4a8;
+    border-radius: 6px; padding: 14px 16px; margin-top: 32px;
+  }
+  .backup-label {
+    font-family: 'Courier Prime', monospace;
+    font-size: 9px; color: #9a8a6a;
+    letter-spacing: 3px; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .backup-desc {
+    font-family: 'Crimson Text', serif;
+    font-size: 13px; color: #7a6a52;
+    font-style: italic; margin-bottom: 10px; line-height: 1.5;
+  }
+  .backup-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn-backup {
+    padding: 6px 16px; border-radius: 4px;
+    font-family: 'Courier Prime', monospace;
+    font-size: 9.5px; letter-spacing: 1px;
+    text-transform: uppercase; cursor: pointer;
+    transition: all .18s ease; border: 1px solid #c4b090;
+  }
+  .btn-export {
+    background: rgba(255,255,255,0.6); color: #5a4a32;
+  }
+  .btn-export:hover { background: #f5ead5; border-color: #b8860b; color: #7a4e10; }
+  .btn-import {
+    background: rgba(255,255,255,0.6); color: #5a4a32;
+  }
+  .btn-import:hover { background: #d5e8d5; border-color: #2a5a30; color: #2a5a30; }
+  #import-file-input { display: none; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: #2a1a0e; color: #f5ede0;
+    font-family: 'Courier Prime', monospace; font-size: 10px;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 10px 20px; border-radius: 4px;
+    opacity: 0; transition: all .3s ease;
+    pointer-events: none; white-space: nowrap; z-index: 999;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center; margin-top: 52px;
+    padding-top: 20px; border-top: 1px solid #c4b090;
+  }
+  .footer-end {
+    font-family: 'Courier Prime', monospace;
+    font-size: 9.5px; color: #a09070;
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px;
+  }
+  .footer-living {
+    font-family: 'Crimson Text', serif;
+    font-size: 14px; color: #8a7a62; font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<input type="file" id="import-file-input" accept=".json" onchange="handleImportFile(this)" />
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+
+const BADGE_MAP = {
+  art:             { label:"Art",           bg:"#dde8d5", color:"#2a5a30" },
+  writing:         { label:"Writing",       bg:"#f5ead5", color:"#7a4e10" },
+  nature:          { label:"Nature",        bg:"#d5e8d5", color:"#1a4a22" },
+  craft:           { label:"Craft",         bg:"#f0ddd5", color:"#7a2a1a" },
+  creative:        { label:"Creative",      bg:"#e8daf5", color:"#4a1a6a" },
+  tech:            { label:"Tech",          bg:"#d5e2f0", color:"#1a3855" },
+  sound:           { label:"Sound",         bg:"#d5ede8", color:"#1a4a44" },
+  dnd:             { label:"D&amp;D",       bg:"#e5d5f8", color:"#3a0a6a" },
+  meditative:      { label:"Meditative",    bg:"#e0e5ec", color:"#384555" },
+  reflective:      { label:"Reflective",    bg:"#ece0e5", color:"#551a2a" },
+  skillBuild:      { label:"Skill Build",   bg:"#f5f0d0", color:"#655a08" },
+  exploratory:     { label:"Exploratory",   bg:"#f5e5d0", color:"#654a10" },
+  slow:            { label:"Slow",          bg:"#e8dff0", color:"#3a2a55" },
+  tactile:         { label:"Tactile",       bg:"#ede0d5", color:"#55301a" },
+  body:            { label:"Body",          bg:"#d0eed0", color:"#154515" },
+  antiConsumption: { label:"Anti-Consump.", bg:"#d5edd5", color:"#1a4a1a" },
+  collecting:      { label:"Collecting",    bg:"#e2edd0", color:"#355510" },
+  science:         { label:"Science",       bg:"#d0e2f0", color:"#153555" },
+  grounding:       { label:"Grounding",     bg:"#ddf0e8", color:"#0e4a30" },
+};
+
+const FILTER_OPTIONS = [
+  { key:null,         label:"All" },
+  { key:"art",        label:"Art" },
+  { key:"writing",    label:"Writing" },
+  { key:"nature",     label:"Nature" },
+  { key:"craft",      label:"Craft" },
+  { key:"creative",   label:"Creative" },
+  { key:"dnd",        label:"D&amp;D" },
+  { key:"tech",       label:"Tech" },
+  { key:"meditative", label:"Meditative" },
+  { key:"body",       label:"Body" },
+  { key:"slow",       label:"Slow" },
+];
+
+const BASE_SECTIONS = [
+  {
+    id:"kindling", name:"Kindling", icon:"✦",
+    tagline:"2 – 3 minutes  ·  a small flame to start",
+    accent:"#b8860b", offroad:false,
+    activities:[
+      { name:"Commonplace Book Entry",
+        description:"Copy one quote, phrase, or idea that's been living rent-free in your head. The book does nothing but receive — no system required.",
+        skill:"Writing", energy:"Low", kit:"Notebook or open doc",
+        badges:["writing","meditative"] },
+      { name:"Worldbuilding Spark",
+        description:"Drop one seed into your campaign notes — a name, a rumor, a scent in a tavern. It doesn't need to go anywhere yet.",
+        skill:"Creative", energy:"Low", kit:"None",
+        badges:["creative","dnd"] },
+      { name:"Field Observation",
+        description:"Step outside, pick one thing — a plant, a sound, a shadow — and actually look at it for two minutes. No output required.",
+        skill:"Nature", energy:"Low", kit:"None",
+        badges:["nature","meditative"] },
+      { name:"Brain Spark",
+        description:"Write one paragraph, no prompt, no goal. Whatever is sitting right at the top of your skull — pour it out.",
+        skill:"Writing", energy:"Low", kit:"Any writing surface",
+        badges:["writing","reflective"] },
+    ]
+  },
+  {
+    id:"ten", name:"Ten Minutes", icon:"◎",
+    tagline:"10 minutes or less  ·  a focused specimen",
+    accent:"#4a7a5a", offroad:false,
+    activities:[
+      { name:"Quick Sketch",
+        description:"One subject, one page, no erasing. You're sharpening the eye, not chasing a finished piece.",
+        skill:"Art", energy:"Medium", kit:"Sketchbook + pencil",
+        badges:["art","skillBuild"] },
+      { name:"Watercolor Swatch Study",
+        description:"Mix, layer, wash. No finished piece required — you're just learning how your colors talk to each other.",
+        skill:"Art", energy:"Low", kit:"Paints + paper",
+        badges:["art","meditative"] },
+      { name:"Annotate One Chapter",
+        description:"Hit pause on your audiobook and write one sentence about what you just heard. What stuck? What pushed back?",
+        skill:"Writing", energy:"Low", kit:"Journal or note app",
+        badges:["writing","reflective"] },
+      { name:"Flash Fiction Micro-scene",
+        description:"100 words. Set it in your campaign world — an NPC's morning routine, a myth about how a river got its name. It doesn't need to be useful.",
+        skill:"Writing", energy:"Medium", kit:"None",
+        badges:["writing","creative","dnd"] },
+      { name:"Nature Journal Entry",
+        description:"Date, location, one observed thing. A sketch or a sentence. The constraint is the whole point — no spreads, no trackers.",
+        skill:"Nature", energy:"Low", kit:"Small notebook",
+        badges:["nature","writing"] },
+    ]
+  },
+  {
+    id:"thirty", name:"Thirty Minutes", icon:"◐",
+    tagline:"30 minutes or less  ·  a proper field session",
+    accent:"#2d5a4a", offroad:false,
+    activities:[
+      { name:"Small Watercolor Study",
+        description:"A plant from the windowsill, an object on the desk, a photo reference. One subject, start to finish.",
+        skill:"Art", energy:"Medium", kit:"Full paint setup",
+        badges:["art","skillBuild"] },
+      { name:"Campaign Sketch",
+        description:"Draw a character, location, or scene from your world. Art practice and worldbuilding in the same stroke.",
+        skill:"Art", energy:"Medium", kit:"Sketchbook",
+        badges:["art","creative","dnd"] },
+      { name:"Reflection Journal Prompt",
+        description:"One question, freeform. No spreads, no system. Just sit with something long enough to find out what you actually think about it.",
+        skill:"Writing", energy:"Low", kit:"Journal",
+        badges:["writing","reflective"] },
+      { name:"Digital Garden Session",
+        description:"Add a new node, link two existing ideas, or let something half-formed breathe in your personal wiki. Your brain, rendered navigable.",
+        skill:"Writing", energy:"Medium", kit:"Obsidian or similar",
+        badges:["writing","tech","creative"] },
+      { name:"Technique Isolation Cook",
+        description:"Pick one technique — a deglaze, a roux, a proper sear — and just make that. Not a meal. Just the skill.",
+        skill:"Craft", energy:"Medium", kit:"Kitchen",
+        badges:["craft","skillBuild"] },
+      { name:"Slow Reading",
+        description:"A chapter with your full attention. No walking, no chores. Just you and the book, on purpose.",
+        skill:"Reading", energy:"Low", kit:"Book",
+        badges:["reflective","writing"] },
+    ]
+  },
+  {
+    id:"hour", name:"One Hour", icon:"◉",
+    tagline:"1 hour or less  ·  a proper expedition",
+    accent:"#3a3a6a", offroad:false,
+    activities:[
+      { name:"Campaign Deep Session",
+        description:"Maps, NPCs, story arcs, lore fragments. The part of D&D prep that already feels like play — lean all the way in.",
+        skill:"Creative", energy:"High", kit:"Notes + tools of choice",
+        badges:["creative","dnd","skillBuild"] },
+      { name:"Sustained Watercolor",
+        description:"A scene, a landscape, a character portrait — something with ambition. Give it enough time to breathe.",
+        skill:"Art", energy:"High", kit:"Full paint setup",
+        badges:["art","skillBuild"] },
+      { name:"Full Sketch Study Session",
+        description:"Dedicated drawing time — multiple subjects or one complex one. No scroll breaks. Treat it like a practice.",
+        skill:"Art", energy:"High", kit:"Sketchbook",
+        badges:["art","skillBuild"] },
+      { name:"Complicated Dish",
+        description:"A recipe that requires your actual attention. Mise en place. Timing. Tasting as you go. The kitchen as a slow puzzle.",
+        skill:"Craft", energy:"High", kit:"Kitchen + ingredients",
+        badges:["craft","creative"] },
+      { name:"Local Hike",
+        description:"Somewhere with dirt underfoot and no particular destination. Even if the big trips aren't possible right now, this still counts.",
+        skill:"Nature", energy:"Medium", kit:"Shoes",
+        badges:["nature","body"] },
+      { name:"Documentary Deep Dive",
+        description:"Something genuinely unfamiliar — full attention, no phone. Maybe write one sentence after: what are you now curious about?",
+        skill:"Exploration", energy:"Low", kit:"Screen",
+        badges:["exploratory","reflective"] },
+    ]
+  },
+  {
+    id:"offroad", name:"Off the Beaten Path", icon:"⊕",
+    tagline:"Terra incognita  ·  venture only when you're feeling adventurous",
+    accent:"#7a3a2a", offroad:true,
+    activities:[
+      { name:"Bookbinding",
+        description:"Sew and glue your own journal from scratch. No more abandoning a store-bought system — this one is yours because you built it.",
+        skill:"Craft", energy:"Medium", kit:"Paper, thread, glue, boards",
+        badges:["craft","tactile","antiConsumption"] },
+      { name:"Field Recording",
+        description:"Take your phone somewhere with interesting ambient sound and just capture it. You're not making music yet — you're learning to actually listen.",
+        skill:"Sound", energy:"Low", kit:"Phone mic or recorder",
+        badges:["nature","sound","exploratory"] },
+      { name:"Zine-Making",
+        description:"A small self-published booklet about anything: campaign lore, a season of sketches, classroom observations. Writing + art + a real made object.",
+        skill:"Craft", energy:"High", kit:"Paper, stapler, markers or printer",
+        badges:["creative","writing","craft"] },
+      { name:"iNaturalist Citizen Science",
+        description:"Log species on your dog walks and contribute to real biodiversity data. You'll start seeing your neighborhood like you've never walked it before.",
+        skill:"Nature", energy:"Low", kit:"Phone + iNaturalist app",
+        badges:["nature","tech","collecting"] },
+      { name:"Conlang Building",
+        description:"Naming conventions, a few grammar rules, 30 words for your campaign world. Tolkien started here too — and it pays off in immersion.",
+        skill:"Writing", energy:"High", kit:"Notes",
+        badges:["writing","creative","dnd"] },
+      { name:"Fermentation Lab",
+        description:"Start a batch of kimchi, hot sauce, or tepache. Twenty minutes active work, then days of checking in — log each batch like an experiment.",
+        skill:"Craft", energy:"Low", kit:"Jars + ingredients",
+        badges:["craft","science","slow"] },
+      { name:"Nature Journaling Practice",
+        description:"Not just one entry — the sustained habit. Sketch what you observe outdoors with field notes, dates, and locations. It becomes a record of how your eye learns to see.",
+        skill:"Nature", energy:"Low", kit:"Dedicated journal, pencil, maybe watercolor",
+        badges:["nature","writing","skillBuild"] },
+      { name:"Earthing",
+        description:"Bare feet on actual ground — grass, soil, sand, stone. No agenda, no destination. Let the dogs lead. Just be a body outside for a few minutes.",
+        skill:"Nature", energy:"Low", kit:"None (shoes optional)",
+        badges:["nature","body","grounding","meditative"] },
+    ]
+  },
+];
+
+const ENERGY_OPTS = ["Low","Low–Med","Medium","High"];
+const STORAGE_KEY = "compendium-custom-v1";
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+
+let activeFilter   = null;
+let customCards    = {};   // { sectionId: [card, ...] }
+let openForms      = {};   // { sectionId: bool }
+let formState      = {};   // { sectionId: { name, description, skill, energy, kit, badges, error } }
+let storageReady   = false;
+
+// ─── STORAGE (localStorage) ──────────────────────────────────────────────────
+
+function loadStorage() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) customCards = JSON.parse(saved);
+  } catch(_) {}
+  storageReady = true;
+}
+
+function saveStorage() {
+  if (!storageReady) return;
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(customCards)); }
+  catch(e) { console.error("Storage error:", e); }
+}
+
+// ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
+
+function exportBackup() {
+  const data = { version: 1, exported: new Date().toISOString(), customCards };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `field-compendium-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✦ Backup exported');
+}
+
+function triggerImport() {
+  document.getElementById('import-file-input').click();
+}
+
+function handleImportFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.customCards) {
+        customCards = data.customCards;
+        saveStorage();
+        render();
+        showToast('✦ Backup restored');
+      } else {
+        showToast('⚠ Invalid backup file');
+      }
+    } catch(_) {
+      showToast('⚠ Could not read file');
+    }
+    input.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── PWA MANIFEST (inline) ───────────────────────────────────────────────────
+
+function injectManifest() {
+  const manifest = {
+    name: "The Field Guide to Your Free Time",
+    short_name: "Field Guide",
+    description: "A personal activity compendium for the curious naturalist and world-builder.",
+    start_url: ".",
+    display: "standalone",
+    background_color: "#ede3cc",
+    theme_color: "#ede3cc",
+    icons: [
+      { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23ede3cc'/%3E%3Ctext y='.9em' font-size='80' x='10'%3E✦%3C/text%3E%3C/svg%3E",
+        sizes: "any", type: "image/svg+xml" }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+  const url  = URL.createObjectURL(blob);
+  document.getElementById('pwa-manifest').href = url;
+}
+
+// ─── SERVICE WORKER (inline cache-first) ─────────────────────────────────────
+
+function registerServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  const swCode = `
+    const CACHE = 'field-compendium-v1';
+    const FONTS = 'https://fonts.googleapis.com';
+    self.addEventListener('install', e => {
+      self.skipWaiting();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(
+        caches.open(CACHE).then(cache =>
+          cache.match(e.request).then(hit => {
+            if (hit) return hit;
+            return fetch(e.request).then(res => {
+              if (res.ok && (e.request.url.startsWith(self.location.origin) || e.request.url.startsWith(FONTS))) {
+                cache.put(e.request, res.clone());
+              }
+              return res;
+            }).catch(() => hit);
+          })
+        )
+      );
+    });
+  `;
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const url  = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).catch(() => {});
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+function energyDots(level) {
+  const map = { "Low":1, "Low–Med":1, "Medium":2, "High":3 };
+  const filled = map[level] ?? 2;
+  return [1,2,3].map(i =>
+    `<span class="${i<=filled?'dot-filled':'dot-empty'}">●</span>`
+  ).join('');
+}
+
+function badgeHTML(type) {
+  const cfg = BADGE_MAP[type];
+  if (!cfg) return '';
+  return `<span class="badge" style="background:${cfg.bg};color:${cfg.color};border:1px solid ${cfg.color}35">${cfg.label}</span>`;
+}
+
+function totalEntries() {
+  const base = BASE_SECTIONS.reduce((a,s)=>a+s.activities.length,0);
+  const custom = Object.values(customCards).reduce((a,arr)=>a+arr.length,0);
+  return { base, custom, total: base+custom };
+}
+
+function getDefaultFormState() {
+  return { name:'', description:'', skill:'', energy:'Medium', kit:'', badges:[], error:'' };
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+
+function renderCard(activity, accent, offroad, isCustom, sectionId, customIndex) {
+  const hoverBorder = accent+'80';
+  const removeBtn = isCustom
+    ? `<button class="remove-btn" onclick="removeCard('${sectionId}',${customIndex})" title="Remove this entry">✕</button>`
+    : '';
+  const customLbl = isCustom ? `<span class="custom-label">✦ custom</span>` : '';
+  const badgesHtml = (activity.badges||[]).map(b=>badgeHTML(b)).join('');
+  const offCls = offroad ? ' card-offroad' : '';
+
+  return `
+    <div class="card${offCls}"
+         style="border-left:3px solid ${accent}"
+         onmouseenter="this.style.borderColor='${hoverBorder}';this.style.boxShadow='0 2px 12px ${accent}18'"
+         onmouseleave="this.style.borderColor='#d4c4a8';this.style.boxShadow='0 1px 4px rgba(0,0,0,.04)'">
+      ${removeBtn}
+      <div class="card-name${isCustom?' has-remove':''}">${activity.name}${customLbl}</div>
+      <div class="card-desc">${activity.description}</div>
+      <div class="card-stats">
+        <span>Skill · <strong>${activity.skill}</strong></span>
+        <span>Energy · <span class="energy-dots">${energyDots(activity.energy)}</span> <strong>${activity.energy}</strong></span>
+        <span>Kit · <strong>${activity.kit}</strong></span>
+      </div>
+      <div class="card-badges">${badgesHtml}</div>
+    </div>`;
+}
+
+function renderAddForm(section) {
+  const fs = formState[section.id] || getDefaultFormState();
+  const energyOptions = ENERGY_OPTS.map(o =>
+    `<option value="${o}"${o===fs.energy?' selected':''}>${o}</option>`
+  ).join('');
+
+  const badgePickerHtml = Object.entries(BADGE_MAP).map(([key,cfg]) => {
+    const on = (fs.badges||[]).includes(key);
+    return `<button type="button" class="badge-toggle"
+      style="border-color:${on?cfg.color:cfg.color+'50'};background:${on?cfg.bg:'rgba(255,255,255,.4)'};color:${on?cfg.color:cfg.color+'90'};font-weight:${on?'700':'400'}"
+      onclick="toggleBadge('${section.id}','${key}')">${cfg.label}</button>`;
+  }).join('');
+
+  const errorHtml = fs.error
+    ? `<div class="form-error">⚠ ${fs.error}</div>`
+    : '';
+
+  return `
+    <div class="add-form" style="border-color:${section.accent}">
+      <div class="form-title" style="color:${section.accent}">✦ New Entry</div>
+      <div class="form-fields">
+        <div>
+          <label class="form-label">Name *</label>
+          <input class="form-input" type="text" placeholder="What is this activity called?"
+            value="${escHtml(fs.name)}"
+            oninput="updateFormField('${section.id}','name',this.value)" />
+        </div>
+        <div>
+          <label class="form-label">Description *</label>
+          <textarea class="form-textarea" rows="3"
+            placeholder="1–2 sentences. What is it, and why does it matter to you?"
+            oninput="updateFormField('${section.id}','description',this.value)">${escHtml(fs.description)}</textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-col-sm">
+            <label class="form-label">Skill</label>
+            <input class="form-input" type="text" placeholder="e.g. Art, Writing, Nature"
+              value="${escHtml(fs.skill)}"
+              oninput="updateFormField('${section.id}','skill',this.value)" />
+          </div>
+          <div class="form-col-xs">
+            <label class="form-label">Energy</label>
+            <select class="form-select" onchange="updateFormField('${section.id}','energy',this.value)">
+              ${energyOptions}
+            </select>
+          </div>
+          <div class="form-col-lg">
+            <label class="form-label">Kit / What you need</label>
+            <input class="form-input" type="text" placeholder="e.g. Notebook, Phone, Nothing"
+              value="${escHtml(fs.kit)}"
+              oninput="updateFormField('${section.id}','kit',this.value)" />
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Tags (select any that apply)</label>
+          <div class="badge-picker">${badgePickerHtml}</div>
+        </div>
+        ${errorHtml}
+        <div class="form-actions">
+          <button class="btn-cancel" onclick="closeForm('${section.id}')">Cancel</button>
+          <button class="btn-save" style="background:${section.accent};border-color:${section.accent}"
+            onclick="saveCard('${section.id}')">✦ Add to Compendium</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function escHtml(str) {
+  return String(str||'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function renderSection(section) {
+  const sectionCustom = customCards[section.id] || [];
+  const allActivities = [...section.activities, ...sectionCustom];
+
+  const visibleBase   = activeFilter
+    ? section.activities.filter(a=>(a.badges||[]).includes(activeFilter))
+    : section.activities;
+  const visibleCustom = activeFilter
+    ? sectionCustom.filter(a=>(a.badges||[]).includes(activeFilter))
+    : sectionCustom;
+  const totalVisible  = visibleBase.length + visibleCustom.length;
+
+  if (activeFilter && totalVisible === 0) return '';
+
+  const offCls = section.offroad ? ' offroad' : '';
+  const warning = section.offroad ? `
+    <div class="offroad-warning">
+      ⚠ These activities have no fixed duration — they're for when you're ready to explore something genuinely new.
+      Each one is a rabbit hole. Enter with curiosity, not obligation.
+    </div>` : '';
+
+  const baseCards = visibleBase.map(a =>
+    renderCard(a, section.accent, section.offroad, false, section.id, -1)
+  ).join('');
+
+  const customCardsHtml = visibleCustom.map((a) => {
+    const realIdx = sectionCustom.indexOf(a);
+    return renderCard(a, section.accent, section.offroad, true, section.id, realIdx);
+  }).join('');
+
+  let addArea = '';
+  if (!activeFilter) {
+    if (openForms[section.id]) {
+      addArea = renderAddForm(section);
+    } else {
+      addArea = `<button class="add-section-btn"
+        style="color:${section.accent+'90'};border-color:${section.accent+'60'}"
+        onmouseenter="this.style.background='${section.accent}10';this.style.color='${section.accent}';this.style.borderColor='${section.accent}'"
+        onmouseleave="this.style.background='transparent';this.style.color='${section.accent+'90'}';this.style.borderColor='${section.accent+'60'}'"
+        onclick="openForm('${section.id}')">+ Add Entry to This Section</button>`;
+    }
+  }
+
+  return `
+    <div class="section-header">
+      <div class="section-title-row" style="border-bottom-color:${section.accent}">
+        <span class="section-icon" style="color:${section.accent}">${section.icon}</span>
+        <span class="section-name${offCls}">${section.name}</span>
+        <span class="section-count">${totalVisible} entries</span>
+      </div>
+      <div class="section-tagline">${section.tagline}</div>
+    </div>
+    ${warning}
+    ${baseCards}
+    ${customCardsHtml}
+    ${addArea}`;
+}
+
+function renderFilterBar() {
+  return `
+    <div class="filter-bar">
+      <div class="filter-label">Filter by Discipline</div>
+      <div class="filter-buttons">
+        ${FILTER_OPTIONS.map(f => {
+          const active = activeFilter === f.key;
+          const cfg = f.key ? BADGE_MAP[f.key] : null;
+          const style = active && cfg
+            ? `border-color:${cfg.color};background:${cfg.bg};color:${cfg.color}`
+            : '';
+          return `<button class="filter-btn${active?' active':''}"
+            style="${style}"
+            onclick="setFilter(${JSON.stringify(f.key)})">${f.label}</button>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function render() {
+  const { total, custom } = totalEntries();
+  const customNote = custom > 0 ? ` (${custom} custom)` : '';
+
+  const sectionsHtml = BASE_SECTIONS.map(renderSection).join('');
+
+  document.getElementById('app').innerHTML = `
+    <div class="header">
+      <div class="vol-label">Personal Field Compendium · Vol. I</div>
+      <div class="ornament-row">
+        <div class="ornament-line left"></div>
+        <span class="ornament-star">✦</span>
+        <span class="ornament-dot">◆</span>
+        <span class="ornament-star">✦</span>
+        <div class="ornament-line right"></div>
+      </div>
+      <h1>The Field Guide<br><em>to Your Free Time</em></h1>
+      <p class="header-tagline">
+        A curated compendium for the curious naturalist, reluctant academic,
+        and world-builder at rest. Choose your depth. Begin anywhere.
+      </p>
+      <div class="entry-count">── ${total} ENTRIES CATALOGUED${customNote} ──</div>
+    </div>
+
+    ${renderFilterBar()}
+    ${sectionsHtml}
+
+    <div class="backup-bar">
+      <div class="backup-label">Archive &amp; Restore</div>
+      <div class="backup-desc">Export your custom entries as a JSON file to back them up or move them to another device.</div>
+      <div class="backup-buttons">
+        <button class="btn-backup btn-export" onclick="exportBackup()">↓ Export Backup</button>
+        <button class="btn-backup btn-import" onclick="triggerImport()">↑ Import Backup</button>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="ornament-row">
+        <div class="ornament-line left"></div>
+        <span class="ornament-star" style="font-size:14px">✦</span>
+        <div class="ornament-line right"></div>
+      </div>
+      <div class="footer-end">End of Current Entries</div>
+      <div class="footer-living">This document is living. Add freely.</div>
+    </div>`;
+}
+
+// ─── EVENT HANDLERS ──────────────────────────────────────────────────────────
+
+function setFilter(key) {
+  activeFilter = activeFilter === key ? null : key;
+  render();
+}
+
+function openForm(sectionId) {
+  if (!formState[sectionId]) formState[sectionId] = getDefaultFormState();
+  openForms[sectionId] = true;
+  render();
+}
+
+function closeForm(sectionId) {
+  openForms[sectionId] = false;
+  formState[sectionId] = getDefaultFormState();
+  render();
+}
+
+function updateFormField(sectionId, field, value) {
+  if (!formState[sectionId]) formState[sectionId] = getDefaultFormState();
+  formState[sectionId][field] = value;
+  // Re-render only the error state; don't full re-render while typing
+  // (error div update only if there's an error showing)
+}
+
+function toggleBadge(sectionId, key) {
+  if (!formState[sectionId]) formState[sectionId] = getDefaultFormState();
+  const badges = formState[sectionId].badges || [];
+  formState[sectionId].badges = badges.includes(key)
+    ? badges.filter(b=>b!==key)
+    : [...badges, key];
+  render();
+}
+
+function saveCard(sectionId) {
+  const fs = formState[sectionId] || getDefaultFormState();
+  if (!fs.name.trim()) { fs.error = "Entry needs a name."; formState[sectionId]=fs; render(); return; }
+  if (!fs.description.trim()) { fs.error = "Entry needs a description."; formState[sectionId]=fs; render(); return; }
+
+  const card = {
+    name: fs.name.trim(),
+    description: fs.description.trim(),
+    skill: fs.skill.trim() || '—',
+    energy: fs.energy,
+    kit: fs.kit.trim() || '—',
+    badges: fs.badges || [],
+  };
+
+  if (!customCards[sectionId]) customCards[sectionId] = [];
+  customCards[sectionId].push(card);
+  openForms[sectionId] = false;
+  formState[sectionId] = getDefaultFormState();
+  saveStorage();
+  render();
+}
+
+function removeCard(sectionId, index) {
+  if (!customCards[sectionId]) return;
+  customCards[sectionId].splice(index, 1);
+  saveStorage();
+  render();
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+
+injectManifest();
+registerServiceWorker();
+loadStorage();
+render();
+</script>
+</body>
+</html>
