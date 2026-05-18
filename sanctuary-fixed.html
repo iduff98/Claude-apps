@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our Weekend Sanctuary</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ── RESET ───────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── TOKENS ──────────────────────── */
+:root {
+  --forest-deep: #1a2e1e;
+  --forest-soft: #3d6142;
+  --sage:        #8aad8f;
+  --sage-light:  #b5cdb8;
+  --moss:        #a3b899;
+  --sky-mid:     #2a4a5e;
+  --sky-pale:    #b8d4e0;
+  --gold:        #c9a84c;
+  --gold-light:  #e2c97a;
+  --cream:       #f5f0e8;
+  --muted:       #6a7a6e;
+}
+
+/* ── BASE ────────────────────────── */
+html { width: 100%; overflow-x: hidden; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--forest-deep);
+  color: var(--cream);
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Full-bleed decorative background — stays behind everything */
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 10%, rgba(61,97,66,.35) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 85% 90%, rgba(42,74,94,.4)  0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(201,168,76,.06) 0%, transparent 70%);
+}
+
+/* ── CENTERING WRAPPER ───────────── */
+/* This is the ONLY centering rule. Everything sits inside #wrap. */
+#wrap {
+  width: min(1400px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* Leaf decorations — fixed, outside #wrap, purely decorative */
+.leaf { position: fixed; pointer-events: none; z-index: 0; opacity: .04; font-size: 6rem; animation: sway 20s ease-in-out infinite; }
+.leaf:nth-child(1) { top: 5%;    left: 2%;  animation-delay: 0s; }
+.leaf:nth-child(2) { top: 30%;   right: 1%; animation-delay: 7s;  font-size: 4rem; }
+.leaf:nth-child(3) { bottom: 10%;left: 5%;  animation-delay: 14s; font-size: 5rem; }
+@keyframes sway { 0%,100%{transform:translateY(0) rotate(0deg);} 33%{transform:translateY(-12px) rotate(3deg);} 66%{transform:translateY(6px) rotate(-2deg);} }
+
+/* ── HEADER ──────────────────────── */
+.site-header {
+  text-align: center;
+  padding: 3rem 2rem 1.5rem;
+  border-bottom: 1px solid rgba(201,168,76,.2);
+}
+.eyebrow { font-size:.7rem; font-weight:500; letter-spacing:.25em; text-transform:uppercase; color:var(--gold); margin-bottom:.75rem; }
+.site-header h1 { font-family:'Cormorant Garamond',serif; font-size:clamp(2.2rem,5vw,3.8rem); font-weight:300; color:var(--cream); line-height:1.15; }
+.site-header h1 em { font-style:italic; color:var(--gold-light); }
+.subline { margin-top:.75rem; font-size:.85rem; color:var(--sage); font-weight:300; }
+.share-btn { display:inline-flex; align-items:center; gap:.45rem; margin-top:1rem; background:rgba(201,168,76,.12); border:1px solid rgba(201,168,76,.35); border-radius:100px; padding:.5rem 1.1rem; color:var(--gold-light); font-family:'DM Sans',sans-serif; font-size:.75rem; font-weight:500; letter-spacing:.08em; cursor:pointer; transition:all .2s; }
+.share-btn:hover { background:rgba(201,168,76,.22); border-color:rgba(201,168,76,.65); transform:translateY(-1px); }
+.share-btn svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+
+/* ── LEGEND ──────────────────────── */
+.legend { display:flex; flex-wrap:wrap; gap:.5rem; justify-content:center; padding:.75rem 2rem 1rem; }
+.legend-item { display:flex; align-items:center; gap:.35rem; font-size:.65rem; color:rgba(255,255,255,.4); letter-spacing:.05em; }
+.legend-dot { width:8px; height:8px; border-radius:2px; flex-shrink:0; }
+
+/* ── MAIN LAYOUT ─────────────────── */
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 1.5rem;
+  padding: 1.5rem 2rem 4rem;
+  align-items: start;
+}
+@media (max-width:900px) { .main-layout { grid-template-columns: 1fr; } }
+
+/* ── SECTION LABEL ───────────────── */
+.schedule-area { min-width: 0; }
+.bank-sidebar   { min-width: 0; }
+
+.section-label { font-size:.65rem; font-weight:500; letter-spacing:.2em; text-transform:uppercase; color:var(--gold); margin-bottom:1rem; display:flex; align-items:center; gap:.75rem; }
+.section-label::after { content:''; flex:1; height:1px; background:linear-gradient(to right, rgba(201,168,76,.4), transparent); }
+
+/* ── DAY GRID ────────────────────── */
+.days-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+@media (max-width:700px) {
+  .days-grid { grid-template-columns: 1fr; }
+  .pri-btn span:last-child { display: none; }
+  .tag { display: none; }
+  .main-layout { padding: 1rem 1rem 3rem; }
+}
+
+.day-col { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:1.25rem; min-height:500px; backdrop-filter:blur(8px); display:flex; flex-direction:column; min-width:0; }
+.day-head { text-align:center; margin-bottom:1.25rem; padding-bottom:1rem; border-bottom:1px solid rgba(201,168,76,.15); }
+.day-name { font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:400; color:var(--cream); }
+.day-vibe { font-size:.7rem; color:var(--sage); font-style:italic; margin-top:.2rem; letter-spacing:.05em; }
+.drop-zone { flex:1; display:flex; flex-direction:column; gap:.6rem; min-height:340px; }
+.drop-zone.drag-over { background:rgba(201,168,76,.05); border-radius:10px; outline:2px dashed rgba(201,168,76,.35); outline-offset:4px; }
+.placeholder { flex:1; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.12); font-size:.75rem; font-style:italic; letter-spacing:.05em; text-align:center; min-height:80px; border-radius:10px; border:1.5px dashed rgba(255,255,255,.08); padding:1rem; }
+.day-actions { display:flex; justify-content:flex-end; margin-top:.5rem; }
+.clear-btn { background:transparent; border:none; font-size:.65rem; color:rgba(255,255,255,.2); cursor:pointer; letter-spacing:.05em; padding:.2rem .4rem; transition:color .2s; font-family:'DM Sans',sans-serif; }
+.clear-btn:hover { color:rgba(200,80,80,.6); }
+
+/* ── ACTIVITY CARDS ──────────────── */
+.card { background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:12px; padding:.75rem .9rem; cursor:pointer; transition:all .2s ease; user-select:none; display:flex; align-items:center; gap:.55rem; overflow:hidden; min-width:0; }
+.card:hover { background:rgba(255,255,255,.1); border-color:rgba(201,168,76,.35); transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,0,0,.2); }
+.card:active { transform:scale(.98); }
+.card.priority-nice { border-color:rgba(201,168,76,.5); background:rgba(201,168,76,.08); }
+.card.priority-want { border-color:rgba(210,100,60,.6); background:rgba(210,100,60,.1); box-shadow:0 0 10px rgba(210,100,60,.15); }
+.card.scheduled-in-bank { border-color:rgba(138,173,143,.3); }
+.card.sched { cursor:grab !important; }
+.card.sched:active { cursor:grabbing !important; }
+.card.sched.dragging { opacity:.4; transform:scale(.97) rotate(-.5deg); }
+
+.card-emoji { font-size:1.25rem; flex-shrink:0; width:1.9rem; text-align:center; }
+.card-body  { flex:1; min-width:0; overflow:hidden; }
+.card-name  { font-size:.82rem; font-weight:500; color:var(--cream); line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card-meta  { font-size:.68rem; color:var(--muted); margin-top:.15rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.tag { display:inline-block; font-size:.58rem; padding:.13rem .45rem; border-radius:100px; font-weight:500; letter-spacing:.04em; text-transform:uppercase; flex-shrink:0; }
+.tag-movies  { background:rgba(106,154,176,.25); color:var(--sky-pale); }
+.tag-games   { background:rgba(138,173,143,.25); color:var(--sage-light); }
+.tag-spa     { background:rgba(201,168,76,.2);   color:var(--gold-light); }
+.tag-nature  { background:rgba(93,138,99,.3);    color:var(--moss); }
+.tag-romance { background:rgba(190,120,140,.25); color:#e8b4c4; }
+.tag-food    { background:rgba(180,140,90,.25);  color:#e0c090; }
+.tag-rest    { background:rgba(90,100,140,.25);  color:#b0b8d8; }
+.tag-custom  { background:rgba(255,255,255,.1);  color:var(--cream); }
+
+/* ── PRIORITY PILL ───────────────── */
+.pri-btn { flex-shrink:1; display:inline-flex; align-items:center; gap:.28rem; padding:.22rem .45rem; border-radius:100px; border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.07); cursor:pointer; font-family:'DM Sans',sans-serif; font-size:.62rem; font-weight:500; letter-spacing:.04em; color:rgba(255,255,255,.45); transition:all .18s ease; white-space:nowrap; min-width:0; }
+.pri-btn:hover { background:rgba(255,255,255,.13); border-color:rgba(255,255,255,.3); color:rgba(255,255,255,.8); transform:translateY(-1px); }
+.pri-btn.pri-1 { background:rgba(201,168,76,.18); border-color:rgba(201,168,76,.55); color:var(--gold-light); }
+.pri-btn.pri-1:hover { background:rgba(201,168,76,.28); }
+.pri-btn.pri-2 { background:rgba(210,100,60,.22); border-color:rgba(210,120,60,.7); color:#f0a882; }
+.pri-btn.pri-2:hover { background:rgba(210,100,60,.32); }
+.pri-icon { font-size:.75rem; line-height:1; }
+
+/* ── ICON BUTTONS ────────────────── */
+.icon-btn { display:flex; align-items:center; justify-content:center; width:1.4rem; height:1.4rem; border-radius:50%; background:rgba(255,255,255,.07); border:none; cursor:pointer; color:rgba(255,255,255,.3); font-size:.72rem; transition:all .15s; flex-shrink:0; }
+.icon-btn:hover { background:rgba(201,168,76,.25); color:var(--gold-light); }
+.icon-btn.del:hover { background:rgba(200,80,80,.3); color:#ff9999; }
+.icon-btn.rm:hover  { background:rgba(200,80,80,.3); color:#ff9999; }
+.del-custom { display:flex; align-items:center; justify-content:center; width:1.2rem; height:1.2rem; border-radius:50%; background:transparent; border:none; cursor:pointer; color:rgba(255,255,255,.2); font-size:.65rem; transition:all .15s; flex-shrink:0; }
+.del-custom:hover { color:rgba(200,80,80,.7); }
+
+/* ── BANK SIDEBAR ────────────────── */
+.bank-wrap { position: sticky; top: 1.5rem; }
+.bank-panel { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:1.25rem; backdrop-filter:blur(8px); max-height:calc(100vh - 8rem); overflow-y:auto; }
+.bank-panel::-webkit-scrollbar { width:4px; }
+.bank-panel::-webkit-scrollbar-thumb { background:rgba(255,255,255,.1); border-radius:4px; }
+.cat-group { margin-bottom:1.25rem; }
+.cat-name { font-size:.65rem; font-weight:500; letter-spacing:.15em; text-transform:uppercase; color:var(--sage); margin-bottom:.5rem; padding-bottom:.4rem; border-bottom:1px solid rgba(255,255,255,.06); }
+.bank-cards { display:flex; flex-direction:column; gap:.4rem; }
+
+/* ── ADD CARD FORM ───────────────── */
+.add-section { margin-top:1.25rem; }
+.add-toggle { width:100%; background:rgba(201,168,76,.12); border:1px dashed rgba(201,168,76,.35); border-radius:10px; padding:.65rem 1rem; color:var(--gold-light); font-family:'DM Sans',sans-serif; font-size:.78rem; cursor:pointer; transition:all .2s; letter-spacing:.05em; }
+.add-toggle:hover { background:rgba(201,168,76,.2); border-color:rgba(201,168,76,.6); }
+.add-form { display:none; flex-direction:column; gap:.6rem; margin-top:.75rem; padding:1rem; background:rgba(255,255,255,.04); border-radius:12px; border:1px solid rgba(255,255,255,.08); }
+.add-form.open { display:flex; }
+.form-row { display:flex; gap:.5rem; }
+.f-input, .f-select { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.12); border-radius:8px; padding:.55rem .75rem; color:var(--cream); font-family:'DM Sans',sans-serif; font-size:.78rem; width:100%; transition:border-color .2s; }
+.f-input::placeholder { color:rgba(255,255,255,.25); }
+.f-input:focus, .f-select:focus { outline:none; border-color:rgba(201,168,76,.5); }
+.f-select option { background:var(--forest-deep); color:var(--cream); }
+.emoji-f { width:60px; text-align:center; font-size:1.1rem; }
+.f-submit { flex:1; background:linear-gradient(135deg,var(--forest-soft),var(--sky-mid)); border:1px solid rgba(201,168,76,.25); border-radius:8px; padding:.55rem 1rem; color:var(--cream); font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:500; cursor:pointer; transition:all .2s; letter-spacing:.04em; }
+.f-submit:hover { filter:brightness(1.15); }
+.f-cancel { background:transparent; border:none; color:rgba(255,255,255,.3); font-family:'DM Sans',sans-serif; font-size:.72rem; cursor:pointer; padding:.3rem; transition:color .2s; }
+.f-cancel:hover { color:rgba(255,255,255,.6); }
+
+/* ── TOAST ───────────────────────── */
+.toast { position:fixed; bottom:2rem; left:50%; transform:translateX(-50%) translateY(100px); background:rgba(61,97,66,.95); border:1px solid rgba(201,168,76,.4); color:var(--cream); font-size:.78rem; padding:.65rem 1.25rem; border-radius:100px; z-index:9999; transition:transform .3s ease; backdrop-filter:blur(10px); letter-spacing:.04em; }
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+/* ── OVERLAYS & MODALS ───────────── */
+.overlay { position:fixed; inset:0; background:rgba(26,46,30,.88); backdrop-filter:blur(10px); z-index:10000; display:none; align-items:center; justify-content:center; padding:1rem; }
+.overlay.open { display:flex; }
+.modal { background:linear-gradient(135deg,rgba(45,74,50,.99),rgba(42,74,94,.99)); border:1px solid rgba(201,168,76,.4); border-radius:20px; padding:1.75rem; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+.modal-title { font-family:'Cormorant Garamond',serif; font-size:1.4rem; font-weight:400; color:var(--cream); text-align:center; margin-bottom:.5rem; }
+
+/* day picker */
+.picker-modal { max-width:340px; }
+.picker-sub { text-align:center; font-size:.8rem; color:var(--sage-light); margin-bottom:1.5rem; font-style:italic; }
+.day-opts { display:flex; flex-direction:column; gap:.6rem; }
+.day-opt { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); border-radius:12px; padding:.9rem 1.25rem; color:var(--cream); font-family:'DM Sans',sans-serif; font-size:.85rem; font-weight:500; cursor:pointer; transition:all .2s; text-align:center; letter-spacing:.04em; }
+.day-opt:hover { background:rgba(255,255,255,.14); border-color:rgba(201,168,76,.5); transform:translateY(-1px); }
+.modal-cancel { background:transparent; border:none; color:rgba(255,255,255,.3); font-family:'DM Sans',sans-serif; font-size:.75rem; cursor:pointer; padding:.75rem; margin-top:.5rem; transition:color .2s; text-align:center; width:100%; letter-spacing:.05em; }
+.modal-cancel:hover { color:rgba(255,255,255,.6); }
+
+/* share modal */
+.share-modal { max-width:520px; }
+.share-img-wrap { border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.08); margin-bottom:1rem; background:rgba(0,0,0,.3); min-height:100px; display:flex; align-items:center; justify-content:center; }
+.share-img-wrap img { width:100%; height:auto; display:block; max-height:380px; object-fit:contain; }
+.spinner { display:flex; flex-direction:column; align-items:center; gap:.6rem; padding:2rem; color:var(--sage); font-size:.75rem; letter-spacing:.08em; }
+.spinner::before { content:''; width:28px; height:28px; border:2px solid rgba(255,255,255,.1); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.share-actions { display:flex; gap:.6rem; flex-wrap:wrap; }
+.share-act-btn { flex:1; min-width:90px; background:linear-gradient(135deg,var(--forest-soft),var(--sky-mid)); border:1px solid rgba(201,168,76,.25); border-radius:10px; padding:.65rem .5rem; color:var(--cream); font-family:'DM Sans',sans-serif; font-size:.78rem; font-weight:500; cursor:pointer; letter-spacing:.04em; transition:all .2s; display:flex; align-items:center; justify-content:center; gap:.35rem; }
+.share-act-btn:hover { filter:brightness(1.15); }
+.share-act-btn svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex-shrink:0; }
+.share-close { background:transparent; border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:.65rem 1rem; color:rgba(255,255,255,.35); font-family:'DM Sans',sans-serif; font-size:.78rem; cursor:pointer; transition:all .2s; }
+.share-close:hover { color:rgba(255,255,255,.65); border-color:rgba(255,255,255,.2); }
+.share-note { text-align:center; font-size:.67rem; color:rgba(255,255,255,.22); margin-top:.65rem; letter-spacing:.04em; font-style:italic; }
+
+/* edit modal */
+.edit-modal { max-width:380px; }
+.edit-fields { display:flex; flex-direction:column; gap:.6rem; margin-bottom:1.1rem; }
+.field-label { font-size:.65rem; letter-spacing:.12em; text-transform:uppercase; color:var(--sage); margin-bottom:.25rem; }
+.reset-wrap { text-align:center; margin-top:.5rem; }
+.reset-wrap button { background:transparent; border:none; font-size:.7rem; color:rgba(255,255,255,.25); cursor:pointer; font-family:'DM Sans',sans-serif; letter-spacing:.04em; transition:color .2s; text-decoration:underline; text-underline-offset:2px; }
+.reset-wrap button:hover { color:rgba(255,160,100,.6); }
+</style>
+</head>
+<body>
+
+<!-- decorative leaves, outside wrap -->
+<div class="leaf">🌿</div>
+<div class="leaf">🍃</div>
+<div class="leaf">🌱</div>
+
+<!-- ═══ ALL VISIBLE CONTENT LIVES INSIDE #wrap ═══ -->
+<div id="wrap">
+
+  <header class="site-header">
+    <p class="eyebrow">✦ Weekend Sanctuary ✦</p>
+    <h1>Build Your <em>Perfect Rest</em></h1>
+    <p class="subline">tap an activity · choose a day · build your retreat</p>
+    <button class="share-btn" onclick="openShareModal()">
+      <svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Share Weekend Plan
+    </button>
+  </header>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(106,154,176,.6)"></div>movies</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(138,173,143,.6)"></div>games</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(201,168,76,.5)"></div>spa</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(93,138,99,.7)"></div>nature</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(190,120,140,.6)"></div>romance</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(180,140,90,.6)"></div>food</div>
+    <div class="legend-item"><div class="legend-dot" style="background:rgba(90,100,140,.6)"></div>rest</div>
+    <div class="legend-item" style="margin-left:.5rem;padding-left:.75rem;border-left:1px solid rgba(255,255,255,.1)">
+      <span style="font-size:.75rem">✨</span>&nbsp;would be nice&nbsp;&nbsp;
+      <span style="font-size:.75rem">🔥</span>&nbsp;really want this
+    </div>
+  </div>
+
+  <div class="main-layout">
+
+    <!-- SCHEDULE -->
+    <div class="schedule-area">
+      <p class="section-label">Your Weekend Agenda</p>
+      <div class="days-grid">
+        <div class="day-col" id="col-fri">
+          <div class="day-head">
+            <div class="day-name">Friday</div>
+            <div class="day-vibe">ease into it 🌲</div>
+          </div>
+          <div class="drop-zone" id="zone-fri" data-day="fri">
+            <div class="placeholder">tap an activity to add it here</div>
+          </div>
+          <div class="day-actions"><button class="clear-btn" onclick="clearDay('fri')">clear day</button></div>
+        </div>
+        <div class="day-col" id="col-sat">
+          <div class="day-head">
+            <div class="day-name">Saturday</div>
+            <div class="day-vibe">slow morning energy ☀️</div>
+          </div>
+          <div class="drop-zone" id="zone-sat" data-day="sat">
+            <div class="placeholder">tap an activity to add it here</div>
+          </div>
+          <div class="day-actions"><button class="clear-btn" onclick="clearDay('sat')">clear day</button></div>
+        </div>
+        <div class="day-col" id="col-sun">
+          <div class="day-head">
+            <div class="day-name">Sunday</div>
+            <div class="day-vibe">cozy reset day 🌧️</div>
+          </div>
+          <div class="drop-zone" id="zone-sun" data-day="sun">
+            <div class="placeholder">tap an activity to add it here</div>
+          </div>
+          <div class="day-actions"><button class="clear-btn" onclick="clearDay('sun')">clear day</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BANK -->
+    <div class="bank-sidebar">
+      <div class="bank-wrap">
+        <p class="section-label">Activity Bank</p>
+        <div class="bank-panel">
+          <div id="bankCategories"></div>
+          <div class="add-section">
+            <button class="add-toggle" onclick="toggleAddForm()">✦ Create New Activity</button>
+            <div class="add-form" id="addForm">
+              <div class="form-row">
+                <input class="f-input emoji-f" id="newEmoji" placeholder="🌟" maxlength="2">
+                <input class="f-input" id="newName" placeholder="Activity name…" style="flex:1">
+              </div>
+              <input class="f-input" id="newMeta" placeholder="Short description (optional)">
+              <select class="f-select" id="newTag">
+                <option value="movies">🎬 Movies</option>
+                <option value="games">🎮 Games</option>
+                <option value="spa">✨ Spa</option>
+                <option value="nature">🌿 Nature</option>
+                <option value="romance">💛 Romance</option>
+                <option value="food">🍜 Food</option>
+                <option value="rest">😴 Rest</option>
+                <option value="custom">⭐ Custom</option>
+              </select>
+              <div class="form-row">
+                <button class="f-submit" onclick="addCustomCard()">Add to Bank</button>
+                <button class="f-cancel" onclick="toggleAddForm()">cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /.main-layout -->
+</div><!-- /#wrap -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- DAY PICKER -->
+<div class="overlay" id="pickerOverlay" onclick="closePickerBg(event)">
+  <div class="modal picker-modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Add to which day?</div>
+    <div class="picker-sub" id="pickerName"></div>
+    <div class="day-opts">
+      <button class="day-opt" onclick="scheduleToDay('fri')">Friday 🌲</button>
+      <button class="day-opt" onclick="scheduleToDay('sat')">Saturday ☀️</button>
+      <button class="day-opt" onclick="scheduleToDay('sun')">Sunday 🌧️</button>
+    </div>
+    <button class="modal-cancel" onclick="closeOverlay('pickerOverlay')">cancel</button>
+  </div>
+</div>
+
+<!-- SHARE -->
+<div class="overlay" id="shareOverlay" onclick="closeShareBg(event)">
+  <div class="modal share-modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Your Weekend Plan ✦</div>
+    <div class="share-img-wrap" id="shareImgWrap"><div class="spinner">generating image…</div></div>
+    <div class="share-actions">
+      <button class="share-act-btn" id="shareNativeBtn" style="display:none" onclick="shareNative()">
+        <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Share
+      </button>
+      <button class="share-act-btn" onclick="downloadImage()">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save Image
+      </button>
+      <button class="share-close" onclick="closeOverlay('shareOverlay')">Close</button>
+    </div>
+    <p class="share-note" id="shareNote"></p>
+  </div>
+</div>
+
+<!-- EDIT -->
+<div class="overlay" id="editOverlay" onclick="closeEditBg(event)">
+  <div class="modal edit-modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Edit Activity</div>
+    <div class="edit-fields">
+      <div>
+        <div class="field-label">Emoji &amp; Name</div>
+        <div class="form-row">
+          <input class="f-input emoji-f" id="editEmoji" maxlength="2">
+          <input class="f-input" id="editName" placeholder="Activity name…" style="flex:1">
+        </div>
+      </div>
+      <div>
+        <div class="field-label">Description</div>
+        <input class="f-input" id="editMeta" placeholder="Short description (optional)">
+      </div>
+      <div>
+        <div class="field-label">Category</div>
+        <select class="f-select" id="editTag">
+          <option value="movies">🎬 Movies</option>
+          <option value="games">🎮 Games</option>
+          <option value="spa">✨ Spa</option>
+          <option value="nature">🌿 Nature</option>
+          <option value="romance">💛 Romance</option>
+          <option value="food">🍜 Food</option>
+          <option value="rest">😴 Rest</option>
+          <option value="custom">⭐ Custom</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <button class="f-submit" onclick="saveEdit()">Save Changes</button>
+      <button class="f-cancel" onclick="closeOverlay('editOverlay')">cancel</button>
+    </div>
+    <div class="reset-wrap" id="editResetWrap" style="display:none">
+      <button onclick="resetToDefault()">reset to original</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════ DATA ═══════════
+const DEFAULT_ACTIVITIES = [
+  {id:'mv1',emoji:'🎬',name:'Movie Marathon',        meta:'Pick a whole series or theme',   tag:'movies', custom:false},
+  {id:'mv2',emoji:'🍿',name:'Comfort Film Rewatch',  meta:'The one you know by heart',      tag:'movies', custom:false},
+  {id:'mv3',emoji:'🎭',name:'Queer Cinema Night',    meta:'Celebrate something special',    tag:'movies', custom:false},
+  {id:'mv4',emoji:'😱',name:'Horror Movie Night',    meta:'Cozy screaming together',        tag:'movies', custom:false},
+  {id:'gm1',emoji:'🎮',name:'Co-op Video Game',      meta:'Team up for a full session',     tag:'games',  custom:false},
+  {id:'gm2',emoji:'🎲',name:'Board Game Battle',     meta:'May the best human win',         tag:'games',  custom:false},
+  {id:'gm3',emoji:'🃏',name:'Card Game Tournament',  meta:'Best of three',                  tag:'games',  custom:false},
+  {id:'gm4',emoji:'🐉',name:'D&D One-Shot',          meta:'Quick adventure, big vibes',     tag:'games',  custom:false},
+  {id:'gm5',emoji:'🕹️',name:'Retro Gaming Session',  meta:'Nostalgia unlocked',             tag:'games',  custom:false},
+  {id:'sp1',emoji:'🧖',name:'Partner Massage',       meta:'Take turns, go slow',            tag:'spa',    custom:false},
+  {id:'sp2',emoji:'🫧',name:'Face Mask Night',       meta:'Matching sheets, obviously',     tag:'spa',    custom:false},
+  {id:'sp3',emoji:'🛁',name:'Fancy Bath Time',       meta:'Salts, candles, the works',      tag:'spa',    custom:false},
+  {id:'sp4',emoji:'💅',name:'Mani-Pedi Session',     meta:'Pick a color together',          tag:'spa',    custom:false},
+  {id:'sp5',emoji:'🌹',name:'Aromatherapy Wind-Down',meta:'Oils, diffuser, dim lights',     tag:'spa',    custom:false},
+  {id:'sp6',emoji:'🧴',name:'Skincare Ritual',       meta:'Full routine, zero rushing',     tag:'spa',    custom:false},
+  {id:'nt1',emoji:'🥾',name:'Morning Hike',          meta:'Easy trail, big payoff',         tag:'nature', custom:false},
+  {id:'nt2',emoji:'🌅',name:'Sunrise Watch',         meta:'Coffee in hand, outside',        tag:'nature', custom:false},
+  {id:'nt3',emoji:'🌿',name:'Park Picnic',           meta:'Blanket, snacks, no agenda',     tag:'nature', custom:false},
+  {id:'nt4',emoji:'🌊',name:'Water Outing',          meta:'River, lake, or ocean',          tag:'nature', custom:false},
+  {id:'nt5',emoji:'🌙',name:'Evening Stargazing',    meta:'Lay on the grass and look up',   tag:'nature', custom:false},
+  {id:'rm1',emoji:'💛',name:'Slow Morning in Bed',   meta:'Nowhere to be, nothing to do',   tag:'romance',custom:false},
+  {id:'rm2',emoji:'🕯️',name:'Candlelit Dinner',      meta:'Cook together or order in',      tag:'romance',custom:false},
+  {id:'rm3',emoji:'💌',name:'Love Letter Exchange',  meta:'Pen and paper preferred',        tag:'romance',custom:false},
+  {id:'rm4',emoji:'🔥',name:'Intimate Time',         meta:'😏 you know',                   tag:'romance',custom:false},
+  {id:'rm5',emoji:'🫂',name:'Extended Cuddle Sesh',  meta:'Dogs welcome',                   tag:'romance',custom:false},
+  {id:'rm6',emoji:'💬',name:'Deep Conversation',     meta:'Real talk, no phones',           tag:'romance',custom:false},
+  {id:'fd1',emoji:'🍳',name:'Fancy Brunch',          meta:'Eggs benny or French toast',     tag:'food',   custom:false},
+  {id:'fd2',emoji:'🍜',name:'Cook Something New',    meta:"Recipe you've been saving",      tag:'food',   custom:false},
+  {id:'fd3',emoji:'🧃',name:'Fancy Mocktail Hour',   meta:'Get creative with the bar cart', tag:'food',   custom:false},
+  {id:'fd4',emoji:'🍕',name:'Takeout Night',         meta:'Your go-to, delivered',          tag:'food',   custom:false},
+  {id:'fd5',emoji:'🧁',name:'Bake Together',         meta:'Mess is half the fun',           tag:'food',   custom:false},
+  {id:'rs1',emoji:'😴',name:'Long Nap',              meta:'No alarms allowed',              tag:'rest',   custom:false},
+  {id:'rs2',emoji:'📚',name:'Reading Hour',          meta:'Separate books, same couch',     tag:'rest',   custom:false},
+  {id:'rs3',emoji:'🏠',name:'Blanket Fort',          meta:'Pillows, fairy lights, snacks',  tag:'rest',   custom:false},
+  {id:'rs4',emoji:'🎵',name:'Music & Do Nothing',    meta:'Playlist on, brain off',         tag:'rest',   custom:false},
+  {id:'rs5',emoji:'🌱',name:'Phone-Free Hour',       meta:'Fully unplug together',          tag:'rest',   custom:false},
+];
+
+const TAG_CATS = {
+  movies:'🎬 Movies & Shows', games:'🎮 Games', spa:'✨ Spa & Self-Care',
+  nature:'🌿 Nature & Outdoors', romance:'💛 Romance & Connection',
+  food:'🍜 Food & Drinks', rest:'😴 Rest & Recharge', custom:'⭐ Custom',
+};
+
+const PRI = {
+  0:{icon:'·',  label:'priority', cls:''},
+  1:{icon:'✨', label:'nice',     cls:'priority-nice'},
+  2:{icon:'🔥', label:'want!',    cls:'priority-want'},
+};
+
+// ═══════════ STATE ═══════════
+const LS = 'sanctuary_v5';
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem(LS)||'{}');
+    // migrate from older keys
+    const old = !s.schedule ? (JSON.parse(localStorage.getItem('sanctuary_v4')||'{}') || JSON.parse(localStorage.getItem('sanctuary_v3')||'{}')) : null;
+    const b = s.schedule ? s : (old||{});
+    return { customCards:b.customCards||[], schedule:{fri:[],sat:[],sun:[],...(b.schedule||{})}, priorities:b.priorities||{}, overrides:b.overrides||{} };
+  } catch { return {customCards:[],schedule:{fri:[],sat:[],sun:[]},priorities:{},overrides:{}}; }
+}
+function saveState() { localStorage.setItem(LS,JSON.stringify({customCards,schedule,priorities,overrides})); }
+
+let {customCards,schedule,priorities,overrides} = loadState();
+let pendingId=null, editingId=null, dragId=null, dragDay=null;
+
+function allActs() {
+  const defs = DEFAULT_ACTIVITIES.map(a=>overrides[a.id]?{...a,...overrides[a.id]}:a);
+  return [...defs,...customCards];
+}
+
+// ═══════════ RENDER ═══════════
+function renderBank() {
+  const acts = allActs();
+  const sched = new Set([...schedule.fri,...schedule.sat,...schedule.sun]);
+  const order = ['movies','games','spa','nature','romance','food','rest','custom'];
+  let html='';
+  for (const tag of order) {
+    const cards = acts.filter(a=>a.tag===tag);
+    if (!cards.length) continue;
+    html+=`<div class="cat-group"><div class="cat-name">${TAG_CATS[tag]||tag}</div><div class="bank-cards">${cards.map(c=>bankCardHTML(c,sched)).join('')}</div></div>`;
+  }
+  document.getElementById('bankCategories').innerHTML = html ||
+    '<p style="font-size:.75rem;color:rgba(255,255,255,.2);text-align:center;padding:1rem 0">No activities yet ✨</p>';
+  attachBankListeners();
+}
+
+function bankCardHTML(c,sched) {
+  const p=PRI[priorities[c.id]||0];
+  const days=['fri','sat','sun'].filter(d=>schedule[d].includes(c.id));
+  const badge=days.length?`<span style="font-size:.58rem;color:var(--sage);letter-spacing:.04em;flex-shrink:0">${days.map(d=>({fri:'Fri',sat:'Sat',sun:'Sun'}[d])).join(' · ')}</span>`:'';
+  const isS=sched.has(c.id);
+  return `<div class="card ${p.cls}${isS?' scheduled-in-bank':''}" data-id="${c.id}">
+    <div class="card-emoji">${c.emoji}</div>
+    <div class="card-body"><div class="card-name">${c.name}</div>${c.meta?`<div class="card-meta">${c.meta}</div>`:''}${badge}</div>
+    <span class="tag tag-${c.tag}">${c.tag}</span>
+    <button class="pri-btn pri-${priorities[c.id]||0}" data-pri="${c.id}"><span class="pri-icon">${p.icon}</span><span>${p.label}</span></button>
+    <button class="icon-btn" data-edit="${c.id}">✏️</button>
+    ${c.custom?`<button class="del-custom" data-del="${c.id}">✕</button>`:''}
+  </div>`;
+}
+
+function schedCardHTML(c,idx,day) {
+  const p=PRI[priorities[c.id]||0];
+  return `<div class="card sched ${p.cls}" draggable="true" data-id="${c.id}" data-idx="${idx}">
+    <div class="card-emoji">${c.emoji}</div>
+    <div class="card-body"><div class="card-name">${c.name}</div>${c.meta?`<div class="card-meta">${c.meta}</div>`:''}</div>
+    <span class="tag tag-${c.tag}">${c.tag}</span>
+    <button class="pri-btn pri-${priorities[c.id]||0}" data-pri="${c.id}"><span class="pri-icon">${p.icon}</span><span>${p.label}</span></button>
+    <button class="icon-btn" data-edit="${c.id}">✏️</button>
+    <button class="icon-btn rm" data-remove="${c.id}" data-day="${day}">✕</button>
+  </div>`;
+}
+
+function renderSchedule() {
+  const acts=allActs();
+  for (const day of ['fri','sat','sun']) {
+    const zone=document.getElementById('zone-'+day);
+    const cards=schedule[day].map(id=>acts.find(a=>a.id===id)).filter(Boolean);
+    zone.innerHTML=cards.length ? cards.map((c,i)=>schedCardHTML(c,i,day)).join('') : '<div class="placeholder">tap an activity to add it here</div>';
+  }
+  attachSchedDrag();
+  attachSchedListeners();
+}
+
+function renderAll() { renderBank(); renderSchedule(); }
+
+// ═══════════ BANK LISTENERS ═══════════
+function attachBankListeners() {
+  document.querySelectorAll('#bankCategories .card').forEach(el=>{
+    el.addEventListener('click',e=>{
+      if(e.target.closest('[data-pri]')||e.target.closest('[data-edit]')||e.target.closest('[data-del]')) return;
+      openPicker(el.dataset.id);
+    });
+  });
+  document.querySelectorAll('#bankCategories [data-pri]').forEach(btn=>{
+    btn.addEventListener('click',e=>{ e.stopPropagation(); cycleP(btn.dataset.pri); });
+  });
+  document.querySelectorAll('#bankCategories [data-edit]').forEach(btn=>{
+    btn.addEventListener('click',e=>{ e.stopPropagation(); openEdit(btn.dataset.edit); });
+  });
+  document.querySelectorAll('#bankCategories [data-del]').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const id=btn.dataset.del;
+      customCards=customCards.filter(c=>c.id!==id);
+      ['fri','sat','sun'].forEach(d=>{ schedule[d]=schedule[d].filter(x=>x!==id); });
+      delete priorities[id]; delete overrides[id];
+      saveState(); renderAll(); showToast('Activity removed ✦');
+    });
+  });
+}
+
+// ═══════════ SCHEDULE LISTENERS ═══════════
+function attachSchedListeners() {
+  document.querySelectorAll('.schedule-area [data-pri]').forEach(btn=>{
+    btn.addEventListener('click',e=>{ e.stopPropagation(); cycleP(btn.dataset.pri); });
+  });
+  document.querySelectorAll('.schedule-area [data-edit]').forEach(btn=>{
+    btn.addEventListener('click',e=>{ e.stopPropagation(); openEdit(btn.dataset.edit); });
+  });
+  document.querySelectorAll('.schedule-area [data-remove]').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const {remove:id,day}=btn.dataset;
+      schedule[day]=schedule[day].filter(x=>x!==id);
+      saveState(); renderAll();
+    });
+  });
+}
+
+function cycleP(id) { priorities[id]=((priorities[id]||0)+1)%3; saveState(); renderAll(); }
+
+// ═══════════ DAY PICKER ═══════════
+function openPicker(id) {
+  pendingId=id;
+  document.getElementById('pickerName').textContent=allActs().find(a=>a.id===id)?.name||'';
+  openOverlay('pickerOverlay');
+}
+function scheduleToDay(day) {
+  if(!pendingId) return;
+  if(!schedule[day].includes(pendingId)) schedule[day].push(pendingId);
+  const name=allActs().find(a=>a.id===pendingId)?.name||'';
+  closeOverlay('pickerOverlay'); pendingId=null;
+  saveState(); renderAll(); showToast(`"${name}" added ✦`);
+}
+function closePickerBg(e) { if(e.target===e.currentTarget) closeOverlay('pickerOverlay'); }
+function clearDay(day) { schedule[day]=[]; saveState(); renderAll(); }
+
+// ═══════════ DRAG-TO-REORDER ═══════════
+function attachSchedDrag() {
+  document.querySelectorAll('.sched').forEach(el=>{
+    el.addEventListener('dragstart',e=>{ dragId=el.dataset.id; dragDay=el.closest('.drop-zone').dataset.day; el.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; });
+    el.addEventListener('dragend',()=>{ el.classList.remove('dragging'); dragId=dragDay=null; });
+  });
+  document.querySelectorAll('.drop-zone').forEach(zone=>{
+    zone.addEventListener('dragover',e=>{ e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));
+    zone.addEventListener('drop',e=>{
+      e.preventDefault(); zone.classList.remove('drag-over');
+      if(!dragId||!dragDay) return;
+      const td=zone.dataset.day;
+      schedule[dragDay]=schedule[dragDay].filter(id=>id!==dragId);
+      const after=[...zone.querySelectorAll('.sched:not(.dragging)')].reduce((cl,el)=>{
+        const off=e.clientY-el.getBoundingClientRect().top-el.getBoundingClientRect().height/2;
+        return(off<0&&off>cl.offset)?{offset:off,el}:cl;
+      },{offset:-Infinity,el:null}).el;
+      if(!after) schedule[td].push(dragId);
+      else { const idx=schedule[td].indexOf(after.dataset.id); schedule[td].splice(Math.max(idx,0),0,dragId); }
+      saveState(); renderAll();
+    });
+  });
+}
+
+// ═══════════ ADD CUSTOM CARD ═══════════
+function toggleAddForm() {
+  const f=document.getElementById('addForm');
+  f.classList.toggle('open');
+  if(f.classList.contains('open')) setTimeout(()=>document.getElementById('newName').focus(),50);
+}
+function addCustomCard() {
+  const emoji=document.getElementById('newEmoji').value.trim()||'⭐';
+  const name=document.getElementById('newName').value.trim();
+  const meta=document.getElementById('newMeta').value.trim();
+  const tag=document.getElementById('newTag').value;
+  if(!name){showToast('Give your activity a name 🌿');return;}
+  customCards.push({id:'c_'+Date.now(),emoji,name,meta,tag,custom:true});
+  document.getElementById('newEmoji').value='';
+  document.getElementById('newName').value='';
+  document.getElementById('newMeta').value='';
+  toggleAddForm(); saveState(); renderAll(); showToast(`"${name}" saved to bank ✦`);
+}
+
+// ═══════════ EDIT ═══════════
+function openEdit(id) {
+  editingId=id;
+  const c=allActs().find(a=>a.id===id); if(!c) return;
+  document.getElementById('editEmoji').value=c.emoji||'';
+  document.getElementById('editName').value=c.name||'';
+  document.getElementById('editMeta').value=c.meta||'';
+  document.getElementById('editTag').value=c.tag||'custom';
+  const isDefault=DEFAULT_ACTIVITIES.some(a=>a.id===id);
+  document.getElementById('editResetWrap').style.display=(isDefault&&overrides[id])?'block':'none';
+  openOverlay('editOverlay');
+  setTimeout(()=>document.getElementById('editName').focus(),80);
+}
+function saveEdit() {
+  if(!editingId) return;
+  const emoji=document.getElementById('editEmoji').value.trim();
+  const name=document.getElementById('editName').value.trim();
+  const meta=document.getElementById('editMeta').value.trim();
+  const tag=document.getElementById('editTag').value;
+  if(!name){showToast("Name can't be empty 🌿");return;}
+  if(DEFAULT_ACTIVITIES.some(a=>a.id===editingId)) {
+    overrides[editingId]={emoji:emoji||undefined,name,meta,tag};
+  } else {
+    const idx=customCards.findIndex(c=>c.id===editingId);
+    if(idx>-1) customCards[idx]={...customCards[idx],emoji:emoji||customCards[idx].emoji,name,meta,tag};
+  }
+  saveState(); closeOverlay('editOverlay'); editingId=null; renderAll(); showToast(`"${name}" updated ✦`);
+}
+function resetToDefault() {
+  if(!editingId) return;
+  delete overrides[editingId]; saveState(); closeOverlay('editOverlay'); editingId=null; renderAll(); showToast('Reset to original ✦');
+}
+function closeEditBg(e) { if(e.target===e.currentTarget) closeOverlay('editOverlay'); }
+
+// ═══════════ OVERLAYS ═══════════
+function openOverlay(id) { document.getElementById(id).classList.add('open'); }
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+
+// ═══════════ SHARE ═══════════
+let capturedDataUrl=null, capturedBlob=null;
+function openShareModal() {
+  capturedDataUrl=null; capturedBlob=null;
+  document.getElementById('shareImgWrap').innerHTML='<div class="spinner">generating image…</div>';
+  document.getElementById('shareNativeBtn').style.display='none';
+  document.getElementById('shareNote').textContent='';
+  openOverlay('shareOverlay');
+  requestAnimationFrame(()=>setTimeout(captureSchedule,120));
+}
+function closeShareBg(e){ if(e.target===e.currentTarget) closeOverlay('shareOverlay'); }
+
+async function captureSchedule() {
+  try {
+    const cols=['fri','sat','sun'].map(d=>document.getElementById('col-'+d));
+    const canvases=await Promise.all(cols.map(col=>html2canvas(col,{backgroundColor:'#1e3228',scale:2,useCORS:true,logging:false,ignoreElements:el=>el.classList.contains('day-actions')})));
+    const PAD=28,GAP=14,HDR=88,FTR=50;
+    const colW=canvases[0].width, colH=Math.max(...canvases.map(c=>c.height));
+    const W=PAD*2+colW*3+GAP*2, H=HDR+colH+FTR;
+    const out=document.createElement('canvas'); out.width=W; out.height=H;
+    const ctx=out.getContext('2d');
+    const bg=ctx.createLinearGradient(0,0,W,H);
+    bg.addColorStop(0,'#1a2e1e'); bg.addColorStop(.5,'#1c2e38'); bg.addColorStop(1,'#1a2e1e');
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    const vig=ctx.createRadialGradient(W/2,H/2,H*.25,W/2,H/2,H*.9);
+    vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(0,0,0,.4)');
+    ctx.fillStyle=vig; ctx.fillRect(0,0,W,H);
+    ctx.textAlign='center';
+    ctx.fillStyle='#e2c97a'; ctx.font='600 14px DM Sans,sans-serif';
+    ctx.fillText('✦  OUR WEEKEND SANCTUARY  ✦',W/2,36);
+    ctx.fillStyle='rgba(138,173,143,.85)'; ctx.font='11px DM Sans,sans-serif';
+    ctx.fillText('rest well, you two 🌿',W/2,56);
+    ctx.beginPath(); ctx.moveTo(PAD*2,68); ctx.lineTo(W-PAD*2,68);
+    ctx.strokeStyle='rgba(201,168,76,.3)'; ctx.lineWidth=1; ctx.stroke();
+    canvases.forEach((c,i)=>{
+      const x=PAD+i*(colW+GAP);
+      ctx.save(); rrp(ctx,x,HDR,colW,colH,10); ctx.clip(); ctx.drawImage(c,x,HDR); ctx.restore();
+    });
+    capturedDataUrl=out.toDataURL('image/png');
+    out.toBlob(b=>{capturedBlob=b;},'image/png');
+    const wrap=document.getElementById('shareImgWrap');
+    wrap.innerHTML=''; const img=document.createElement('img'); img.src=capturedDataUrl; wrap.appendChild(img);
+    if(navigator.share&&navigator.canShare){
+      document.getElementById('shareNativeBtn').style.display='flex';
+      document.getElementById('shareNote').textContent="Share opens your device's share sheet";
+    } else { document.getElementById('shareNote').textContent='Save the image then send it however you like ✦'; }
+  } catch(err){
+    console.error(err);
+    document.getElementById('shareImgWrap').innerHTML='<div class="spinner" style="color:rgba(255,120,120,.8)">Capture failed — try a screenshot instead.</div>';
+  }
+}
+function rrp(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
+async function shareNative(){if(!capturedBlob){showToast('Still generating…');return;}try{const f=new File([capturedBlob],'weekend-sanctuary.png',{type:'image/png'});if(navigator.canShare({files:[f]}))await navigator.share({files:[f],title:'Our Weekend Sanctuary'});else await navigator.share({title:'Our Weekend Sanctuary'});}catch(e){if(e.name!=='AbortError')showToast('Share failed — try Save Image');}}
+function downloadImage(){if(!capturedDataUrl){showToast('Still generating…');return;}const a=document.createElement('a');a.href=capturedDataUrl;a.download='weekend-sanctuary.png';a.click();}
+
+// ═══════════ TOAST ═══════════
+let toastT;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);}
+
+// ═══════════ INIT ═══════════
+renderAll();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>
