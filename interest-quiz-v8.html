@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What Do You Like?</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f3f0; color: #1a1a1a; min-height: 100vh; }
+#app { max-width: 640px; margin: 0 auto; padding: 28px 18px 80px; }
+
+/* Progress */
+.progress-bar { height: 3px; background: #ddd; border-radius: 2px; margin-bottom: 32px; }
+.progress-fill { height: 100%; background: #1a1a1a; border-radius: 2px; transition: width 0.35s ease; }
+.progress-label { font-size: 12px; color: #999; margin-bottom: 8px; letter-spacing: 0.04em; }
+
+/* Section header */
+.section-header { margin-bottom: 32px; border-bottom: 1px solid #e0ddd8; padding-bottom: 16px; }
+.section-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.section-desc { font-size: 14px; color: #777; }
+.question { margin-bottom: 32px; }
+.q-text { font-size: 15px; font-weight: 500; line-height: 1.45; margin-bottom: 6px; }
+.q-hint { font-size: 12px; color: #999; margin-bottom: 12px; }
+
+/* Binary */
+.binary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bin-btn { width: 100%; padding: 14px 12px; border: 1.5px solid #d8d5d0; border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; line-height: 1.45; text-align: left; color: #1a1a1a; font-family: inherit; transition: border-color 0.12s, background 0.12s, color 0.12s; }
+.bin-btn:hover { border-color: #aaa; }
+.bin-btn.sel { border-color: #1a1a1a; background: #1a1a1a; color: #fff; }
+.bin-both { width: 100%; margin-top: 8px; padding: 10px 14px; border: 1.5px dashed #ccc; border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; color: #999; font-family: inherit; transition: all 0.12s; text-align: center; }
+.bin-both:hover { border-color: #888; color: #555; }
+.bin-both.sel { border-color: #555; border-style: solid; background: #f0f0ee; color: #333; font-weight: 500; }
+
+/* Chips */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 7px 14px; border: 1.5px solid #d8d5d0; border-radius: 20px; background: #fff; cursor: pointer; font-size: 13px; color: #1a1a1a; font-family: inherit; transition: border-color 0.12s, background 0.12s, color 0.12s; user-select: none; }
+.chip:hover:not(.dim) { border-color: #aaa; }
+.chip.sel { border-color: #1a1a1a; background: #1a1a1a; color: #fff; }
+.chip.dim { opacity: 0.3; cursor: default; }
+
+/* Inputs */
+textarea { width: 100%; padding: 13px; border: 1.5px solid #d8d5d0; border-radius: 8px; font-size: 14px; font-family: inherit; line-height: 1.5; resize: vertical; min-height: 90px; outline: none; background: #fff; color: #1a1a1a; }
+textarea:focus { border-color: #1a1a1a; }
+input[type=text], input[type=password] { width: 100%; padding: 11px 13px; border: 1.5px solid #d8d5d0; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; background: #fff; color: #1a1a1a; }
+input[type=text]:focus, input[type=password]:focus { border-color: #1a1a1a; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 12px 26px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: opacity 0.15s, background 0.15s; }
+.btn-dark { background: #1a1a1a; color: #fff; }
+.btn-dark:hover { opacity: 0.85; }
+.btn-dark:disabled { background: #ccc; cursor: default; opacity: 1; }
+.btn-ghost { background: #fff; color: #555; border: 1.5px solid #d8d5d0; }
+.btn-ghost:hover { border-color: #aaa; }
+.nav { display: flex; gap: 10px; align-items: center; margin-top: 28px; }
+.nav-right { margin-left: auto; }
+
+/* Intro */
+.intro-title { font-size: 34px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.5px; }
+.intro-sub { font-size: 16px; color: #666; line-height: 1.65; margin-bottom: 24px; }
+.section-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.s-pill { background: #fff; border: 1px solid #e0ddd8; border-radius: 20px; padding: 5px 12px; font-size: 12px; color: #777; }
+.api-box { background: #fff; border: 1px solid #e0ddd8; border-radius: 10px; padding: 18px; margin-bottom: 28px; }
+.api-label { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.api-note { font-size: 12px; color: #999; margin-bottom: 10px; line-height: 1.5; }
+.api-note a { color: #555; }
+
+/* Loading */
+.loading { text-align: center; padding: 80px 20px; }
+.spinner { width: 36px; height: 36px; border: 3px solid #eee; border-top-color: #1a1a1a; border-radius: 50%; animation: spin 0.75s linear infinite; margin: 0 auto 20px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Result ── */
+.result-wrap { margin: -28px -18px 0; }
+
+/* Hero */
+.result-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 55%, #0f3460 100%); padding: 48px 28px 36px; text-align: center; position: relative; overflow: hidden; }
+.result-hero::before { content:''; position:absolute; inset:0; background: radial-gradient(ellipse at 70% 20%, rgba(229,160,90,.2) 0%, transparent 55%), radial-gradient(ellipse at 15% 85%, rgba(100,180,255,.12) 0%, transparent 50%); pointer-events:none; }
+.result-eyebrow { font-size: 11px; letter-spacing: 0.2em; color: #e5a05a; text-transform: uppercase; margin-bottom: 12px; font-weight: 600; position: relative; }
+.result-title { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(28px, 6vw, 42px); font-weight: 700; color: #fff; line-height: 1.15; margin-bottom: 8px; position: relative; }
+.result-title em { font-style: italic; font-weight: 400; color: #e5c99a; }
+.result-tagline { font-size: 13px; color: rgba(255,255,255,0.4); letter-spacing: 0.04em; position: relative; }
+.hero-dots { display: flex; justify-content: center; gap: 6px; margin-top: 24px; position: relative; }
+.hero-dots span { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #e5a05a; opacity: 0.4; }
+.hero-dots span:nth-child(3) { width: 32px; border-radius: 3px; opacity: 0.7; }
+.hero-dots span:nth-child(5) { opacity: 0.4; }
+
+/* Tags */
+.result-body { padding: 28px 20px 0; }
+.tags-label { font-size: 10px; letter-spacing: 0.18em; color: #aaa; text-transform: uppercase; font-weight: 600; margin-bottom: 10px; }
+.tags-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 28px; }
+.rtag { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.rtag.c0 { background:#fef3e2; color:#b45309; }
+.rtag.c1 { background:#ede9fe; color:#6d28d9; }
+.rtag.c2 { background:#dcfce7; color:#15803d; }
+.rtag.c3 { background:#dbeafe; color:#1d4ed8; }
+.rtag.c4 { background:#fce7f3; color:#be185d; }
+.rtag.c5 { background:#ecfdf5; color:#065f46; }
+
+/* Category cards */
+.cards { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+.card { background: #fff; border-radius: 12px; border: 1px solid #e8e5e0; overflow: hidden; animation: fadeUp 0.4s ease both; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.card:nth-child(1) { animation-delay: 0.05s; }
+.card:nth-child(2) { animation-delay: 0.1s; }
+.card:nth-child(3) { animation-delay: 0.15s; }
+.card:nth-child(4) { animation-delay: 0.2s; }
+.card:nth-child(5) { animation-delay: 0.25s; }
+.card:nth-child(6) { animation-delay: 0.3s; }
+.card-header { display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; user-select: none; }
+.card-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.card-meta { flex: 1; min-width: 0; }
+.card-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; margin-bottom: 3px; }
+.card-preview { font-size: 13px; color: #666; line-height: 1.45; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-chevron { font-size: 13px; color: #bbb; flex-shrink: 0; transition: transform 0.2s ease; }
+.card-chevron.open { transform: rotate(180deg); }
+.card-body { padding: 0 18px; max-height: 0; overflow: hidden; transition: max-height 0.35s ease, padding 0.2s ease; }
+.card-body.open { max-height: 400px; padding: 0 18px 18px; }
+.card-body p { font-size: 14.5px; line-height: 1.75; color: #333; }
+.card-stripe { width: 5px; flex-shrink: 0; align-self: stretch; min-height: 100%; border-radius: 0; }
+
+/* Card color themes */
+.card[data-cat="OBJECTS"] .card-icon { background: #fef3e2; }
+.card[data-cat="OBJECTS"] .card-label { color: #b45309; }
+.card[data-cat="OBJECTS"] .card-stripe { background: #f59e0b; }
+.card[data-cat="HOBBIES"] .card-icon { background: #dcfce7; }
+.card[data-cat="HOBBIES"] .card-label { color: #15803d; }
+.card[data-cat="HOBBIES"] .card-stripe { background: #10b981; }
+.card[data-cat="EXPERIENCES"] .card-icon { background: #dbeafe; }
+.card[data-cat="EXPERIENCES"] .card-label { color: #1d4ed8; }
+.card[data-cat="EXPERIENCES"] .card-stripe { background: #3b82f6; }
+.card[data-cat="FOOD"] .card-icon { background: #fce7f3; }
+.card[data-cat="FOOD"] .card-label { color: #be185d; }
+.card[data-cat="FOOD"] .card-stripe { background: #ec4899; }
+.card[data-cat="MEDIA"] .card-icon { background: #ede9fe; }
+.card[data-cat="MEDIA"] .card-label { color: #6d28d9; }
+.card[data-cat="MEDIA"] .card-stripe { background: #8b5cf6; }
+.card[data-cat="STYLE"] .card-icon { background: #e0f2fe; }
+.card[data-cat="STYLE"] .card-label { color: #0369a1; }
+.card[data-cat="STYLE"] .card-stripe { background: #06b6d4; }
+
+/* Essence */
+.essence-block { background: linear-gradient(135deg, #1a1a2e, #0f3460); border-radius: 12px; padding: 22px 24px; margin-bottom: 32px; animation: fadeUp 0.4s 0.4s ease both; }
+.essence-block p { font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-size: 16px; line-height: 1.7; color: #e5c99a; text-align: center; }
+
+/* Copy section */
+.copy-section { border-top: 1px solid #e8e5e0; padding: 24px 0 40px; }
+.copy-label { font-size: 10px; letter-spacing: 0.16em; color: #aaa; text-transform: uppercase; font-weight: 600; margin-bottom: 10px; }
+.copy-box { width: 100%; border: 1.5px solid #d8d5d0; border-radius: 8px; padding: 14px; font-size: 13px; font-family: inherit; line-height: 1.6; background: #fafaf8; color: #444; resize: vertical; min-height: 140px; outline: none; }
+.copy-row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.error-box { background: #fff8f6; border: 1px solid #f0c0b0; border-radius: 8px; padding: 18px; color: #c04020; font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+
+// ─── SECTIONS & QUESTIONS ──────────────────────────────────────────────────
+
+const sections = [
+  {
+    title: "Things & Objects",
+    desc: "How you relate to stuff — what you buy, browse, and keep",
+    questions: [
+      { id:'q1', type:'binary',
+        text:'You have $150 to spend on yourself, no guilt. You probably end up in…',
+        a:'Somewhere with things for your home, kitchen, or workspace',
+        b:'Somewhere with things to wear, carry, or have on you' },
+      { id:'q2', type:'chips',
+        text:'Which of these would actually make you stop scrolling?',
+        hint:'Pick all that apply',
+        opts:['A handmade ceramic for sale','A well-designed mechanical keyboard','A vintage furniture find','A limited-run sneaker drop','A beautiful hardcover book','A high-quality knife or hand tool','A rare houseplant','A restored film camera','An interesting candle or fragrance','A specialty food or ingredient','A piece of original art','A well-made leather bag'],
+        hasOther: true },
+      { id:'q3', type:'binary', hasBoth: true,
+        text:'When something you own breaks or wears out, your instinct is…',
+        a:'Fix or restore it — there\'s something satisfying about keeping things going',
+        b:'Replace it with something better — an excuse to upgrade' },
+      { id:'q4', type:'chips',
+        text:'What kind of stores do you genuinely enjoy just browsing?',
+        hint:'Pick all that apply',
+        opts:['Hardware or tool shops','Independent bookshops','Thrift or vintage stores','Kitchen supply stores','Garden centers','Art supply stores','Record shops','Specialty food or spice stores','Camping or outdoor gear shops','Fabric and craft stores','Antique markets or fairs','Tech retailers'],
+        hasOther: true },
+      { id:'q5', type:'binary',
+        text:'An object having a history or a story behind it…',
+        a:'Makes it more interesting — provenance and age add meaning',
+        b:'Doesn\'t factor in much — I care more about what it does now' },
+      { id:'q6', type:'binary', hasBoth: true,
+        text:'Before buying something, you\'re more likely to…',
+        a:'Research it properly — reviews, comparisons, the full picture',
+        b:'Trust your gut and just get it' },
+      { id:'q7', type:'binary', hasBoth: true,
+        text:'Your home or workspace tends toward…',
+        a:'Accumulation — you\'re drawn to things and like having them around',
+        b:'Restraint — too much stuff creates noise you don\'t want' },
+      { id:'q8', type:'multi', max:4,
+        text:'Which categories have you actually spent money on for yourself recently?',
+        hint:'Pick up to 4',
+        opts:['Kitchen or cooking','Tech or gadgets','Clothing or shoes','Books or media','Home or furniture','Garden or plants','Hobby or craft supplies','Beauty or grooming','Fitness or sport','Music equipment','Art or stationery','Specialty food or drink'],
+        hasOther: true }
+    ]
+  },
+  {
+    title: "Hobbies & Making",
+    desc: "What you do with your hands and your time",
+    questions: [
+      { id:'q9', type:'binary', hasBoth: true,
+        text:'A free afternoon with zero obligations — you\'re more likely to…',
+        a:'Make or build something — get absorbed in a project',
+        b:'Go somewhere or do something — get out and experience' },
+      { id:'q10', type:'chips',
+        text:'Which of these could genuinely hold your attention for hours?',
+        hint:'Pick all that apply',
+        opts:['Tinkering with something mechanical','Working in a garden','Drawing or sketching','Playing an instrument','Cooking something ambitious','Writing','Sewing or textile work','Photography','Building something physical','A deep strategy game','Exploring somewhere on foot','Reading without stopping'],
+        hasOther: true },
+      { id:'q11', type:'binary', hasBoth: true,
+        text:'With hobbies, you naturally go…',
+        a:'Wide — you like trying lots of different things',
+        b:'Deep — you get serious about one or two things and really pursue them' },
+      { id:'q12', type:'multi', max:5,
+        text:'Which craft or skill areas genuinely interest you?',
+        hint:'Pick up to 5',
+        opts:['Woodworking or carpentry','Ceramics or pottery','Textile work — weaving, knitting, sewing','Metalwork or jewelry making','Leatherwork','Illustration or printmaking','Bookbinding or papercraft','Film photography','Fermentation — sourdough, kimchi, brewing','Electronics and circuitry','Natural dyeing or botanical craft','Glasswork or lampworking'],
+        hasOther: true },
+      { id:'q13', type:'binary', hasBoth: true,
+        text:'When you\'re learning something new, you\'d rather…',
+        a:'Watch someone skilled do it and absorb their approach',
+        b:'Figure it out through trial and error — learning by doing' },
+      { id:'q14', type:'multi', max:5,
+        text:'Which outdoor or physical activities actually appeal to you?',
+        hint:'Pick up to 5',
+        opts:['Hiking long trails','Cycling','Rock climbing','Wild or open water swimming','Kayaking or paddling','Surfing or snowboarding','Birdwatching','Foraging','Fishing','Running','Skating','Archery or target sports'] },
+      { id:'q15', type:'binary', hasBoth: true,
+        text:'Making something is most satisfying when…',
+        a:'The process itself is absorbing — the flow state is the reward',
+        b:'You end up with something genuinely beautiful or useful' },
+      { id:'q16', type:'binary',
+        text:'Competitive hobbies — things with scores, rankings, or opponents…',
+        a:'I\'m into it — stakes and competition make things more interesting',
+        b:'I prefer to do the thing without that pressure' },
+      { id:'q17', type:'chips',
+        text:'What do you quietly wish you were better at or had more time for?',
+        hint:'Pick all that apply',
+        opts:['Playing music','Drawing or painting','Cooking at a high level','Speaking another language','A physical skill or sport','Writing','A craft or making skill','Coding or building tech things','Gardening','Photography','Dancing','A specific outdoor pursuit'],
+        hasOther: true }
+    ]
+  },
+  {
+    title: "Experiences & Activities",
+    desc: "How you spend time out in the world",
+    questions: [
+      { id:'q18', type:'binary', hasBoth: true,
+        text:'A weekend that actually recharges you looks more like…',
+        a:'Being out in the world — doing things, going places, seeing people',
+        b:'Being home or somewhere quiet — slow, low-key, on your own terms' },
+      { id:'q19', type:'chips',
+        text:'What kinds of places genuinely excite you to visit?',
+        hint:'Pick all that apply',
+        opts:['Independent bookshops','Live music venues','Farmers or food markets','Museums or galleries','Breweries or distilleries','Vintage or antique markets','Botanical gardens','Local restaurants off the beaten path','Flea markets','Maker or craft fairs','Planetariums or science museums','Old buildings or historic sites'],
+        hasOther: true },
+      { id:'q20', type:'binary',
+        text:'When you arrive somewhere new, your instinct is…',
+        a:'Find where locals actually go — eat there, shop there, be there',
+        b:'Hit the things that made you want to go — the famous spots, the landmark experiences' },
+      { id:'q21', type:'binary', hasBoth: true,
+        text:'You\'re more naturally a…',
+        a:'Spectator — you love watching events, performances, and games from the crowd',
+        b:'Participant — you\'d rather be the one doing the thing' },
+      { id:'q22', type:'multi', max:4,
+        text:'Which of these sounds like a genuinely great time?',
+        hint:'Pick up to 4',
+        opts:['A ceramics or glassblowing workshop','A long hike with a serious payoff view','A multi-course dinner somewhere special','A record or antique fair','A comedy show with someone sharp','A ferry or boat trip somewhere','A live sporting event for a team you follow','A behind-the-scenes tour — a brewery, studio, or factory'] },
+      { id:'q23', type:'binary',
+        text:'Things that start after 8pm…',
+        a:'That\'s often when the good stuff happens',
+        b:'I\'d honestly rather be home or winding down by then' },
+      { id:'q24', type:'binary', hasBoth: true,
+        text:'When exploring somewhere new, you navigate by…',
+        a:'Recommendations — you ask people, read lists, plan ahead',
+        b:'Wandering — you trust what catches your eye in the moment' },
+      { id:'q25', type:'binary', hasBoth: true,
+        text:'Experiences feel most meaningful when they\'re…',
+        a:'Shared — the people you\'re with are most of what makes it',
+        b:'Intimate or solo — fewer people, more presence, more attention' },
+      { id:'q26', type:'chips',
+        text:'Which kinds of workshops or classes would you genuinely sign up for?',
+        hint:'Pick all that apply',
+        opts:['Cooking class','Pottery or ceramics','Knife skills or butchery','Life drawing or figure study','Fermentation or brewing','Foraging walk','Bookbinding','Natural dyeing or botanical printing','Leatherwork','Welding or metalwork','Film photography darkroom','Bread or pastry baking'],
+        hasOther: true }
+    ]
+  },
+  {
+    title: "Food & Drink",
+    desc: "How you eat, drink, and think about both",
+    questions: [
+      { id:'q27', type:'binary', hasBoth: true,
+        text:'You get more satisfaction from…',
+        a:'Cooking a genuinely good meal yourself',
+        b:'Finding a restaurant or place that does something really well' },
+      { id:'q28', type:'multi', max:4,
+        text:'What draws you to a restaurant or food experience?',
+        hint:'Pick up to 4',
+        opts:['An unusual or interesting menu','Exceptional execution of simple things','A great atmosphere or room','The story behind the place — who made it and why','Locally sourced or seasonal ingredients','Value — excellent food at a fair price','Somewhere with a reputation that\'s hard to get into','A specific cuisine you already love'],
+        hasOther: true },
+      { id:'q29', type:'binary',
+        text:'Eating something completely unfamiliar…',
+        a:'Is part of the point — one of the best ways to encounter something genuinely new',
+        b:'I\'m open to it, but not chasing novelty for its own sake' },
+      { id:'q30', type:'binary',
+        text:'Your relationship with what you drink is more like…',
+        a:'A genuine interest — you have actual opinions about wine, coffee, beer, cocktails, or spirits',
+        b:'Pure enjoyment — you like what you like and don\'t overthink it' },
+      { id:'q31', type:'binary', hasBoth: true,
+        text:'Food at home on a regular night is more likely to be…',
+        a:'Cooked from scratch — usually something with a few real steps to it',
+        b:'Assembled or simple — not precious about it when it\'s just for you' },
+      { id:'q32', type:'multi', max:3,
+        text:'Which of these food interests actually appeals to you?',
+        hint:'Pick up to 3',
+        opts:['Growing some of your own food','Visiting a market and cooking with what you find','Learning a cuisine you don\'t know well','Home fermentation — sourdough, kimchi, kombucha, or similar','Understanding wine or spirits at a deeper level','Tracking down a really specific or hard-to-find ingredient'],
+        hasOther: true }
+    ]
+  },
+  {
+    title: "Media & Entertainment",
+    desc: "What you watch, read, listen to, and play",
+    questions: [
+      { id:'q33', type:'binary', hasBoth: true,
+        text:'When you want to consume something, you usually reach for…',
+        a:'Something to read',
+        b:'Something to watch or listen to' },
+      { id:'q34', type:'multi', max:5,
+        text:'Which genres or types of content do you actually return to?',
+        hint:'Pick up to 5',
+        opts:['Literary or character-driven fiction','Thriller, mystery, or crime','Sci-fi or speculative fiction','Fantasy','History and biography','Science and nature writing','Philosophy or essays','True crime','Comedy — in any format','Investigative journalism','Documentary film','Independent or arthouse cinema','Animation'],
+        hasOther: true },
+      { id:'q35', type:'binary', hasBoth: true,
+        text:'With music, you\'re more of a…',
+        a:'Deep listener — you follow artists, explore catalogs, have actual opinions about records',
+        b:'Ambient enjoyer — you like music on but don\'t think about it that hard' },
+      { id:'q36', type:'binary', hasBoth: true,
+        text:'In stories — across any format — you tend to prefer…',
+        a:'Character-driven — what matters is who the people are and how they change',
+        b:'Plot-driven — you want something to happen, tension, stakes, momentum' },
+      { id:'q37', type:'binary',
+        text:'Rewatching, rereading, or re-listening to something you already love…',
+        a:'Happens often — familiar things reveal different layers each time',
+        b:'Rarely — there\'s too much new stuff to spend time revisiting' },
+      { id:'q38', type:'multi', max:4,
+        text:'Which sounds like a great entertainment experience?',
+        hint:'Pick up to 4',
+        opts:['A film in a cinema with a great screen','Getting lost in a long book over a few days','Going through an artist\'s whole catalog in order','A TV series everyone\'s watching that you can talk about','Sharp live comedy','A documentary about something you knew nothing about','A video game you can sink dozens of hours into','A podcast series that becomes an obsession'] },
+      { id:'q39', type:'binary',
+        text:'Video games…',
+        a:'Are part of my life — I play regularly and it\'s a real hobby',
+        b:'I play occasionally or not at all' },
+      { id:'q40', type:'chips',
+        text:'What pulls you in when you\'re deciding what to watch or read?',
+        hint:'Pick all that apply',
+        opts:['Dry or dark comedy','Slow-burn drama','Things set in other time periods','Weird or genre-bending stuff','Nature and wildlife','Real people and real stories','Big emotional arcs','Smart, precise writing','Science and ideas','Crime and investigation','Surreal or absurdist','International — non-English language'],
+        hasOther: true }
+    ]
+  },
+  {
+    title: "Style & Aesthetics",
+    desc: "How things look, feel, and what that says about you",
+    questions: [
+      { id:'q41', type:'binary', hasBoth: true,
+        text:'How you dress is more of…',
+        a:'An expression — it communicates something about who you are',
+        b:'A habit — you know what works and you stick to it' },
+      { id:'q42', type:'multi', max:4,
+        text:'Which words feel closest to your personal aesthetic?',
+        hint:'Pick up to 4',
+        opts:['Understated','Eclectic','Sharp','Relaxed','Structured','Layered','Natural','Bold','Classic','Minimal','Vintage','Streetwise','Refined','Worn-in','Maximalist','Considered'],
+        hasOther: true },
+      { id:'q43', type:'binary',
+        text:'Your home, ideally…',
+        a:'Has a clear aesthetic — things feel cohesive, chosen, like they belong together',
+        b:'Is personal and comfortable — things are there because they mean something, not because they match' },
+      { id:'q44', type:'binary',
+        text:'You\'re more drawn to things that are…',
+        a:'Visibly handmade — you can see the process and the imperfection',
+        b:'Precisely finished — clean lines, quality control, no visible seams' },
+      { id:'q45', type:'multi', max:3,
+        text:'Which of these spaces would you actually enjoy spending time in?',
+        hint:'Pick up to 3',
+        opts:['A warm, cluttered independent bookshop','A minimal, light-filled gallery','A busy market with dozens of vendors','A well-designed coffee shop with great light','A workshop where things are actively being made','A quiet archive or library'] },
+      { id:'q46', type:'binary',
+        text:'Your default color sensibility leans toward…',
+        a:'Muted, earthy, or neutral — tones that sit quietly and age well',
+        b:'Something with presence — saturated, unexpected, or deliberately bold' },
+      { id:'q47', type:'binary', hasBoth: true,
+        text:'In what you wear and own, you tend to…',
+        a:'Favor things that will still feel right in ten years — suspicious of trends',
+        b:'Stay current — you like what\'s interesting now and update accordingly' },
+      { id:'q48', type:'binary',
+        text:'The way something is designed or presented…',
+        a:'Genuinely matters — great design changes how something feels to own and use',
+        b:'Is secondary — I care about what it does, not how it looks doing it' },
+      { id:'q49', type:'binary',
+        text:'When putting together a look, a room, or any visual arrangement, you tend to…',
+        a:'Work from a concept — choices serve an overall idea',
+        b:'Make individual decisions that feel right and see what emerges' },
+      { id:'q50', type:'text',
+        text:'What\'s something you love that this quiz probably didn\'t get at?',
+        hint:'Optional — a specific interest, a niche obsession, a favorite thing, anything at all.',
+        placeholder:'Could be anything — a scene, a hobby, a place, a format, a fixation…' }
+    ]
+  }
+];
+
+// ─── STATE ─────────────────────────────────────────────────────────────────
+let screen = 'intro';
+let sIdx = 0;
+const answers = {};
+let portraitData = {}; // { OBJECTS, HOBBIES, EXPERIENCES, FOOD, MEDIA, STYLE, ESSENCE }
+let fullPortraitText = '';
+let apiKey = '';
+const openCards = new Set();
+
+// ─── RENDER ────────────────────────────────────────────────────────────────
+function render() {
+  const app = document.getElementById('app');
+  if (screen === 'intro')   app.innerHTML = renderIntro();
+  if (screen === 'quiz')    app.innerHTML = renderQuiz();
+  if (screen === 'loading') app.innerHTML = renderLoading();
+  if (screen === 'result')  app.innerHTML = renderResult();
+  if (screen === 'error')   app.innerHTML = renderError();
+  attachChipListeners();
+}
+
+function renderIntro() {
+  return `
+    <h1 class="intro-title">What Do You Like?</h1>
+    <p class="intro-sub">50 questions about the things you own, make, do, eat, watch, and care about. At the end, an AI writes a genuine analysis of your interests — not a summary, an actual read on you.</p>
+    <div class="section-pills">
+      ${sections.map(s=>`<span class="s-pill">${s.title}</span>`).join('')}
+    </div>
+    <p style="font-size:13px;color:#aaa;margin-bottom:24px;">5–8 minutes &nbsp;·&nbsp; Tap to answer &nbsp;·&nbsp; One open question at the end</p>
+    <div class="api-box">
+      <div class="api-label">Anthropic API Key</div>
+      <div class="api-note">Required to generate your portrait. Free at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> — goes directly to Anthropic, nothing stored here.</div>
+      <input type="password" id="api-key-input" placeholder="sk-ant-..." value="${apiKey}" oninput="apiKey=this.value" />
+    </div>
+    <button class="btn btn-dark" onclick="startQuiz()">Start →</button>
+  `;
+}
+
+function renderQuiz() {
+  const sec = sections[sIdx];
+  const totalQs = sections.reduce((a,s)=>a+s.questions.length,0);
+  const doneQs = sections.slice(0,sIdx).reduce((a,s)=>a+s.questions.length,0);
+  const pct = Math.round((doneQs/totalQs)*100);
+  return `
+    <p class="progress-label">Section ${sIdx+1} of ${sections.length} &nbsp;·&nbsp; Q${doneQs+1}–${doneQs+sec.questions.length} of ${totalQs}</p>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="section-header">
+      <div class="section-title">${sec.title}</div>
+      <div class="section-desc">${sec.desc}</div>
+    </div>
+    ${sec.questions.map((q,qi)=>renderQuestion(q,doneQs+qi+1)).join('')}
+    <div class="nav">
+      ${sIdx>0?`<button class="btn btn-ghost" onclick="prevSection()">← Back</button>`:''}
+      <div class="nav-right">
+        <button class="btn btn-dark" id="next-btn" onclick="nextSection()" ${canAdvance()?'':'disabled'}>
+          ${sIdx===sections.length-1?'Generate My Portrait →':'Next →'}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderQuestion(q, num) {
+  let body = '';
+  if (q.type==='binary') body = renderBinary(q);
+  if (q.type==='multi'||q.type==='chips') body = renderChips(q);
+  if (q.type==='text') body = renderText(q);
+  return `<div class="question" id="wrap-${q.id}">
+    <div class="q-text"><span style="color:#bbb;font-weight:400;font-size:13px;margin-right:6px;">${num}.</span>${q.text}</div>
+    ${q.hint?`<div class="q-hint">${q.hint}</div>`:''}
+    ${body}
+  </div>`;
+}
+
+function renderBinary(q) {
+  const val = answers[q.id];
+  const bothBtn = q.hasBoth
+    ? `<button class="bin-both ${val==='both'?'sel':''}" onclick="setAnswer('${q.id}','both')">↔ Both feel true</button>`
+    : '';
+  return `<div class="binary">
+    <button class="bin-btn ${val==='a'?'sel':''}" onclick="setAnswer('${q.id}','a')">${q.a}</button>
+    <button class="bin-btn ${val==='b'?'sel':''}" onclick="setAnswer('${q.id}','b')">${q.b}</button>
+  </div>${bothBtn}`;
+}
+
+function renderChips(q) {
+  const sel = answers[q.id]||[];
+  const max = q.max||999;
+  const btns = q.opts.map(o=>{
+    const isSel = sel.includes(o);
+    const isDim = !isSel && sel.length>=max;
+    const esc = o.replace(/"/g,'&quot;');
+    return `<button class="chip${isSel?' sel':''}${isDim?' dim':''}" data-qid="${q.id}" data-val="${esc}" data-max="${max}">${o}</button>`;
+  }).join('');
+  const otherVal = answers[q.id+'_other']||'';
+  const otherField = q.hasOther
+    ? `<div style="width:100%;margin-top:10px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:#999;white-space:nowrap;">Other:</span>
+        <input type="text" placeholder="Anything not listed…" value="${otherVal.replace(/"/g,'&quot;')}"
+          style="flex:1;padding:7px 12px;border:1.5px solid #d8d5d0;border-radius:20px;font-size:13px;font-family:inherit;outline:none;background:#fff;"
+          oninput="answers['${q.id}_other']=this.value;updateNextBtn()"
+          onfocus="this.style.borderColor='#1a1a1a'" onblur="this.style.borderColor='#d8d5d0'" />
+      </div>`
+    : '';
+  return `<div class="chips">${btns}${otherField}</div>`;
+}
+
+function renderText(q) {
+  return `<textarea placeholder="${q.placeholder||''}" oninput="answers['${q.id}']=this.value;updateNextBtn()">${answers[q.id]||''}</textarea>`;
+}
+
+function renderLoading() {
+  return `<div class="loading">
+    <div class="spinner"></div>
+    <p style="font-size:16px;color:#777;">Writing your portrait…</p>
+    <p style="font-size:13px;color:#bbb;margin-top:8px;">About 15–20 seconds</p>
+  </div>`;
+}
+
+// ─── RESULT ────────────────────────────────────────────────────────────────
+const catMeta = {
+  OBJECTS:     { label:'Things & Objects',      icon:'📦' },
+  HOBBIES:     { label:'Hobbies & Making',       icon:'🛠️' },
+  EXPERIENCES: { label:'Experiences',            icon:'🌍' },
+  FOOD:        { label:'Food & Drink',           icon:'🍽️' },
+  MEDIA:       { label:'Media & Entertainment',  icon:'🎬' },
+  STYLE:       { label:'Style & Aesthetics',     icon:'✦'  },
+};
+
+function buildTags() {
+  const tags=[], colors=['c0','c1','c2','c3','c4','c5'];
+  sections.forEach(sec=>sec.questions.forEach(q=>{
+    if(q.type==='chips'||q.type==='multi'){
+      (answers[q.id]||[]).slice(0,3).forEach(v=>{ if(tags.length<14) tags.push(v); });
+      const o=answers[q.id+'_other'];
+      if(o&&o.trim()&&tags.length<14) tags.push(o.trim());
+    }
+  }));
+  return tags.sort(()=>Math.random()-0.5).slice(0,12)
+    .map((t,i)=>`<span class="rtag ${colors[i%6]}">${t}</span>`).join('');
+}
+
+function toggleCard(cat) {
+  openCards.has(cat) ? openCards.delete(cat) : openCards.add(cat);
+  const body = document.querySelector(`.card[data-cat="${cat}"] .card-body`);
+  const chev = document.querySelector(`.card[data-cat="${cat}"] .card-chevron`);
+  if(body) body.classList.toggle('open', openCards.has(cat));
+  if(chev) chev.classList.toggle('open', openCards.has(cat));
+}
+
+function renderResult() {
+  const cats = Object.keys(catMeta);
+  const tagHTML = buildTags();
+  const cardsHTML = cats.map(cat=>{
+    const text = portraitData[cat]||'';
+    if(!text) return '';
+    const meta = catMeta[cat];
+    // First sentence as preview
+    const firstSentence = (text.match(/[^.!?]+[.!?]+/)||[text])[0].trim();
+    const isOpen = openCards.has(cat);
+    return `<div class="card" data-cat="${cat}">
+      <div style="display:flex;">
+        <div class="card-stripe"></div>
+        <div style="flex:1;min-width:0;">
+          <div class="card-header" onclick="toggleCard('${cat}')">
+            <div class="card-icon">${meta.icon}</div>
+            <div class="card-meta">
+              <div class="card-label">${meta.label}</div>
+              <div class="card-preview">${firstSentence}</div>
+            </div>
+            <div class="card-chevron ${isOpen?'open':''}">▾</div>
+          </div>
+          <div class="card-body ${isOpen?'open':''}">
+            <p>${text}</p>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="result-wrap">
+    <div class="result-hero">
+      <div class="result-eyebrow">Your Interest Portrait</div>
+      <div class="result-title">A Portrait of<br><em>Your Taste</em></div>
+      <div class="result-tagline">Based on 50 questions about what you like</div>
+      <div class="hero-dots"><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+    <div class="result-body">
+      ${tagHTML?`<div class="tags-label">Things that caught your eye</div><div class="tags-row">${tagHTML}</div>`:''}
+      <div class="cards">${cardsHTML}</div>
+      ${portraitData.ESSENCE?`<div class="essence-block"><p>${portraitData.ESSENCE}</p></div>`:''}
+      <div class="copy-section">
+        <div class="copy-label">Full portrait — copy &amp; paste</div>
+        <textarea class="copy-box" readonly onclick="this.select()">${fullPortraitText}</textarea>
+        <div class="copy-row">
+          <button class="btn btn-dark" onclick="copyPortrait()">Copy to Clipboard</button>
+          <button class="btn btn-ghost" onclick="resetQuiz()">Start Over</button>
+        </div>
+        <p id="copy-confirm" style="font-size:13px;color:#4a9;margin-top:10px;display:none;">✓ Copied!</p>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderError() {
+  return `<div class="error-box" id="err-msg">Something went wrong. Check your API key and try again.</div>
+    <button class="btn btn-dark" onclick="retryPortrait()">Try Again</button>
+    <button class="btn btn-ghost" style="margin-left:10px;" onclick="resetQuiz()">Start Over</button>`;
+}
+
+// ─── CHIP DELEGATION ───────────────────────────────────────────────────────
+function attachChipListeners() {
+  document.querySelectorAll('.chips').forEach(container=>{
+    container.addEventListener('click',e=>{
+      const btn = e.target.closest('.chip');
+      if(!btn||btn.classList.contains('dim')) return;
+      const id=btn.dataset.qid, val=btn.dataset.val, max=parseInt(btn.dataset.max)||999;
+      const sel=answers[id]||[];
+      const isSel=sel.includes(val);
+      if(!isSel&&sel.length>=max) return;
+      answers[id]=isSel?sel.filter(v=>v!==val):[...sel,val];
+      refreshChips(id);
+      updateNextBtn();
+    });
+  });
+}
+
+function refreshChips(id) {
+  const q=findQ(id), wrap=document.getElementById('wrap-'+id);
+  if(!q||!wrap) return;
+  const sel=answers[id]||[], max=q.max||999;
+  wrap.querySelectorAll('.chip').forEach(btn=>{
+    const v=btn.dataset.val, isSel=sel.includes(v), isDim=!isSel&&sel.length>=max;
+    btn.classList.toggle('sel',isSel);
+    btn.classList.toggle('dim',isDim);
+  });
+}
+
+// ─── ACTIONS ───────────────────────────────────────────────────────────────
+function startQuiz() {
+  const inp=document.getElementById('api-key-input');
+  if(inp) apiKey=inp.value.trim();
+  screen='quiz'; sIdx=0; render();
+}
+function resetQuiz() {
+  screen='intro'; sIdx=0;
+  Object.keys(answers).forEach(k=>delete answers[k]);
+  portraitData={}; fullPortraitText=''; openCards.clear(); render();
+}
+function setAnswer(id,val) {
+  answers[id]=val;
+  document.querySelectorAll(`#wrap-${id} .bin-btn`).forEach((btn,i)=>{
+    btn.classList.toggle('sel',(i===0&&val==='a')||(i===1&&val==='b'));
+  });
+  const both=document.querySelector(`#wrap-${id} .bin-both`);
+  if(both) both.classList.toggle('sel',val==='both');
+  updateNextBtn();
+}
+function updateNextBtn() {
+  const btn=document.getElementById('next-btn');
+  if(btn) btn.disabled=!canAdvance();
+}
+function findQ(id) {
+  for(const sec of sections){ const q=sec.questions.find(q=>q.id===id); if(q) return q; }
+  return null;
+}
+function canAdvance() {
+  return sections[sIdx].questions.some(q=>{
+    if(q.type==='text') return true;
+    const a=answers[q.id];
+    if(!a) return false;
+    return Array.isArray(a)?a.length>0:true;
+  });
+}
+function prevSection() { sIdx=Math.max(0,sIdx-1); screen='quiz'; render(); window.scrollTo(0,0); }
+function nextSection() {
+  if(sIdx<sections.length-1){ sIdx++; screen='quiz'; render(); window.scrollTo(0,0); }
+  else { screen='loading'; render(); generatePortrait(); }
+}
+function copyPortrait() {
+  navigator.clipboard.writeText(fullPortraitText).then(()=>{
+    const el=document.getElementById('copy-confirm');
+    if(el){ el.style.display='block'; setTimeout(()=>el.style.display='none',2500); }
+  });
+}
+function retryPortrait() { screen='loading'; render(); generatePortrait(); }
+
+// ─── API ───────────────────────────────────────────────────────────────────
+function collectAnswers() {
+  const lines=[]; let num=0;
+  sections.forEach(sec=>{
+    lines.push('\n## '+sec.title);
+    sec.questions.forEach(q=>{
+      num++;
+      const a=answers[q.id], other=answers[q.id+'_other'];
+      const hasAny=(a&&!(Array.isArray(a)&&a.length===0))||(other&&other.trim());
+      if(!hasAny) return;
+      let displayA='';
+      if(q.type==='binary'){
+        if(a==='both') displayA='[BOTH APPLY] '+q.a+' AND '+q.b;
+        else displayA='[STATED PREFERENCE] '+(a==='a'?q.a:q.b);
+      } else if(Array.isArray(a)){
+        const items=[...a];
+        if(other&&other.trim()) items.push(other.trim());
+        displayA='[RESONANCE SIGNALS] '+items.join(' | ');
+      } else {
+        displayA='[IN THEIR OWN WORDS] '+(a||'');
+        if(other&&other.trim()) displayA+=' + '+other.trim();
+      }
+      lines.push('Q'+num+': '+q.text+'\n→ '+displayA);
+    });
+  });
+  return lines.join('\n');
+}
+
+function parsePortrait(raw) {
+  const result={};
+  const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  lines.forEach(line=>{
+    const idx=line.indexOf(' | ');
+    if(idx>0){
+      const key=line.slice(0,idx).trim().toUpperCase();
+      const val=line.slice(idx+3).trim();
+      if(key&&val) result[key]=val;
+    }
+  });
+  return result;
+}
+
+function buildFullText(data) {
+  const order=['OBJECTS','HOBBIES','EXPERIENCES','FOOD','MEDIA','STYLE','ESSENCE'];
+  const labels={OBJECTS:'Things & Objects',HOBBIES:'Hobbies & Making',EXPERIENCES:'Experiences',FOOD:'Food & Drink',MEDIA:'Media & Entertainment',STYLE:'Style & Aesthetics',ESSENCE:'In Summary'};
+  return order.filter(k=>data[k]).map(k=>`${labels[k]}\n${data[k]}`).join('\n\n');
+}
+
+async function generatePortrait() {
+  const summary=collectAnswers();
+  const systemPrompt=`You are an interest analyst — a sharp, warm observer who reads data about a person and writes an insightful profile. Think of yourself as a perceptive friend who's good at seeing patterns.
+
+You write in a direct, vivid, journalistic style. Your output reads like something a person wrote, not a quiz result.
+
+CRITICAL RULES:
+1. TRANSLATE, don't transcribe. Never use quiz language in your output. Convert raw answers into genuine insight. "Handmade or artisan" → write about their relationship to objects that carry evidence of making.
+2. INTERPRET clusters. [RESONANCE SIGNALS] items are things that appealed — not confirmed activities. Read what the cluster reveals about a personality type, sensibility, or worldview. Say that, not what they picked.
+3. [STATED PREFERENCE] and [BOTH APPLY] are reliable — be confident. [BOTH APPLY] means the tension itself is interesting — explore what it reveals.
+4. MAKE INFERENCES. Don't just describe — say what it means. What kind of person shows this pattern? Name the actual taste world, scene, or sensibility.
+5. USE REAL LANGUAGE. Not "outdoor activities" — name the actual pursuit and what kind of person it points toward.
+6. [IN THEIR OWN WORDS] answers are gold — they wrote them unprompted. Weight them heavily and reference them directly.
+7. Be honest, not flattering. Write an accurate read.
+
+OUTPUT FORMAT — you MUST follow this exactly. Output exactly 7 lines, each in this format:
+SECTION_KEY | your 2–3 sentence insight about that category
+
+The 7 keys are: OBJECTS, HOBBIES, EXPERIENCES, FOOD, MEDIA, STYLE, ESSENCE
+
+ESSENCE should be a single resonant sentence that captures the whole person.
+Do not add any other text, headers, or explanation — just the 7 lines.`;
+
+  const userPrompt=`Write the Interest Portrait for this person. Follow the output format exactly: 7 lines, each as KEY | insight.
+
+Each section: 2–3 punchy, specific sentences. Not a summary of their answers — an interpretation of what the pattern means. Write like you genuinely see them.
+
+ESSENCE: one sentence. Make it good enough to screenshot.
+
+Raw quiz data:
+${summary}`;
+
+  const headers={
+    'Content-Type':'application/json',
+    'anthropic-version':'2023-06-01',
+    'anthropic-dangerous-direct-browser-access':'true'
+  };
+  if(apiKey) headers['x-api-key']=apiKey;
+
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers,
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:900,
+        system:systemPrompt,
+        messages:[{role:'user',content:userPrompt}]
+      })
+    });
+    const data=await res.json();
+    if(data.error) throw new Error(data.error.message||'API error');
+    const raw=(data.content||[]).map(b=>b.text||'').join('').trim();
+    if(!raw) throw new Error('Empty response');
+    portraitData=parsePortrait(raw);
+    fullPortraitText=buildFullText(portraitData);
+    screen='result'; render(); window.scrollTo(0,0);
+  } catch(e){
+    console.error(e); screen='error'; render();
+    const errBox=document.getElementById('err-msg');
+    if(errBox){
+      const isFile=location.protocol==='file:';
+      errBox.innerHTML=isFile
+        ?'<strong>File:// not supported.</strong> Run <code>python3 -m http.server 8080</code> in this folder, then open <strong>http://localhost:8080/interest-quiz-v8.html</strong>. Or host on GitHub Pages.'
+        :'<strong>Error:</strong> '+(e.message||'Unknown error')+'<br><br>Check your API key has credits available.';
+    }
+  }
+}
+
+render();
+</script>
+</body>
+</html>
