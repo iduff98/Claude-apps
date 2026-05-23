@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What Do You Like?</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f3f0; color: #1a1a1a; min-height: 100vh; }
+#app { max-width: 640px; margin: 0 auto; padding: 28px 18px 80px; }
+.progress-bar { height: 3px; background: #ddd; border-radius: 2px; margin-bottom: 32px; }
+.progress-fill { height: 100%; background: #1a1a1a; border-radius: 2px; transition: width 0.35s ease; }
+.progress-label { font-size: 12px; color: #999; margin-bottom: 8px; letter-spacing: 0.04em; }
+.section-header { margin-bottom: 32px; border-bottom: 1px solid #e0ddd8; padding-bottom: 16px; }
+.section-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.section-desc { font-size: 14px; color: #777; }
+.question { margin-bottom: 32px; }
+.q-text { font-size: 15px; font-weight: 500; line-height: 1.45; margin-bottom: 6px; }
+.q-hint { font-size: 12px; color: #999; margin-bottom: 12px; }
+.binary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bin-btn { width: 100%; padding: 14px 12px; border: 1.5px solid #d8d5d0; border-radius: 8px; background: #fff; cursor: pointer; font-size: 13px; line-height: 1.45; text-align: left; color: #1a1a1a; font-family: inherit; transition: border-color 0.12s, background 0.12s, color 0.12s; }
+.bin-btn:hover { border-color: #aaa; }
+.bin-btn.sel { border-color: #1a1a1a; background: #1a1a1a; color: #fff; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { padding: 7px 14px; border: 1.5px solid #d8d5d0; border-radius: 20px; background: #fff; cursor: pointer; font-size: 13px; color: #1a1a1a; font-family: inherit; transition: border-color 0.12s, background 0.12s, color 0.12s; user-select: none; }
+.chip:hover:not(.dim) { border-color: #aaa; }
+.chip.sel { border-color: #1a1a1a; background: #1a1a1a; color: #fff; }
+.chip.dim { opacity: 0.3; cursor: default; }
+textarea { width: 100%; padding: 13px; border: 1.5px solid #d8d5d0; border-radius: 8px; font-size: 14px; font-family: inherit; line-height: 1.5; resize: vertical; min-height: 90px; outline: none; background: #fff; color: #1a1a1a; }
+textarea:focus { border-color: #1a1a1a; }
+input[type=text], input[type=password] { width: 100%; padding: 11px 13px; border: 1.5px solid #d8d5d0; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; background: #fff; color: #1a1a1a; }
+input[type=text]:focus, input[type=password]:focus { border-color: #1a1a1a; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 12px 26px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; font-family: inherit; transition: opacity 0.15s, background 0.15s; }
+.btn-dark { background: #1a1a1a; color: #fff; }
+.btn-dark:hover { opacity: 0.85; }
+.btn-dark:disabled { background: #ccc; cursor: default; opacity: 1; }
+.btn-ghost { background: #fff; color: #555; border: 1.5px solid #d8d5d0; }
+.btn-ghost:hover { border-color: #aaa; }
+.nav { display: flex; gap: 10px; align-items: center; margin-top: 28px; }
+.nav-right { margin-left: auto; }
+.intro-title { font-size: 34px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.5px; }
+.intro-sub { font-size: 16px; color: #666; line-height: 1.65; margin-bottom: 24px; }
+.section-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.s-pill { background: #fff; border: 1px solid #e0ddd8; border-radius: 20px; padding: 5px 12px; font-size: 12px; color: #777; }
+.api-box { background: #fff; border: 1px solid #e0ddd8; border-radius: 10px; padding: 18px; margin-bottom: 28px; }
+.api-label { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.api-note { font-size: 12px; color: #999; margin-bottom: 10px; line-height: 1.5; }
+.api-note a { color: #555; }
+.loading { text-align: center; padding: 80px 20px; }
+.spinner { width: 36px; height: 36px; border: 3px solid #eee; border-top-color: #1a1a1a; border-radius: 50%; animation: spin 0.75s linear infinite; margin: 0 auto 20px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 16px; color: #777; }
+/* ── Result screen ── */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&display=swap');
+.result-wrap { margin: -28px -18px 0; }
+.result-hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); padding: 52px 28px 40px; text-align: center; position: relative; overflow: hidden; }
+.result-hero::before { content:''; position:absolute; inset:0; background: radial-gradient(ellipse at 70% 20%, rgba(229,160,90,.18) 0%, transparent 60%), radial-gradient(ellipse at 20% 80%, rgba(100,180,255,.1) 0%, transparent 50%); pointer-events:none; }
+.result-eyebrow { font-size: 11px; letter-spacing: 0.2em; color: #e5a05a; text-transform: uppercase; margin-bottom: 14px; font-weight: 600; }
+.result-title { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(32px, 7vw, 48px); font-weight: 700; color: #fff; line-height: 1.15; margin-bottom: 10px; }
+.result-title em { font-style: italic; font-weight: 400; color: #e5c99a; }
+.result-tagline { font-size: 14px; color: rgba(255,255,255,0.5); letter-spacing: 0.04em; }
+.result-hero-deco { display: flex; justify-content: center; gap: 8px; margin-top: 28px; }
+.result-hero-deco span { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #e5a05a; opacity: 0.4; }
+.result-hero-deco span:nth-child(2) { width: 40px; border-radius: 3px; opacity: 0.7; }
+.result-hero-deco span:nth-child(3) { opacity: 0.4; }
+.result-body { padding: 36px 24px 0; }
+.result-tags-label { font-size: 11px; letter-spacing: 0.16em; color: #aaa; text-transform: uppercase; font-weight: 600; margin-bottom: 12px; }
+.result-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 36px; }
+.result-tag { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.result-tag.c0 { background: #fef3e2; color: #b45309; }
+.result-tag.c1 { background: #ede9fe; color: #6d28d9; }
+.result-tag.c2 { background: #dcfce7; color: #15803d; }
+.result-tag.c3 { background: #dbeafe; color: #1d4ed8; }
+.result-tag.c4 { background: #fce7f3; color: #be185d; }
+.result-tag.c5 { background: #f0fdf4; color: #166534; }
+.result-divider { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+.result-divider::before, .result-divider::after { content:''; flex:1; height:1px; background: linear-gradient(90deg, transparent, #e0ddd8, transparent); }
+.result-divider-icon { font-size: 16px; color: #d4a96a; }
+.portrait-paragraphs { margin-bottom: 36px; }
+.portrait-para { font-size: 16px; line-height: 1.85; color: #2a2a2a; margin-bottom: 22px; }
+.portrait-para:first-child::first-letter { font-family: 'Playfair Display', Georgia, serif; font-size: 52px; font-weight: 700; float: left; line-height: 0.85; margin: 6px 10px 0 0; color: #0f3460; }
+.portrait-closing { background: linear-gradient(135deg, #1a1a2e, #0f3460); border-radius: 12px; padding: 24px 28px; margin-bottom: 40px; }
+.portrait-closing p { font-family: 'Playfair Display', Georgia, serif; font-style: italic; font-size: 17px; line-height: 1.7; color: #e5c99a; text-align: center; }
+.copy-section { border-top: 1px solid #e8e5e0; padding-top: 28px; padding-bottom: 40px; }
+.copy-label { font-size: 12px; letter-spacing: 0.12em; color: #aaa; text-transform: uppercase; font-weight: 600; margin-bottom: 10px; }
+.copy-box { width: 100%; border: 1.5px solid #d8d5d0; border-radius: 8px; padding: 14px; font-size: 13px; font-family: inherit; line-height: 1.6; background: #fafaf8; color: #444; resize: vertical; min-height: 160px; outline: none; }
+.copy-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.error-box { background: #fff8f6; border: 1px solid #f0c0b0; border-radius: 8px; padding: 18px; color: #c04020; font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const sections = [
+  {
+    title: "Products & Objects",
+    desc: "What you enjoy owning, buying, and having around",
+    questions: [
+      { id:'q1', type:'binary',
+        text:'When buying something for your home, you lean toward…',
+        a:'Practical & functional — it needs to do its job well',
+        b:'Beautiful & decorative — I want to love looking at it' },
+      { id:'q2', type:'multi', max:5,
+        text:'Which product categories genuinely interest you?',
+        hint:'Pick up to 5',
+        opts:['Kitchen tools','Tech gadgets','Home décor','Clothing & fashion','Stationery','Tools & hardware','Beauty & skincare','Outdoor gear','Art supplies','Books','Plants & gardening','Furniture','Bags & accessories','Lighting','Candles & scents','Sporting goods'],
+        hasOther: true },
+      { id:'q3', type:'binary',
+        text:'You prefer products that are…',
+        a:'Handmade or artisan — craft and imperfection are part of the appeal',
+        b:'Precision-manufactured — clean, consistent, engineered well' },
+      { id:'q4', type:'chips',
+        text:'Which of these objects would you genuinely enjoy owning?',
+        hint:'Pick all that apply',
+        opts:['Vintage camera','Cast iron pan','Quality chef knife','Leather notebook','Mechanical keyboard','Record player','Telescope','Field guide book','Hand tool set','Ceramic mug','Quality speakers','Pocket knife','Fountain pen','Large houseplant','Weighted blanket','Classic board game','Analog watch','Espresso machine'],
+        hasOther: true },
+      { id:'q5', type:'binary',
+        text:'Gadgets and new technology…',
+        a:'I love them — I follow releases and enjoy having the latest',
+        b:'I only buy what I need — utility over novelty' },
+      { id:'q6', type:'binary',
+        text:'When it comes to quantity vs. quality…',
+        a:'Fewer, better things — one great item over five okay ones',
+        b:'Variety and options — I like choices and switching it up' },
+      { id:'q7', type:'binary',
+        text:'Your relationship to stuff is generally…',
+        a:'Curated — I think carefully about what I bring into my space',
+        b:'Comfortable accumulation — I like things around and am not too precious about it' },
+      { id:'q8', type:'binary',
+        text:'When you find a brand or maker you love…',
+        a:'I go deep — buy more from them, stay loyal, follow their work',
+        b:'I keep exploring — I like discovering new makers and variety' }
+    ]
+  },
+  {
+    title: "Hobbies & Making",
+    desc: "What you do with your time and hands",
+    questions: [
+      { id:'q9', type:'chips',
+        text:'Which of these have you done or seriously wanted to try?',
+        hint:'Pick all that apply',
+        opts:['Woodworking','Knitting or crochet','Drawing or painting','Cooking from scratch','Brewing or fermentation','Pottery','Leatherwork','Calligraphy','Jewelry making','Model building','Embroidery','Candle or soap making','Electronics & DIY','Gardening','Bookbinding','Origami','Photography'],
+        hasOther: true },
+      { id:'q10', type:'binary',
+        text:'Hobbies work best for you when they are…',
+        a:'Solo — I like the focus and freedom of working alone',
+        b:'Social — shared activities, clubs, or doing things with others' },
+      { id:'q11', type:'binary',
+        text:'Do you enjoy hobbies that produce a physical thing you can keep or give?',
+        a:'Yes — I love having a finished object to show for my time',
+        b:'Not particularly — process and experience matter more than output' },
+      { id:'q12', type:'multi', max:5,
+        text:'Which outdoor or active hobbies appeal to you?',
+        hint:'Pick up to 5',
+        opts:['Hiking','Rock climbing','Cycling','Kayaking or canoeing','Running','Swimming','Birdwatching','Foraging','Fishing','Outdoor photography','Camping','Surfing','Yoga outdoors','Stargazing','Skateboarding'] },
+      { id:'q13', type:'binary',
+        text:'When trying a new hobby…',
+        a:'I like a real learning curve — I want to get genuinely skilled at it',
+        b:'I prefer low barrier — easy to start, fun from the first session' },
+      { id:'q14', type:'multi', max:5,
+        text:'Which indoor hobbies sound appealing?',
+        hint:'Pick up to 5',
+        opts:['Reading','Puzzles','Board games','Video games','Writing','Yoga or meditation','Cooking','Baking','Drawing','Playing music','Watching films','Language learning','Journaling','Sewing or tailoring'] },
+      { id:'q15', type:'binary',
+        text:'Do you enjoy collecting things?',
+        a:'Yes — I love the hunt and curation of building a collection',
+        b:'Not really — I prefer experiences to accumulation' },
+      { id:'q16', type:'binary',
+        text:'Physical activity in hobbies…',
+        a:'I actively seek it — movement is part of how I recharge',
+        b:'I am more drawn to still or sedentary hobbies' },
+      { id:'q17', type:'binary',
+        text:'Competition in hobbies…',
+        a:'I enjoy it — it adds motivation and a fun edge',
+        b:'I prefer non-competitive — it is about personal enjoyment' }
+    ]
+  },
+  {
+    title: "Experiences & Activities",
+    desc: "What you seek out and do in the world",
+    questions: [
+      { id:'q18', type:'binary',
+        text:'When you travel, you prioritize…',
+        a:'Adventure and exploration — new places, new things',
+        b:'Rest and enjoyment — good food, comfort, slow pace' },
+      { id:'q19', type:'multi', max:5,
+        text:'Which types of experiences excite you most?',
+        hint:'Pick up to 5',
+        opts:['Concerts or live music','Art museums','Theatre or dance','Food tours','Night markets','Escape rooms','Sports events','Festivals','Brewery or winery tours','Cooking classes','Spa days','Comedy shows','Hiking trips','Road trips','City exploration on foot','Flea markets or antique fairs'],
+        hasOther: true },
+      { id:'q20', type:'binary',
+        text:'Your ideal Saturday has…',
+        a:'Plans — things to do, places to go, people to see',
+        b:'Open space — no agenda, whatever feels right in the moment' },
+      { id:'q21', type:'binary',
+        text:'Live events like concerts, sports, and theatre…',
+        a:'I love them — the shared energy and atmosphere is irreplaceable',
+        b:'I prefer smaller, quieter, more intimate settings' },
+      { id:'q22', type:'binary',
+        text:'You are more drawn to experiences that are…',
+        a:'Novel — I want things I have never done before',
+        b:'Familiar — I love returning to things I know I will enjoy' },
+      { id:'q23', type:'multi', max:4,
+        text:'Which of these would you be most excited to do?',
+        hint:'Pick up to 4',
+        opts:['Take a pottery class','Go on a sailing trip','Attend a multi-day festival','Visit a foreign city solo','Take a cooking course','Do a long-distance hike','See a favorite band live','Visit a world-class art museum','Go to a drive-in movie','Attend a craft fair','Take a wilderness survival course','Go wine tasting in a vineyard'] },
+      { id:'q24', type:'binary',
+        text:'Nature and the outdoors…',
+        a:'Essential — I need regular time outside to feel like myself',
+        b:'Nice sometimes — but not something I actively seek' },
+      { id:'q25', type:'binary',
+        text:'Nightlife and going out…',
+        a:'I enjoy it — bars, restaurants, events, the energy of being out',
+        b:'I am a homebody at heart — I prefer evenings in' },
+      { id:'q26', type:'binary',
+        text:'When you have free time, you tend to…',
+        a:'Fill it — I like having things going on and get restless without plans',
+        b:'Guard it — I protect downtime and unstructured rest' }
+    ]
+  },
+  {
+    title: "Food & Drink",
+    desc: "How you relate to eating, cooking, and drinking",
+    questions: [
+      { id:'q27', type:'binary',
+        text:'Cooking…',
+        a:'Is a genuine pleasure — I enjoy the process and love feeding people',
+        b:'Is a chore — I do it when I have to but prefer eating out or ordering in' },
+      { id:'q28', type:'multi', max:5,
+        text:'Which food and drink experiences appeal to you most?',
+        hint:'Pick up to 5',
+        opts:['Trying a new restaurant','Cooking an ambitious recipe','Visiting a farmers market','Wine or cocktail tasting','Baking bread or pastry','Street food exploring','A long dinner with great conversation','Discovering a new ingredient','A food tour in a new city','Home brewing or fermenting','A fancy tasting menu','Comfort food and old favorites','Learning a new cuisine'] },
+      { id:'q29', type:'binary',
+        text:'Trying unfamiliar foods…',
+        a:'Excites me — I will try almost anything at least once',
+        b:'I prefer sticking to what I know I like' },
+      { id:'q30', type:'binary',
+        text:'Coffee, tea, or other drinks…',
+        a:'It is a ritual — I care about quality, process, and the experience of it',
+        b:'It is functional — I drink it but do not think much about it' },
+      { id:'q31', type:'binary',
+        text:'When dining out, you prefer…',
+        a:'Places with a distinct point of view — interesting, creative menus',
+        b:'Reliable classics — great execution of familiar things' },
+      { id:'q32', type:'binary',
+        text:'Food and drink feel like…',
+        a:'A genuine area of interest — I follow it, explore it, invest in it',
+        b:'One of life\'s pleasures — but not a particular area of focus' }
+    ]
+  },
+  {
+    title: "Media & Entertainment",
+    desc: "What you watch, read, play, and listen to",
+    questions: [
+      { id:'q33', type:'binary',
+        text:'For entertainment, you lean toward…',
+        a:'Reading — books, long-form articles, written content',
+        b:'Watching — film, TV, and video content' },
+      { id:'q34', type:'multi', max:5,
+        text:'What types of content do you engage with most?',
+        hint:'Pick up to 5',
+        opts:['Fiction novels','Non-fiction & essays','Documentaries','Drama series','Comedy','Podcasts','Video essays','News & current events','Sci-fi or fantasy','True crime','History content','Nature & science','Sports','Anime','Independent film','Horror'],
+        hasOther: true },
+      { id:'q35', type:'binary',
+        text:'Music for you is…',
+        a:'Something I actively seek out and explore — I care about what I listen to',
+        b:'Background — I enjoy it but do not chase new artists or dig deep' },
+      { id:'q36', type:'multi', max:4,
+        text:'Which entertainment formats do you most enjoy?',
+        hint:'Pick up to 4',
+        opts:['Going to the cinema','Attending live music','Watching with a group','Solo movie nights','Music festivals','Listening to full albums','Deep-diving an artist back catalogue','Binge-watching a whole series','Long podcast sessions','Listening to audiobooks'] },
+      { id:'q37', type:'binary',
+        text:'Video games…',
+        a:'Yes — I play regularly or they are a meaningful hobby',
+        b:'Rarely or never — not really my thing' },
+      { id:'q38', type:'binary',
+        text:'When you find a show, band, book, or author you love…',
+        a:'I go all in — explore their full body of work, learn about them',
+        b:'I enjoy it and move on — I do not usually go deep into someone\'s work' },
+      { id:'q39', type:'binary',
+        text:'Podcasts or audiobooks…',
+        a:'Part of my regular routine — I listen constantly on commutes, chores, walks',
+        b:'Rarely — I prefer silence or music when moving around' },
+      { id:'q40', type:'binary',
+        text:'Comedy specifically…',
+        a:'A genuine priority — I seek out great stand-up, funny shows, comic writing',
+        b:'I enjoy it when I come across it but do not actively seek it out' }
+    ]
+  },
+  {
+    title: "Style, Aesthetics & One Last Thing",
+    desc: "How you present yourself — and a chance to add anything we missed",
+    questions: [
+      { id:'q41', type:'binary',
+        text:'Personal style and getting dressed…',
+        a:'I think about it — it is an expression of something for me',
+        b:'Comfort and ease first — I keep it simple and practical' },
+      { id:'q42', type:'chips',
+        text:'Which visual aesthetics appeal to you?',
+        hint:'Pick all that apply',
+        opts:['Minimalist','Maximalist','Industrial','Rustic','Mid-century modern','Gothic','Cottagecore','Brutalist','Art nouveau','Retro & vintage','Coastal','Botanical','Geometric','Dark academia','Bohemian','Streetwear','Scandinavian','Wabi-sabi','Preppy','Craftcore'],
+        hasOther: true },
+      { id:'q43', type:'binary',
+        text:'Your ideal living space is…',
+        a:'Carefully curated — every object chosen with intention',
+        b:'Comfortable and lived-in — practical, personal, not too precious' },
+      { id:'q44', type:'binary',
+        text:'Color in your life…',
+        a:'I love bold, saturated color — it energizes and expresses me',
+        b:'I gravitate toward neutrals and muted tones — calm and consistent' },
+      { id:'q45', type:'multi', max:4,
+        text:'Which describe your personal aesthetic?',
+        hint:'Pick up to 4',
+        opts:['Classic and timeless','Eclectic and layered','Clean and modern','Warm and cozy','Bold and expressive','Natural and organic','Dark and moody','Playful and colorful','Refined and minimal','Handmade and textured','Adventurous and outdoorsy','Sharp and put-together'] },
+      { id:'q46', type:'binary',
+        text:'When it comes to clothing…',
+        a:'A few quality pieces I love and wear constantly',
+        b:'Variety — different looks, switching it up, seasonal updates' },
+      { id:'q47', type:'binary',
+        text:'Interior design and home spaces…',
+        a:'Genuinely interest me — I think about furniture, light, and arrangement',
+        b:'I care about comfort but not so much the aesthetics of a space' },
+      { id:'q48', type:'binary',
+        text:'If you had to choose, you would rather invest in…',
+        a:'A great experience — a trip, a concert, a meal out',
+        b:'A great object — something beautiful or useful you will have for years' },
+      { id:'q49', type:'binary',
+        text:'Sustainability and ethics in what you buy…',
+        a:'Matters to me — I actively factor it into purchasing decisions',
+        b:'I am aware of it but it is not a primary driver for me' },
+      { id:'q50', type:'text',
+        text:'Is there something you love that did not come up in this quiz?',
+        hint:'Optional — a hobby, object, place, interest, obsession… anything at all.',
+        placeholder:'Anything goes — big or small, weird or wonderful…' }
+    ]
+  }
+];
+
+let screen = 'intro';
+let sIdx = 0;
+const answers = {};
+let portraitText = '';
+let apiKey = '';
+
+// ─── RENDER ────────────────────────────────────────────────────────────────
+
+function render() {
+  const app = document.getElementById('app');
+  if (screen === 'intro')   app.innerHTML = renderIntro();
+  if (screen === 'quiz')    app.innerHTML = renderQuiz();
+  if (screen === 'loading') app.innerHTML = renderLoading();
+  if (screen === 'result')  app.innerHTML = renderResult();
+  if (screen === 'error')   app.innerHTML = renderError();
+  attachChipListeners();
+}
+
+function renderIntro() {
+  return `
+    <h1 class="intro-title">What Do You Like?</h1>
+    <p class="intro-sub">50 questions about what you enjoy — the things you own, make, do, watch, eat, and care about. At the end, an AI writes a portrait of your taste and interests.</p>
+    <div class="section-pills">
+      ${sections.map(s => `<span class="s-pill">${s.title}</span>`).join('')}
+    </div>
+    <p style="font-size:13px;color:#aaa;margin-bottom:24px;">Takes about 5–8 minutes &nbsp;·&nbsp; Tap to answer &nbsp;·&nbsp; One open-ended question at the end</p>
+    <div class="api-box">
+      <div class="api-label">Anthropic API Key</div>
+      <div class="api-note">Required to generate your portrait when running this file locally. Get one free at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>. Your key is never stored or sent anywhere except directly to Anthropic.</div>
+      <input type="password" id="api-key-input" placeholder="sk-ant-..." value="${apiKey}" oninput="apiKey=this.value" />
+    </div>
+    <button class="btn btn-dark" onclick="startQuiz()">Start →</button>
+  `;
+}
+
+function renderQuiz() {
+  const sec = sections[sIdx];
+  const totalQs = sections.reduce((a,s) => a + s.questions.length, 0);
+  const doneQs = sections.slice(0, sIdx).reduce((a,s) => a + s.questions.length, 0);
+  const pct = Math.round((doneQs / totalQs) * 100);
+  const qNum = doneQs + 1;
+  return `
+    <p class="progress-label">Section ${sIdx+1} of ${sections.length} &nbsp;·&nbsp; Q${qNum}–${qNum + sec.questions.length - 1} of ${totalQs}</p>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="section-header">
+      <div class="section-title">${sec.title}</div>
+      <div class="section-desc">${sec.desc}</div>
+    </div>
+    ${sec.questions.map((q, qi) => renderQuestion(q, doneQs + qi + 1)).join('')}
+    <div class="nav">
+      ${sIdx > 0 ? `<button class="btn btn-ghost" onclick="prevSection()">← Back</button>` : ''}
+      <div class="nav-right">
+        <button class="btn btn-dark" id="next-btn" onclick="nextSection()" ${canAdvance() ? '' : 'disabled'}>
+          ${sIdx === sections.length - 1 ? 'Generate My Portrait →' : 'Next →'}
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderQuestion(q, num) {
+  let body = '';
+  if (q.type === 'binary') body = renderBinary(q);
+  if (q.type === 'multi' || q.type === 'chips') body = renderChips(q);
+  if (q.type === 'text') body = renderText(q);
+  return `
+    <div class="question" id="wrap-${q.id}">
+      <div class="q-text"><span style="color:#bbb;font-weight:400;font-size:13px;margin-right:6px;">${num}.</span>${q.text}</div>
+      ${q.hint ? `<div class="q-hint">${q.hint}</div>` : ''}
+      ${body}
+    </div>
+  `;
+}
+
+function renderBinary(q) {
+  const val = answers[q.id];
+  return `<div class="binary">
+    <button class="bin-btn ${val === 'a' ? 'sel' : ''}" onclick="setAnswer('${q.id}','a')">${q.a}</button>
+    <button class="bin-btn ${val === 'b' ? 'sel' : ''}" onclick="setAnswer('${q.id}','b')">${q.b}</button>
+  </div>`;
+}
+
+// Chips use data attributes — no inline JSON, no quote conflicts
+function renderChips(q) {
+  const sel = answers[q.id] || [];
+  const max = q.max || 999;
+  const btns = q.opts.map(o => {
+    const isSel = sel.includes(o);
+    const isDim = !isSel && sel.length >= max;
+    const esc = o.replace(/"/g, '&quot;');
+    return `<button class="chip${isSel ? ' sel' : ''}${isDim ? ' dim' : ''}" data-qid="${q.id}" data-val="${esc}" data-max="${max}">${o}</button>`;
+  }).join('');
+  const otherVal = answers[q.id + '_other'] || '';
+  const otherField = q.hasOther
+    ? `<div style="width:100%;margin-top:10px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:#999;white-space:nowrap;">Other:</span>
+        <input type="text" placeholder="Anything not listed…" value="${otherVal.replace(/"/g,'&quot;')}"
+          style="flex:1;padding:7px 12px;border:1.5px solid #d8d5d0;border-radius:20px;font-size:13px;font-family:inherit;outline:none;background:#fff;"
+          oninput="answers['${q.id}_other']=this.value;updateNextBtn()"
+          onfocus="this.style.borderColor='#1a1a1a'" onblur="this.style.borderColor='#d8d5d0'" />
+      </div>`
+    : '';
+  return `<div class="chips">${btns}${otherField}</div>`;
+}
+
+function renderText(q) {
+  const val = answers[q.id] || '';
+  return `<textarea placeholder="${q.placeholder || ''}" oninput="answers['${q.id}']=this.value;updateNextBtn()">${val}</textarea>`;
+}
+
+function renderLoading() {
+  return `<div class="loading">
+    <div class="spinner"></div>
+    <p class="loading-text">Reading your answers and composing your portrait…</p>
+    <p style="font-size:13px;color:#bbb;margin-top:8px;">This takes about 15–20 seconds</p>
+  </div>`;
+}
+
+function buildTags() {
+  // Pull up to 12 highlights from chip/multi answers across all sections
+  const tags = [];
+  const colorClasses = ['c0','c1','c2','c3','c4','c5'];
+  sections.forEach(sec => {
+    sec.questions.forEach(q => {
+      if (q.type === 'chips' || q.type === 'multi') {
+        const sel = answers[q.id] || [];
+        sel.slice(0, 3).forEach(v => { if (tags.length < 14) tags.push(v); });
+        const other = answers[q.id + '_other'];
+        if (other && other.trim() && tags.length < 14) tags.push(other.trim());
+      }
+    });
+  });
+  // Shuffle a bit and cap
+  const shuffled = tags.sort(() => Math.random() - 0.5).slice(0, 12);
+  return shuffled.map((t, i) => `<span class="result-tag ${colorClasses[i % colorClasses.length]}">${t}</span>`).join('');
+}
+
+function renderResult() {
+  // Split portrait into paragraphs; last sentence of last paragraph becomes the closing pull-quote
+  const rawParas = portraitText.split(/\n+/).map(p => p.trim()).filter(Boolean);
+  let bodyParas = rawParas;
+  let closingLine = '';
+
+  // If last paragraph is short (a closing line), pull it out
+  const last = rawParas[rawParas.length - 1];
+  if (rawParas.length > 1 && last.split(' ').length < 40) {
+    bodyParas = rawParas.slice(0, -1);
+    closingLine = last;
+  } else {
+    // Otherwise grab the last sentence from the last paragraph
+    const sentences = last.match(/[^.!?]+[.!?]+/g) || [];
+    if (sentences.length > 1) {
+      closingLine = sentences[sentences.length - 1].trim();
+      const rest = last.slice(0, last.lastIndexOf(closingLine)).trim();
+      bodyParas = [...rawParas.slice(0, -1), rest].filter(Boolean);
+    }
+  }
+
+  const paraHTML = bodyParas.map((p, i) =>
+    `<p class="portrait-para">${p}</p>`
+  ).join('');
+
+  const tagHTML = buildTags();
+
+  return `
+    <div class="result-wrap">
+      <div class="result-hero">
+        <div class="result-eyebrow">Your Interest Portrait</div>
+        <div class="result-title">A Portrait of<br><em>Your Taste</em></div>
+        <div class="result-tagline">Based on 50 questions about what you like</div>
+        <div class="result-hero-deco"><span></span><span></span><span></span></div>
+      </div>
+      <div class="result-body">
+        ${tagHTML ? `<div class="result-tags-label">Things that caught your eye</div><div class="result-tags">${tagHTML}</div>` : ''}
+        <div class="result-divider"><span class="result-divider-icon">✦</span></div>
+        <div class="portrait-paragraphs">${paraHTML}</div>
+        ${closingLine ? `<div class="portrait-closing"><p>${closingLine}</p></div>` : ''}
+        <div class="copy-section">
+          <div class="copy-label">Copy your portrait</div>
+          <textarea class="copy-box" readonly onclick="this.select()">${portraitText}</textarea>
+          <div class="copy-row">
+            <button class="btn btn-dark" onclick="copyPortrait()">Copy to Clipboard</button>
+            <button class="btn btn-ghost" onclick="resetQuiz()">Start Over</button>
+          </div>
+          <p id="copy-confirm" style="font-size:13px;color:#4a9;margin-top:10px;display:none;">✓ Copied!</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderError() {
+  return `
+    <div class="error-box" id="err-msg">Something went wrong generating your portrait. Check that your API key is correct, then try again.</div>
+    <button class="btn btn-dark" onclick="retryPortrait()">Try Again</button>
+    <button class="btn btn-ghost" style="margin-left:10px;" onclick="resetQuiz()">Start Over</button>
+  `;
+}
+
+// ─── CHIP EVENT DELEGATION ─────────────────────────────────────────────────
+
+function attachChipListeners() {
+  document.querySelectorAll('.chips').forEach(container => {
+    container.addEventListener('click', function(e) {
+      const btn = e.target.closest('.chip');
+      if (!btn || btn.classList.contains('dim')) return;
+      const id = btn.dataset.qid;
+      const val = btn.dataset.val;
+      const max = parseInt(btn.dataset.max) || 999;
+      const sel = answers[id] || [];
+      const isSel = sel.includes(val);
+      if (!isSel && sel.length >= max) return;
+      answers[id] = isSel ? sel.filter(v => v !== val) : [...sel, val];
+      refreshChips(id);
+      updateNextBtn();
+    });
+  });
+}
+
+function refreshChips(id) {
+  const q = findQ(id);
+  const wrap = document.getElementById('wrap-' + id);
+  if (!q || !wrap) return;
+  const sel = answers[id] || [];
+  const max = q.max || 999;
+  wrap.querySelectorAll('.chip').forEach(btn => {
+    const v = btn.dataset.val;
+    const isSel = sel.includes(v);
+    const isDim = !isSel && sel.length >= max;
+    btn.classList.toggle('sel', isSel);
+    btn.classList.toggle('dim', isDim);
+  });
+}
+
+// ─── ACTIONS ───────────────────────────────────────────────────────────────
+
+function startQuiz() {
+  const inp = document.getElementById('api-key-input');
+  if (inp) apiKey = inp.value.trim();
+  screen = 'quiz'; sIdx = 0; render();
+}
+
+function resetQuiz() {
+  screen = 'intro'; sIdx = 0;
+  Object.keys(answers).forEach(k => delete answers[k]);
+  portraitText = '';
+  render();
+}
+
+function setAnswer(id, val) {
+  answers[id] = val;
+  document.querySelectorAll(`#wrap-${id} .bin-btn`).forEach((btn, i) => {
+    btn.classList.toggle('sel', (i === 0 && val === 'a') || (i === 1 && val === 'b'));
+  });
+  updateNextBtn();
+}
+
+function updateNextBtn() {
+  const btn = document.getElementById('next-btn');
+  if (btn) btn.disabled = !canAdvance();
+}
+
+function findQ(id) {
+  for (const sec of sections) {
+    const q = sec.questions.find(q => q.id === id);
+    if (q) return q;
+  }
+  return null;
+}
+
+function canAdvance() {
+  const sec = sections[sIdx];
+  return sec.questions.some(q => {
+    if (q.type === 'text') return true;
+    const a = answers[q.id];
+    if (!a) return false;
+    if (Array.isArray(a)) return a.length > 0;
+    return true;
+  });
+}
+
+function prevSection() { sIdx = Math.max(0, sIdx - 1); screen = 'quiz'; render(); window.scrollTo(0, 0); }
+
+function nextSection() {
+  if (sIdx < sections.length - 1) {
+    sIdx++; screen = 'quiz'; render(); window.scrollTo(0, 0);
+  } else {
+    screen = 'loading'; render(); generatePortrait();
+  }
+}
+
+function copyPortrait() {
+  navigator.clipboard.writeText(portraitText).then(() => {
+    const el = document.getElementById('copy-confirm');
+    if (el) { el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 2500); }
+  });
+}
+
+function retryPortrait() {
+  screen = 'loading'; render(); generatePortrait();
+}
+
+// ─── API ───────────────────────────────────────────────────────────────────
+
+function collectAnswers() {
+  const lines = [];
+  let num = 0;
+  sections.forEach(sec => {
+    lines.push('\n### ' + sec.title);
+    sec.questions.forEach(q => {
+      num++;
+      const a = answers[q.id];
+      const other = answers[q.id + '_other'];
+      const hasAny = (a && !(Array.isArray(a) && a.length === 0)) || (other && other.trim());
+      if (!hasAny) return;
+      let displayA = '';
+      if (q.type === 'binary') {
+        displayA = '[Direct preference] ' + (a === 'a' ? q.a : q.b);
+      } else if (Array.isArray(a)) {
+        const items = [...a];
+        if (other && other.trim()) items.push('Other: ' + other.trim());
+        displayA = '[Selected from list — indicates interest/resonance, not confirmed activity] ' + items.join(', ');
+      } else {
+        displayA = a || '';
+        if (other && other.trim()) displayA += (displayA ? '; ' : '') + 'Other: ' + other.trim();
+      }
+      lines.push('Q' + num + ': ' + q.text + '\nA: ' + displayA);
+    });
+  });
+  return lines.join('\n');
+}
+
+async function generatePortrait() {
+  const summary = collectAnswers();
+  const systemPrompt = `You are a thoughtful analyst writing an Interest Portrait — a flowing prose profile of someone based on their quiz responses. Your job is to find genuine patterns and connections across their answers, not to restate or summarize them.
+
+CRITICAL RULES:
+- Answers labeled [Direct preference] are clear statements the person made — you can be specific and confident about these.
+- Answers labeled [Selected from list] mean the person chose things that resonate with them. This could mean they do them, have tried them, or are drawn to them. DO NOT state these as confirmed facts or current activities. Instead, notice what the selections signal as a cluster — the type of person they suggest, the underlying pull or aesthetic, what the pattern reveals.
+- Make CONNECTIONS across categories — if someone selected pottery and weighted blankets and botanical aesthetics, that tells you something about a sensibility, not three separate facts. Name the thread.
+- Never say "you love X" or "you do X" based on a list selection. Instead use language like: "there's a pull toward...", "you seem drawn to...", "the through-line here is...", "what emerges is a person who...", "these choices suggest..."
+- If someone wrote something in an "Other" field, that is highly specific and personal — weight it accordingly.
+- Do not work through the quiz section by section. Find the interesting cross-category patterns and build the portrait around those.
+- Be warm, specific, and perceptive — not flattering or generic.`;
+
+  const userPrompt = `Write a flowing Interest Portrait for this person in 5–6 paragraphs of prose. No bullet points, headers, or lists.
+
+Find the threads that run across multiple categories — the underlying sensibility, the kind of world they seem to want to live in, the aesthetic or personality that shows up again and again. Close with one sentence that captures who they are as a person of taste and interest.
+
+Remember: [Direct preference] answers are confirmed. [Selected from list] answers signal resonance and attraction — interpret them as revealing a type, not a confirmed habit.
+
+Quiz responses:
+` + summary;
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'anthropic-version': '2023-06-01',
+    'anthropic-dangerous-direct-browser-access': 'true'
+  };
+  if (apiKey) headers['x-api-key'] = apiKey;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: userPrompt }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message || 'API error');
+    const text = (data.content || []).map(b => b.text || '').join('').trim();
+    if (!text) throw new Error('Empty response');
+    portraitText = text;
+    screen = 'result';
+    render();
+    window.scrollTo(0, 0);
+  } catch(e) {
+    console.error('Portrait generation error:', e);
+    screen = 'error';
+    render();
+    const errBox = document.getElementById('err-msg');
+    if (errBox) {
+      const msg = e.message || 'Unknown error';
+      const isFile = location.protocol === 'file:';
+      errBox.innerHTML = isFile
+        ? '<strong>File:// not supported.</strong> Chrome blocks API calls from local files. Serve this via a web server: run <code>python3 -m http.server 8080</code> in this folder, then open <strong>http://localhost:8080/interest-quiz-v2.html</strong>. Or host on GitHub Pages.'
+        : '<strong>API Error:</strong> ' + msg + '<br><br>Check that your API key is correct and has available credits.';
+    }
+  }
+}
+
+render();
+</script>
+</body>
+</html>
