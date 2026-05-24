@@ -1,4 +1,4 @@
-<!-- sanctuary-fixed v4 | updated: 2026-05-23 | float-apart reorder + drop-settle + glowing indicator -->
+<!-- sanctuary-fixed v8 | updated: 2026-05-23 | cursor ghost + lift animation + smooth collapse -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -125,8 +125,63 @@ body::before {
 .card.priority-nice { border-color:rgba(201,168,76,.5); background:rgba(201,168,76,.08); }
 .card.priority-want { border-color:rgba(210,100,60,.6); background:rgba(210,100,60,.1); box-shadow:0 0 10px rgba(210,100,60,.15); }
 .card.scheduled-in-bank { border-color:rgba(138,173,143,.35); }
-.card.sched { cursor:grab !important; }
-.card.sched:active { cursor:grabbing !important; }
+/* Dragging card collapses — siblings fill space. Ghost follows cursor separately. */
+.card.sched {
+  cursor: grab !important;
+  transition: height 0.18s cubic-bezier(.4,0,.2,1),
+              padding 0.18s cubic-bezier(.4,0,.2,1),
+              margin 0.18s cubic-bezier(.4,0,.2,1),
+              opacity 0.15s ease,
+              transform 0.14s cubic-bezier(.34,1.56,.64,1),
+              box-shadow 0.14s ease;
+  will-change: auto;
+  position: relative;
+}
+.card.sched:active { cursor: grabbing !important; }
+
+/* Step 1 — lift: card rises and tilts before collapsing */
+.card.sched.lifting {
+  transform: scale(1.05) rotate(-1.5deg) !important;
+  box-shadow: 0 14px 36px rgba(0,0,0,0.45), 0 0 0 1.5px rgba(201,168,76,0.55) !important;
+  opacity: 0.7 !important;
+  z-index: 50;
+}
+
+/* Step 2 — dragging: collapse to zero so siblings fill the gap */
+.card.sched.dragging {
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-width: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  transform: none !important;
+  pointer-events: none;
+}
+
+/* Cursor-following ghost */
+#cursor-ghost {
+  position: fixed;
+  pointer-events: none;
+  z-index: 99999;
+  opacity: 0.88;
+  transform: scale(1.04) rotate(-1.5deg);
+  box-shadow: 0 16px 44px rgba(0,0,0,0.5), 0 0 0 1.5px rgba(201,168,76,0.5);
+  border-radius: 12px;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  backdrop-filter: blur(6px);
+  background: rgba(45,74,50,0.92);
+}
+#cursor-ghost.ghost-exit {
+  opacity: 0 !important;
+  transform: scale(0.88) rotate(-2deg) !important;
+}
+
+/* Enable GPU compositing on siblings during active drag */
+.drop-zone.is-dragging .sched:not(.dragging) {
+  will-change: transform;
+}
 
 /* Top row: emoji + text */
 .card-top { display:flex; align-items:center; gap:.5rem; min-width:0; }
@@ -662,7 +717,8 @@ function renderSchedule(){
   }
   attachSchedDrag();
   attachSchedListeners();
-  attachScrollReveal();
+  // NOTE: attachScrollReveal() is intentionally NOT called here.
+  // It's only called from scheduleToDay() so reordering never triggers fade-in.
 }
 
 function renderAll(){ renderBank(); renderSchedule(); }
@@ -789,17 +845,22 @@ function scheduleToDay(day){
     closeOverlay('pickerOverlay');
     pendingId = null;
     saveState(); renderAll();
+    attachScrollReveal(); // only new additions get the reveal
     showToast(`"${name}" added ✦`);
   }, 320);
 }
 function clearDay(day){ schedule[day]=[]; saveState(); renderAll(); }
 
-// ═══════════ DRAG TO REORDER (float-apart + indicator) ═══════════
-let cachedRects    = [];
-let rafPending     = false;
-let dragHeight     = 0;
-let currentInsIdx  = -1;
-let dropIndicator  = null;
+// ═══════════ DRAG TO REORDER ═══════════
+let cachedRects   = [];
+let rafPending    = false;
+let dragHeight    = 0;
+let currentInsIdx = -1;
+let dropIndicator = null;
+
+// Transparent 1×1 GIF — hides the browser's built-in drag ghost
+const GHOST_IMG = new Image();
+GHOST_IMG.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
 function buildRectCache(zone){
   cachedRects = [...zone.querySelectorAll('.sched:not(.dragging)')].map(el=>{
@@ -825,20 +886,16 @@ function updateFloatApart(zone, clientY){
   const cards = [...zone.querySelectorAll('.sched:not(.dragging)')];
   if(!cards.length){ removeIndicator(); return; }
 
-  // Find insertion index — first card whose midpoint is below cursor
   let newIdx = cards.length;
-  for(let i=0; i<cards.length; i++){
-    const r = cachedRects.find(x=>x.el===cards[i]);
-    if(r && clientY < r.top + r.height/2){ newIdx = i; break; }
+  for(let i = 0; i < cards.length; i++){
+    const r = cachedRects.find(x => x.el === cards[i]);
+    if(r && clientY < r.top + r.height / 2){ newIdx = i; break; }
   }
-
-  if(newIdx === currentInsIdx) return; // nothing changed, skip work
+  if(newIdx === currentInsIdx) return;
   currentInsIdx = newIdx;
 
   const shift = dragHeight + 8;
-
-  // Shift cards below insertion point down
-  cards.forEach((el,i)=>{
+  cards.forEach((el, i)=>{
     if(i >= newIdx){
       el.style.setProperty('--shift-amount', shift + 'px');
       el.classList.add('shift-down');
@@ -850,32 +907,29 @@ function updateFloatApart(zone, clientY){
   // Position the glowing indicator line
   const ind      = getOrCreateIndicator();
   const zoneRect = zone.getBoundingClientRect();
-  let   lineY;
-
+  let lineY;
   if(newIdx === 0){
-    const first = cachedRects[0];
-    lineY = first ? first.top - 5 : zoneRect.top + 10;
+    lineY = (cachedRects[0]?.top ?? zoneRect.top + 10) - 5;
   } else if(newIdx >= cards.length){
-    const last = cachedRects[cachedRects.length-1];
+    const last = cachedRects[cachedRects.length - 1];
     lineY = last ? last.top + last.height + 5 : zoneRect.bottom - 10;
   } else {
-    const above = cachedRects.find(x=>x.el===cards[newIdx-1]);
-    const below = cachedRects.find(x=>x.el===cards[newIdx]);
-    lineY = (above && below)
-      ? above.top + above.height + (below.top - above.top - above.height)/2
+    const above = cachedRects.find(x => x.el === cards[newIdx - 1]);
+    const below = cachedRects.find(x => x.el === cards[newIdx]);
+    lineY = above && below
+      ? above.top + above.height + (below.top - above.top - above.height) / 2
       : clientY;
   }
-
-  ind.style.left   = (zoneRect.left + 6)  + 'px';
-  ind.style.right  = (window.innerWidth - zoneRect.right + 6) + 'px';
-  ind.style.top    = lineY + 'px';
-  ind.style.width  = '';
+  ind.style.left  = (zoneRect.left + 6) + 'px';
+  ind.style.right = (window.innerWidth - zoneRect.right + 6) + 'px';
+  ind.style.top   = lineY + 'px';
+  ind.style.width = '';
 }
 
 function clearFloatApart(){
   document.querySelectorAll('.drop-zone').forEach(zone=>{
-    zone.classList.remove('drag-over');
-    zone.querySelectorAll('.sched').forEach(el=>el.classList.remove('shift-down'));
+    zone.classList.remove('drag-over', 'is-dragging');
+    zone.querySelectorAll('.sched').forEach(el=> el.classList.remove('shift-down'));
   });
   removeIndicator();
   currentInsIdx = -1;
@@ -887,17 +941,56 @@ function attachSchedDrag(){
       dragId     = el.dataset.id;
       dragDay    = el.closest('.drop-zone').dataset.day;
       dragHeight = el.getBoundingClientRect().height;
-      el.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
-      buildRectCache(el.closest('.drop-zone'));
-      currentInsIdx = -1;
+      e.dataTransfer.setDragImage(GHOST_IMG, 0, 0);
+
+      const zone = el.closest('.drop-zone');
+      zone.classList.add('is-dragging');
+
+      // Step 1 — lift: card rises and tilts for a beat
+      el.classList.add('lifting');
+
+      // Create a ghost clone that follows the cursor
+      const ghost = el.cloneNode(true);
+      ghost.id = 'cursor-ghost';
+      ghost.style.width  = el.offsetWidth  + 'px';
+      ghost.style.height = el.offsetHeight + 'px';
+      ghost.style.left   = (e.clientX - 20) + 'px';
+      ghost.style.top    = (e.clientY - el.offsetHeight / 2) + 'px';
+      document.body.appendChild(ghost);
+
+      // Step 2 — after lift, collapse original so siblings smoothly fill the gap
+      setTimeout(()=>{
+        el.classList.remove('lifting');
+        el.classList.add('dragging');
+        requestAnimationFrame(()=>{
+          buildRectCache(zone);
+          currentInsIdx = -1;
+        });
+      }, 160);
     });
+
+    el.addEventListener('drag', e=>{
+      if(!e.clientX && !e.clientY) return; // browser fires 0,0 on final drop event
+      const ghost = document.getElementById('cursor-ghost');
+      if(ghost){
+        ghost.style.left = (e.clientX - 20) + 'px';
+        ghost.style.top  = (e.clientY - parseInt(ghost.style.height) / 2) + 'px';
+      }
+    });
+
     el.addEventListener('dragend', ()=>{
-      el.classList.remove('dragging');
+      const ghost = document.getElementById('cursor-ghost');
+      if(ghost){
+        ghost.classList.add('ghost-exit');
+        setTimeout(()=> ghost.remove(), 160);
+      }
+      el.classList.remove('dragging', 'lifting');
       clearFloatApart();
       dragId = dragDay = null;
-      cachedRects = [];
-      rafPending  = false;
+      cachedRects   = [];
+      rafPending    = false;
+      currentInsIdx = -1;
     });
   });
 
@@ -905,6 +998,7 @@ function attachSchedDrag(){
     zone.addEventListener('dragover', e=>{
       e.preventDefault();
       zone.classList.add('drag-over');
+      // Fallback: build cache if the two-frame delay hasn't fired yet
       if(!cachedRects.length) buildRectCache(zone);
       if(!rafPending){
         rafPending = true;
@@ -915,35 +1009,45 @@ function attachSchedDrag(){
         });
       }
     });
+
     zone.addEventListener('dragleave', e=>{
-      // Only clear if truly leaving the zone (not entering a child)
       if(!zone.contains(e.relatedTarget)){
         zone.classList.remove('drag-over');
-        zone.querySelectorAll('.sched').forEach(el=>el.classList.remove('shift-down'));
+        zone.querySelectorAll('.sched').forEach(el=> el.classList.remove('shift-down'));
         removeIndicator();
         currentInsIdx = -1;
       }
     });
+
     zone.addEventListener('drop', e=>{
       e.preventDefault();
       if(!dragId || !dragDay){ clearFloatApart(); return; }
 
-      const td  = zone.dataset.day;
-      const ins = currentInsIdx >= 0 ? currentInsIdx : schedule[td].length;
+      const td = zone.dataset.day;
 
-      // Remove from source day
-      schedule[dragDay] = schedule[dragDay].filter(id=>id!==dragId);
+      // Remove shifts so cards are at true natural positions before measuring
+      zone.querySelectorAll('.sched').forEach(el=> el.classList.remove('shift-down'));
+      removeIndicator();
 
-      // If same day and removing an earlier card shifts our target index
-      const finalIdx = Math.min(ins, schedule[td].length);
-      schedule[td].splice(finalIdx, 0, dragId);
+      // Live measurement — accurate no matter how many reorders have happened
+      const cards = [...zone.querySelectorAll('.sched:not(.dragging)')];
+      let syncIdx = cards.length;
+      for(let i = 0; i < cards.length; i++){
+        const r = cards[i].getBoundingClientRect();
+        if(e.clientY < r.top + r.height / 2){ syncIdx = i; break; }
+      }
 
+      const srcDay = dragDay;
+      schedule[srcDay] = schedule[srcDay].filter(id=> id !== dragId);
+      schedule[td].splice(Math.min(syncIdx, schedule[td].length), 0, dragId);
+
+      const landedId = dragId;
       clearFloatApart();
-      cachedRects = [];
+      cachedRects   = [];
       currentInsIdx = -1;
       saveState();
       renderAll();
-      dropSettleCard(dragId);
+      dropSettleCard(landedId);
     });
   });
 }
@@ -952,9 +1056,9 @@ function dropSettleCard(cardId){
   const el = document.querySelector(`.drop-zone .sched[data-id="${cardId}"]`);
   if(!el) return;
   el.classList.remove('drop-settle');
-  void el.offsetWidth; // force reflow
+  void el.offsetWidth;
   el.classList.add('drop-settle');
-  el.addEventListener('animationend', ()=>el.classList.remove('drop-settle'), {once:true});
+  el.addEventListener('animationend', ()=> el.classList.remove('drop-settle'), {once:true});
 }
 
 // ═══════════ ADD CUSTOM ═══════════
