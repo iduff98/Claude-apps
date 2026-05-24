@@ -1,0 +1,781 @@
+<!-- v1.2.0 — Zack's Field Guide to Good Things | Sections + Edit/Add/Delete + localStorage + PWA -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2C5F2E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Field Guide">
+  <title>Zack — Interest Compendium</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --g900: #182E19; --g700: #2C5F2E; --g600: #336B35; --g500: #3E7D41;
+      --g300: #6FAB78; --g100: #D3EBCD; --g50: #EDF5EE;
+      --cream: #FAF8F3; --white: #FFFFFF;
+      --k900: #1A1A1A; --k700: #4A4A4A; --k500: #808080; --k300: #C8C4BC; --k100: #F0EDEA;
+      --gold: #B8922A; --goldl: #FBF3DC; --gold-border: #E2CC80;
+      --rust: #9E3E28; --rustl: #FAF0EC; --rust-border: #DDB09E;
+      --violet: #5B4A8E; --violl: #F3F0FA;
+      --shadow-sm: 0 1px 4px rgba(28,40,28,.07), 0 2px 10px rgba(28,40,28,.05);
+      --shadow-md: 0 4px 16px rgba(28,40,28,.10), 0 8px 28px rgba(28,40,28,.07);
+    }
+
+    body { font-family: 'Jost', sans-serif; background: var(--cream); color: var(--k900); min-height: 100vh; }
+
+    /* ── HEADER ── */
+    .header { background: var(--g700); padding: 52px 48px 44px; position: relative; overflow: hidden; }
+    .hd { position: absolute; border-radius: 50%; opacity: .18; background: var(--g500); }
+    .hd.a { width:320px; height:320px; top:-100px; right:-60px; }
+    .hd.b { width:160px; height:160px; bottom:-60px; right:200px; background:var(--g900); opacity:.35; }
+    .hd.c { width:80px;  height:80px;  top:20px; right:260px; opacity:.12; }
+    .header-inner { max-width:1140px; margin:0 auto; position:relative; z-index:1; }
+    .eyebrow { font-size:10px; font-weight:600; letter-spacing:3.5px; text-transform:uppercase; color:var(--g300); margin-bottom:12px; }
+    h1 { font-family:'Cormorant Garamond',serif; font-size:54px; font-weight:500; line-height:1.08; color:var(--white); margin-bottom:14px; }
+    h1 em { font-style:italic; color:var(--g300); }
+    .header-sub { font-size:13px; font-weight:300; letter-spacing:.4px; color:rgba(255,255,255,.62); max-width:480px; }
+
+    /* ── MAIN ── */
+    .main { max-width:1140px; margin:0 auto; padding:44px 48px 120px; }
+    .section-row { display:flex; align-items:baseline; gap:14px; margin-bottom:20px; }
+    .section-title { font-family:'Cormorant Garamond',serif; font-size:30px; font-weight:500; color:var(--g700); }
+    .section-meta { font-size:11px; color:var(--k500); letter-spacing:.4px; }
+
+    /* ── FILTER BAR ── */
+    .filter-bar { display:flex; gap:7px; flex-wrap:wrap; margin-bottom:10px; }
+    .pill { font-family:'Jost'; font-size:11.5px; font-weight:600; letter-spacing:.5px; padding:7px 16px; border-radius:100px; border:1.5px solid var(--k300); background:var(--white); color:var(--k700); cursor:pointer; transition:all .17s; white-space:nowrap; }
+    .pill:hover { border-color:var(--g500); color:var(--g700); }
+    .pill.active { background:var(--g700); border-color:var(--g700); color:var(--white); }
+    .pill[data-filter="newtotry"].active { background:#8B6914; border-color:#8B6914; }
+    .pill[data-filter="dadhouse"].active { background:var(--rust); border-color:var(--rust); }
+
+    /* ── SORT ROW ── */
+    .sort-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+    .sort-label { font-size:11px; color:var(--k500); letter-spacing:.4px; display:flex; align-items:center; gap:5px; }
+    .sort-label::before { content:'↑'; color:var(--g500); font-weight:700; }
+    .count-label { font-size:11px; color:var(--k500); }
+    .count-label span { color:var(--g600); font-weight:600; }
+
+    /* ── LEGEND ── */
+    .legend { display:flex; gap:20px; flex-wrap:wrap; background:var(--white); border-radius:8px; padding:12px 18px; margin-bottom:36px; box-shadow:var(--shadow-sm); font-size:11px; color:var(--k500); }
+    .legend-item { display:flex; align-items:center; gap:7px; }
+    .leg-dots { display:flex; gap:2px; }
+
+    /* ── SECTION BLOCK (all view) ── */
+    .section-block { margin-bottom:52px; }
+    .section-hdr { display:flex; align-items:center; gap:10px; margin-bottom:16px; padding-bottom:13px; border-bottom:2px solid var(--k100); }
+    .sec-icon { font-size:19px; line-height:1; }
+    .sec-name { font-family:'Cormorant Garamond',serif; font-size:27px; font-weight:500; color:var(--k900); }
+    .sec-count { font-size:10.5px; color:var(--k500); letter-spacing:.4px; }
+
+    /* ── CARD GRID ── */
+    .card-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px; }
+
+    /* ── CARD ── */
+    .card {
+      background:var(--white); border-radius:10px; padding:20px 20px 18px 22px;
+      box-shadow:var(--shadow-sm); border-left:3px solid var(--g300);
+      transition:box-shadow .2s, transform .2s, border-color .2s;
+      position:relative; animation:rise .28s ease both;
+    }
+    .card:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); border-left-color:var(--g600); }
+    .card.cnew    { border-left-color:var(--gold-border); }
+    .card.cnew:hover  { border-left-color:var(--gold); }
+    .card.cdad    { border-left-color:var(--rust-border); }
+    .card.cdad:hover  { border-left-color:var(--rust); }
+    .card.cdormant { border-left-color:#C2B8E8; }
+    .card.cdormant:hover { border-left-color:var(--violet); }
+    @keyframes rise { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── CARD EDIT / DELETE BUTTONS ── */
+    .card-actions { position:absolute; top:10px; right:11px; display:flex; gap:5px; z-index:2; }
+    .act-btn {
+      width:26px; height:26px; border-radius:5px; border:1px solid var(--k300);
+      background:var(--white); cursor:pointer; display:flex; align-items:center;
+      justify-content:center; font-size:11px; color:var(--k500);
+      transition:all .15s; opacity:.25;
+    }
+    .card:hover .act-btn { opacity:1; }
+    @media (hover:none) { .act-btn { opacity:.65; } }
+    .act-btn:hover { border-color:var(--k700); color:var(--k900); }
+    .act-btn.del:hover { border-color:var(--rust); color:var(--rust); background:var(--rustl); }
+
+    /* ── CONFIRM DELETE OVERLAY ── */
+    .confirm-overlay {
+      position:absolute; inset:0; background:rgba(255,255,255,.97);
+      border-radius:9px; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:14px;
+      opacity:0; pointer-events:none; transition:opacity .15s; z-index:10;
+    }
+    .card[data-confirming] .confirm-overlay { opacity:1; pointer-events:all; }
+    .confirm-msg { font-size:13px; color:var(--k700); font-weight:500; text-align:center; padding:0 20px; line-height:1.5; }
+    .confirm-btns { display:flex; gap:8px; }
+    .confirm-btn { padding:8px 18px; border-radius:5px; border:1.5px solid; font-family:'Jost'; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; }
+    .confirm-yes { background:var(--rust); border-color:var(--rust); color:#fff; }
+    .confirm-yes:hover { background:#7d3120; }
+    .confirm-no  { background:var(--white); border-color:var(--k300); color:var(--k700); }
+    .confirm-no:hover { border-color:var(--k700); }
+
+    /* ── CARD CONTENT ── */
+    .card-badges { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:11px; padding-right:62px; }
+    .badge { font-size:9.5px; font-weight:700; letter-spacing:.9px; text-transform:uppercase; padding:3px 8px; border-radius:4px; border:1px solid transparent; }
+    .badge-time    { background:var(--g50);   color:var(--g700);  border-color:var(--g100); }
+    .badge-new     { background:var(--goldl); color:#7A5A10;      border-color:var(--gold-border); }
+    .badge-dad     { background:var(--rustl); color:var(--rust);  border-color:var(--rust-border); }
+    .badge-revisit { background:var(--violl); color:var(--violet); border-color:#C2B8E8; }
+    .card-name { font-weight:600; font-size:14.5px; line-height:1.3; color:var(--k900); margin-bottom:7px; }
+    .card-desc { font-size:12.5px; font-weight:300; line-height:1.65; color:var(--k700); margin-bottom:14px; }
+    .card-note { font-size:11px; font-style:italic; color:var(--violet); margin-bottom:12px; }
+    .card-footer { display:flex; align-items:center; gap:12px; padding-top:13px; border-top:1px solid var(--k100); flex-wrap:wrap; }
+    .metric { display:flex; flex-direction:column; gap:5px; flex-shrink:0; }
+    .metric-lbl { font-size:8.5px; text-transform:uppercase; letter-spacing:1.2px; font-weight:600; color:var(--k500); }
+    .metric-val { display:flex; gap:3px; align-items:center; }
+    .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .dot.on  { background:var(--g500); }
+    .dot.off { background:var(--k100); border:1px solid var(--k300); }
+    .dollar { font-size:11.5px; font-weight:700; line-height:1; }
+    .dollar.on  { color:var(--k900); }
+    .dollar.off { color:var(--k300); }
+    .spacer { flex:1; }
+    .sec-tag { font-size:9.5px; font-weight:600; letter-spacing:.3px; padding:3px 8px; border-radius:3px; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state { grid-column:1/-1; text-align:center; padding:56px 20px; color:var(--k500); font-size:14px; }
+
+    /* ── LIFESTYLE DIVIDER ── */
+    .divider { display:flex; align-items:center; gap:18px; margin:12px 0 38px; }
+    .div-line { flex:1; height:1px; background:var(--k300); }
+    .div-label { font-family:'Cormorant Garamond',serif; font-size:14px; font-style:italic; color:var(--k500); letter-spacing:.8px; }
+
+    /* ── LIFESTYLE GRID ── */
+    .life-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px; }
+    .life-card { background:var(--white); border-radius:10px; padding:24px 22px; box-shadow:var(--shadow-sm); }
+    .life-icon { font-size:22px; margin-bottom:10px; }
+    .life-title { font-family:'Cormorant Garamond',serif; font-size:21px; font-weight:500; color:var(--g700); margin-bottom:10px; }
+    .life-body { font-size:12.5px; font-weight:300; line-height:1.72; color:var(--k700); }
+    .life-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:14px; }
+    .life-tag { font-size:10.5px; font-weight:500; padding:4px 10px; background:var(--g50); color:var(--g700); border:1px solid var(--g100); border-radius:4px; }
+
+    /* ── FAB ── */
+    .fab {
+      position:fixed; bottom:28px; right:28px; width:54px; height:54px;
+      border-radius:50%; background:var(--g700); color:var(--white); border:none;
+      font-size:26px; line-height:1; cursor:pointer; box-shadow:var(--shadow-md);
+      display:flex; align-items:center; justify-content:center; z-index:200;
+      transition:background .15s, transform .15s;
+    }
+    .fab:hover { background:var(--g900); transform:scale(1.07); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(24,46,25,.52); z-index:1000;
+      display:flex; align-items:center; justify-content:center; padding:20px;
+      opacity:0; pointer-events:none; transition:opacity .2s;
+    }
+    .modal-overlay.open { opacity:1; pointer-events:all; }
+    .modal {
+      background:var(--white); border-radius:12px; width:100%; max-width:560px;
+      max-height:92vh; overflow-y:auto; padding:32px;
+      box-shadow:0 24px 64px rgba(0,0,0,.22);
+      transform:translateY(22px); transition:transform .22s;
+    }
+    .modal-overlay.open .modal { transform:translateY(0); }
+    .modal-title { font-family:'Cormorant Garamond',serif; font-size:28px; font-weight:500; color:var(--k900); margin-bottom:26px; }
+
+    /* MODAL FIELDS */
+    .field { margin-bottom:18px; }
+    .field label { display:block; font-size:10.5px; font-weight:600; letter-spacing:.9px; text-transform:uppercase; color:var(--k500); margin-bottom:7px; }
+    .field input, .field select, .field textarea {
+      width:100%; padding:10px 12px; border:1.5px solid var(--k300); border-radius:6px;
+      font-family:'Jost'; font-size:13.5px; color:var(--k900); background:var(--white);
+      transition:border-color .15s, box-shadow .15s; outline:none; -webkit-appearance:none;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      border-color:var(--g500); box-shadow:0 0 0 3px rgba(62,125,65,.12);
+    }
+    .field input.err, .field textarea.err { border-color:#C0392B; }
+    .field textarea { resize:vertical; min-height:82px; line-height:1.6; }
+    .field-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .field-hint { font-size:10.5px; color:var(--k500); margin-top:5px; }
+
+    /* PICKERS */
+    .picker { display:flex; gap:6px; flex-wrap:wrap; }
+    .picker-btn {
+      width:38px; height:38px; border-radius:6px; border:1.5px solid var(--k300);
+      background:var(--white); font-size:12.5px; font-weight:600; color:var(--k700);
+      cursor:pointer; transition:all .15s; display:flex; align-items:center;
+      justify-content:center; font-family:'Jost';
+    }
+    .picker-btn:hover { border-color:var(--g500); color:var(--g600); }
+    .picker-btn.active { background:var(--g700); border-color:var(--g700); color:var(--white); }
+
+    /* TOGGLES */
+    .toggle-row { display:flex; flex-direction:column; gap:10px; }
+    .toggle-item { display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+    .toggle-item input[type=checkbox] { width:15px; height:15px; accent-color:var(--g600); cursor:pointer; flex-shrink:0; }
+    .toggle-item span { font-size:13px; color:var(--k700); }
+
+    /* MODAL ACTIONS */
+    .modal-actions { display:flex; gap:10px; margin-top:28px; padding-top:20px; border-top:1px solid var(--k100); }
+    .btn-save { flex:1; padding:12px; background:var(--g700); color:var(--white); border:none; border-radius:6px; font-family:'Jost'; font-size:13px; font-weight:600; cursor:pointer; transition:background .15s; }
+    .btn-save:hover { background:var(--g900); }
+    .btn-cancel { padding:12px 20px; background:var(--white); color:var(--k700); border:1.5px solid var(--k300); border-radius:6px; font-family:'Jost'; font-size:13px; font-weight:600; cursor:pointer; transition:border-color .15s; }
+    .btn-cancel:hover { border-color:var(--k700); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width:680px) {
+      .header { padding:36px 24px 32px; }
+      h1 { font-size:38px; }
+      .main { padding:32px 20px 100px; }
+      .card-grid { grid-template-columns:1fr; }
+      .life-grid  { grid-template-columns:1fr; }
+      .legend { gap:14px; }
+      .field-row { grid-template-columns:1fr; }
+      .fab { bottom:20px; right:20px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="hd a"></div><div class="hd b"></div><div class="hd c"></div>
+  <div class="header-inner">
+    <div class="eyebrow">Personal Interest Compendium</div>
+    <h1>Zack's <em>Field Guide</em><br>to Good Things</h1>
+    <p class="header-sub">Curated interests, hobbies, and pursuits — rated by effort and cost, sorted by what they ask of your time.</p>
+  </div>
+</header>
+
+<main class="main">
+
+  <div class="section-row">
+    <h2 class="section-title">Interests &amp; Activities</h2>
+  </div>
+
+  <div class="filter-bar" id="filterBar">
+    <button class="pill active" data-filter="all">All</button>
+    <button class="pill" data-filter="media">🎬 Media</button>
+    <button class="pill" data-filter="games">🎲 Games</button>
+    <button class="pill" data-filter="outdoors">🌲 Outdoors</button>
+    <button class="pill" data-filter="creative">✏️ Creative</button>
+    <button class="pill" data-filter="newtotry">✦ New to Try</button>
+    <button class="pill" data-filter="dadhouse">🏡 Dad House</button>
+  </div>
+
+  <div class="sort-row">
+    <div class="sort-label">Sorted by time needed — shortest first</div>
+    <div class="count-label">Showing <span id="countDisplay">0</span> interests</div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="leg-dots">
+        <div class="dot on"></div><div class="dot on"></div><div class="dot on"></div><div class="dot off"></div><div class="dot off"></div>
+      </div>
+      <span>Effort (1–5)</span>
+    </div>
+    <div class="legend-item">
+      <span style="font-weight:700;font-size:12px;color:var(--k900)">$&thinsp;$</span>
+      <span style="font-size:12px;color:var(--k300);font-weight:700">$&thinsp;$</span>
+      <span>&ensp;Cost (1–4)</span>
+    </div>
+    <div class="legend-item"><span class="badge badge-new" style="font-size:9px">✦ New to Try</span></div>
+    <div class="legend-item"><span class="badge badge-dad" style="font-size:9px">🏡 Dad House</span></div>
+    <div class="legend-item"><span class="badge badge-revisit" style="font-size:9px">◎ Revisit</span></div>
+  </div>
+
+  <div id="cardArea"></div>
+
+  <div class="divider">
+    <div class="div-line"></div>
+    <div class="div-label">beyond activities</div>
+    <div class="div-line"></div>
+  </div>
+
+  <div class="section-row">
+    <h2 class="section-title">Lifestyle &amp; Tastes</h2>
+    <span class="section-meta">non-activity interests</span>
+  </div>
+
+  <div class="life-grid">
+    <div class="life-card">
+      <div class="life-icon">🍕</div>
+      <div class="life-title">Favorite Foods</div>
+      <div class="life-body">Not a cook — but a dedicated appreciator with strong opinions about what tastes right. Comfort food with conviction.</div>
+      <div class="life-tags">
+        <span class="life-tag">Pizza</span><span class="life-tag">Parfaits</span>
+        <span class="life-tag">Fried Rice</span><span class="life-tag">Fried Noodles</span>
+        <span class="life-tag">Chicken &amp; Broccoli</span><span class="life-tag">White Rice</span>
+      </div>
+    </div>
+    <div class="life-card">
+      <div class="life-icon">🐾</div>
+      <div class="life-title">The Sheepadoodle</div>
+      <div class="life-body">A big fluffy presence who deserves good care, good walks, and someone who takes it seriously. Non-negotiable part of any home setup.</div>
+      <div class="life-tags">
+        <span class="life-tag">Daily walks</span><span class="life-tag">Grooming routine</span>
+        <span class="life-tag">Enrichment</span><span class="life-tag">Trail buddy</span>
+      </div>
+    </div>
+    <div class="life-card">
+      <div class="life-icon">🔧</div>
+      <div class="life-title">The Quality Standard</div>
+      <div class="life-body">Researches before buying. Fixes before replacing. The wrong thing feels like noise. The right thing just works — quietly, reliably, for a long time.</div>
+      <div class="life-tags">
+        <span class="life-tag">Deliberate buying</span><span class="life-tag">Repair ethos</span>
+        <span class="life-tag">Gear research</span><span class="life-tag">High standards</span>
+      </div>
+    </div>
+    <div class="life-card">
+      <div class="life-icon">🍜</div>
+      <div class="life-title">Food Exploration</div>
+      <div class="life-body">The pleasure is in finding the good spots, knowing what's worth ordering, and having clear — and defended — opinions about it.</div>
+      <div class="life-tags">
+        <span class="life-tag">Restaurant finding</span><span class="life-tag">Pizza rankings</span>
+        <span class="life-tag">Takeout curation</span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- FAB -->
+<button class="fab" id="fabBtn" title="Add new interest">+</button>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-title" id="modalTitle">Add Interest</div>
+
+    <div class="field">
+      <label>Name *</label>
+      <input type="text" id="fName" placeholder="e.g. Nature Photography">
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Section *</label>
+        <select id="fSection">
+          <option value="media">🎬 Media &amp; Analysis</option>
+          <option value="games">🎲 Games &amp; Play</option>
+          <option value="outdoors">🌲 Outdoors &amp; Adventure</option>
+          <option value="creative">✏️ Creative</option>
+          <option value="dadhouse">🏡 Dad House</option>
+          <option value="newtotry">✦ New to Try</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Time Display *</label>
+        <input type="text" id="fTimeLabel" placeholder="e.g. ~30 min">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Sort Minutes *</label>
+      <input type="number" id="fTimeMin" placeholder="e.g. 30" min="1">
+      <div class="field-hint">Used for card ordering — enter total minutes (120 = 2 hrs)</div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Effort (1–5)</label>
+        <div class="picker" id="effortPicker">
+          <button class="picker-btn" data-val="1">1</button>
+          <button class="picker-btn" data-val="2">2</button>
+          <button class="picker-btn" data-val="3">3</button>
+          <button class="picker-btn" data-val="4">4</button>
+          <button class="picker-btn" data-val="5">5</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Cost (1–4)</label>
+        <div class="picker" id="costPicker">
+          <button class="picker-btn" data-val="1">1</button>
+          <button class="picker-btn" data-val="2">2</button>
+          <button class="picker-btn" data-val="3">3</button>
+          <button class="picker-btn" data-val="4">4</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Description *</label>
+      <textarea id="fDesc" placeholder="What is this interest and why does it fit?"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Note <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+      <textarea id="fNote" placeholder="Personal note or context..." style="min-height:58px"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Tags</label>
+      <div class="toggle-row">
+        <label class="toggle-item">
+          <input type="checkbox" id="fNew">
+          <span>✦ New to Try — suggested based on other interests</span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" id="fDad">
+          <span>🏡 Dad House Pick — better with dedicated space</span>
+        </label>
+        <label class="toggle-item">
+          <input type="checkbox" id="fDormant">
+          <span>◎ Dormant / Revisit — talent or interest on pause</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-cancel" id="cancelBtn">Cancel</button>
+      <button class="btn-save" id="saveBtn">Save Interest</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── PWA SETUP ──────────────────────────────────────────────────────────────
+(function setupPWA() {
+  const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="36" fill="#2C5F2E"/><rect x="36" y="54" width="120" height="15" rx="7.5" fill="#D3EBCD"/><rect x="36" y="88" width="90" height="15" rx="7.5" fill="#D3EBCD"/><rect x="36" y="122" width="105" height="15" rx="7.5" fill="#D3EBCD"/></svg>`;
+  const iconUri = 'data:image/svg+xml,' + encodeURIComponent(iconSvg);
+
+  const manifest = {
+    name: "Zack's Field Guide",
+    short_name: "Field Guide",
+    description: "Zack's personal interest & hobby compendium",
+    start_url: window.location.href,
+    display: "standalone",
+    background_color: "#FAF8F3",
+    theme_color: "#2C5F2E",
+    icons: [
+      { src: iconUri, sizes: "192x192", type: "image/svg+xml" },
+      { src: iconUri, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+    ]
+  };
+  try {
+    const mBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+    const mLink = document.createElement('link');
+    mLink.rel = 'manifest';
+    mLink.href = URL.createObjectURL(mBlob);
+    document.head.appendChild(mLink);
+    const iLink = document.createElement('link');
+    iLink.rel = 'apple-touch-icon';
+    iLink.href = iconUri;
+    document.head.appendChild(iLink);
+  } catch(e) {}
+
+  if ('serviceWorker' in navigator) {
+    const sw = `
+      const CACHE='zack-field-guide-v1.2';
+      self.addEventListener('install',()=>self.skipWaiting());
+      self.addEventListener('activate',e=>e.waitUntil(clients.claim()));
+      self.addEventListener('fetch',e=>{
+        e.respondWith(
+          caches.open(CACHE).then(c=>
+            c.match(e.request).then(r=>r||fetch(e.request).then(res=>{
+              c.put(e.request,res.clone());return res;
+            }))
+          ).catch(()=>new Response('',{status:408}))
+        );
+      });
+    `;
+    try {
+      const swBlob = new Blob([sw], { type: 'application/javascript' });
+      navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+    } catch(e) {}
+  }
+})();
+
+// ── SECTION DEFINITIONS ────────────────────────────────────────────────────
+const SECTION_DEFS = [
+  { id:'media',    label:'Media & Analysis',    icon:'🎬', tagBg:'#EDF5EE', tagColor:'#2C5F2E' },
+  { id:'games',    label:'Games & Play',         icon:'🎲', tagBg:'#EEF2FB', tagColor:'#3B5EA6' },
+  { id:'outdoors', label:'Outdoors & Adventure', icon:'🌲', tagBg:'#EEF5F0', tagColor:'#2D6B34' },
+  { id:'creative', label:'Creative',             icon:'✏️', tagBg:'#F4F0FA', tagColor:'#5B4A8E' },
+  { id:'dadhouse', label:'Dad House Picks',      icon:'🏡', tagBg:'#FAF0EC', tagColor:'#9E3E28' },
+  { id:'newtotry', label:'New to Try',           icon:'✦',  tagBg:'#FBF3DC', tagColor:'#7A5A10' },
+];
+const SMAP = Object.fromEntries(SECTION_DEFS.map(s=>[s.id,s]));
+
+// ── DEFAULT DATA ───────────────────────────────────────────────────────────
+const DEFAULTS = [
+  // MEDIA & ANALYSIS
+  {id:'d01',section:'media',   name:'Active Music Listening',          desc:'Full album deep-dives, genre exploration, and appreciating how a track is constructed from the inside out.',                                        timeMin:30,  timeLabel:'~30 min',    effort:1,cost:1},
+  {id:'d02',section:'media',   name:'Video Essay Watching',            desc:"YouTube deep-dives on cinema, game design, music theory, and culture. Someone else's thesis, well argued — great fuel for your own.",              timeMin:45,  timeLabel:'~45 min',    effort:1,cost:1},
+  {id:'d03',section:'media',   name:'Movie Night',                     desc:"Full feature film with room for a post-watch take. The main event. You're already good at this one.",                                              timeMin:120, timeLabel:'2–3 hrs',     effort:1,cost:1},
+  {id:'d04',section:'media',   name:'Video Game Session',              desc:'Narrative adventures, strategy deep-cuts, co-op, or solo. The medium rewards the kind of attention you give it.',                                  timeMin:120, timeLabel:'1–3 hrs',     effort:2,cost:2},
+  // GAMES & PLAY
+  {id:'d05',section:'games',   name:'Card Games',                      desc:"Quick hands, low setup, high replayability. Rummy, poker variants, Uno — depends on who's at the table.",                                         timeMin:30,  timeLabel:'30–60 min',   effort:1,cost:1},
+  {id:'d06',section:'games',   name:'Jigsaw Puzzles',                  desc:'Methodical, meditative, and satisfying in a way that sneaks up on you. Good while watching something.',                                            timeMin:60,  timeLabel:'1–3 hrs',     effort:2,cost:1},
+  {id:'d07',section:'games',   name:'Board Games',                     desc:'Strategy, deduction, or chaos — depends on the game. Best with the right people.',                                                                 timeMin:120, timeLabel:'2–3 hrs',     effort:2,cost:2},
+  {id:'d08',section:'games',   name:'D&D / TTRPG',                     desc:'Campaign sessions, world navigation, character decisions. You already know this one well.',                                                         timeMin:180, timeLabel:'3–4 hrs',     effort:3,cost:2},
+  // OUTDOORS
+  {id:'d09',section:'outdoors',name:'Dog Trail Walk',                  desc:'Take the sheepadoodle somewhere with more to smell than the neighborhood block.',                                                                   timeMin:60,  timeLabel:'1–1.5 hrs',   effort:2,cost:1},
+  {id:'d10',section:'outdoors',name:'Day Hike',                        desc:"A proper trail, good shoes, enough elevation to feel it later. You've done it and loved it.",                                                      timeMin:240, timeLabel:'Half day',     effort:3,cost:1},
+  {id:'d11',section:'outdoors',name:'Backpacking Trip',                desc:"Overnight or multi-day carry through somewhere worth carrying to. High effort, high payoff — you know this from experience.",                      timeMin:480, timeLabel:'Full day+',    effort:5,cost:3},
+  // CREATIVE
+  {id:'d12',section:'creative',name:'Sketch Illustration',             desc:"The talent is real, even if you don't think so. Pen on paper, whatever feels right. You don't need a reason or an audience to pick it back up.",  timeMin:60,  timeLabel:'1–2 hrs',     effort:3,cost:1,dormant:true,note:'Dormant — genuinely worth revisiting.'},
+  // DAD HOUSE
+  {id:'d13',section:'dadhouse',name:'Indoor Plants',                   desc:'Low-drama, high-reward. Something living that improves the space and only asks for a little attention each week.',                                  timeMin:10,  timeLabel:'10 min/week',  effort:1,cost:1,dadHouse:true},
+  {id:'d14',section:'dadhouse',name:'Quality Tool Acquisition',        desc:'The slow, deliberate build-out of a toolkit that actually works. Every purchase researched and worth making.',                                     timeMin:60,  timeLabel:'Ongoing',      effort:2,cost:3,dadHouse:true},
+  {id:'d15',section:'dadhouse',name:'Dog Grooming at Home',            desc:'Sheepadoodles need regular upkeep. Learning the routine is an investment that pays back every single time.',                                       timeMin:60,  timeLabel:'1–2 hrs',     effort:3,cost:2,dadHouse:true},
+  {id:'d16',section:'dadhouse',name:'Space Curation & Organization',   desc:'Make the home work right. Less noise, better function, deliberate placement. You already think this way.',                                         timeMin:120, timeLabel:'2–4 hrs',     effort:2,cost:1,dadHouse:true},
+  {id:'d17',section:'dadhouse',name:'Home Theater Calibration',        desc:"Display calibration, audio setup, the full treatment. You'd research it right — and it would actually be right.",                                  timeMin:120, timeLabel:'2–3 hrs',     effort:3,cost:2,dadHouse:true,newToTry:true},
+  {id:'d18',section:'dadhouse',name:'Home Repairs & Maintenance',      desc:'Diagnose. Research. Fix it properly. The fix-before-replace approach saves money and builds real competence.',                                     timeMin:120, timeLabel:'Varies',       effort:3,cost:2,dadHouse:true},
+  {id:'d19',section:'dadhouse',name:'Smart Home Setup',                desc:'Research the ecosystem, buy deliberately, configure it properly. A working system — not a gadget collection.',                                    timeMin:180, timeLabel:'2–4 hrs',     effort:3,cost:3,dadHouse:true},
+  // NEW TO TRY
+  {id:'d20',section:'newtotry',name:'Letterboxd Logging',              desc:"Log and rate every film you watch. Your takes are already forming — this just gives them a home.",                                                  timeMin:15,  timeLabel:'10–15 min',   effort:1,cost:1,newToTry:true},
+  {id:'d21',section:'newtotry',name:'Film Score Analysis',             desc:'Treat soundtracks as their own art form — composition, recurring motif, how the music serves or shapes a scene.',                                 timeMin:60,  timeLabel:'~1 hr',        effort:2,cost:1,newToTry:true},
+  {id:'d22',section:'newtotry',name:'Graphic Novel Reading',           desc:'Visual storytelling at the intersection of film and drawing. Bridges everything you already love about both mediums.',                             timeMin:60,  timeLabel:'~1 hr',        effort:1,cost:2,newToTry:true},
+  {id:'d23',section:'newtotry',name:'Solo TTRPG / Narrative Journaling',desc:'Games like Ironsworn or Thousand Year Old Vampire. Solo, story-driven, no scheduling required.',                                                 timeMin:60,  timeLabel:'1–2 hrs',     effort:3,cost:1,newToTry:true},
+  {id:'d24',section:'newtotry',name:'Writing a Review',                desc:"Put the take on paper — film, game, or album. You've mentioned wanting to do this, and the opinions are already there.",                           timeMin:75,  timeLabel:'1–2 hrs',     effort:3,cost:1,newToTry:true,note:"Something you've mentioned wanting to do."},
+  {id:'d25',section:'newtotry',name:'Trail Photography',               desc:"Bring a camera on hikes. Frame the outdoors the way you'd frame a shot. Good gear makes it worth doing right.",                                   timeMin:240, timeLabel:'Half day',     effort:3,cost:3,newToTry:true},
+  {id:'d26',section:'newtotry',name:'Video Essay Creation',            desc:"Make your own film or game analysis content. The editorial voice is already there — it just needs an outlet.",                                     timeMin:300, timeLabel:'4–6 hrs',     effort:5,cost:2,newToTry:true},
+];
+
+// ── STATE & LOCALSTORAGE ───────────────────────────────────────────────────
+const LS_KEY = 'zack-field-guide-v1';
+let state = { interests: [] };
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) { state = JSON.parse(raw); }
+    else { state = { interests: DEFAULTS.map(i=>({...i})) }; saveState(); }
+  } catch(e) { state = { interests: DEFAULTS.map(i=>({...i})) }; saveState(); }
+}
+
+function saveState() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+// ── RENDER HELPERS ─────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function dots(n,t=5) {
+  return Array.from({length:t},(_,i)=>`<div class="dot ${i<n?'on':'off'}"></div>`).join('');
+}
+function dollars(n,t=4) {
+  return Array.from({length:t},(_,i)=>`<span class="dollar ${i<n?'on':'off'}">$</span>`).join('');
+}
+
+function renderCard(item, idx=0) {
+  const isDorm = !!item.dormant, isDad = !!item.dadHouse, isNew = !!item.newToTry;
+  const bc = isDorm ? 'cdormant' : isDad ? 'cdad' : isNew ? 'cnew' : '';
+  const sec = SMAP[item.section] || SMAP['media'];
+  return `
+  <div class="card ${bc}" data-id="${esc(item.id)}" style="animation-delay:${idx*0.04}s">
+    <div class="card-actions">
+      <button class="act-btn edit" title="Edit">✎</button>
+      <button class="act-btn del" title="Remove">✕</button>
+    </div>
+    <div class="confirm-overlay">
+      <div class="confirm-msg">Remove<br><strong>${esc(item.name)}</strong>?</div>
+      <div class="confirm-btns">
+        <button class="confirm-btn confirm-yes">Remove</button>
+        <button class="confirm-btn confirm-no">Keep</button>
+      </div>
+    </div>
+    <div class="card-badges">
+      <span class="badge badge-time">${esc(item.timeLabel)}</span>
+      ${isNew  ? '<span class="badge badge-new">✦ New to Try</span>' : ''}
+      ${isDad  ? '<span class="badge badge-dad">🏡 Dad House</span>' : ''}
+      ${isDorm ? '<span class="badge badge-revisit">◎ Revisit</span>' : ''}
+    </div>
+    <div class="card-name">${esc(item.name)}</div>
+    <div class="card-desc">${esc(item.desc)}</div>
+    ${item.note ? `<div class="card-note">${esc(item.note)}</div>` : ''}
+    <div class="card-footer">
+      <div class="metric">
+        <div class="metric-lbl">Effort</div>
+        <div class="metric-val">${dots(item.effort||1)}</div>
+      </div>
+      <div class="metric">
+        <div class="metric-lbl">Cost</div>
+        <div class="metric-val">${dollars(item.cost||1)}</div>
+      </div>
+      <div class="spacer"></div>
+      <span class="sec-tag" style="background:${sec.tagBg};color:${sec.tagColor}">${sec.label}</span>
+    </div>
+  </div>`;
+}
+
+// ── MAIN RENDER ────────────────────────────────────────────────────────────
+let activeFilter = 'all';
+
+function render() {
+  const area = document.getElementById('cardArea');
+  const counter = document.getElementById('countDisplay');
+
+  if (activeFilter === 'all') {
+    let total = 0, html = '';
+    SECTION_DEFS.forEach(sec => {
+      const items = state.interests.filter(i=>i.section===sec.id).sort((a,b)=>a.timeMin-b.timeMin);
+      if (!items.length) return;
+      total += items.length;
+      html += `<div class="section-block">
+        <div class="section-hdr">
+          <span class="sec-icon">${sec.icon}</span>
+          <span class="sec-name">${sec.label}</span>
+          <span class="sec-count">&ensp;${items.length} item${items.length!==1?'s':''}</span>
+        </div>
+        <div class="card-grid">${items.map((it,i)=>renderCard(it,i)).join('')}</div>
+      </div>`;
+    });
+    area.innerHTML = html || '<p style="text-align:center;padding:60px;color:var(--k500)">No interests yet — tap + to add one.</p>';
+    counter.textContent = total;
+  } else {
+    const filtered = state.interests.filter(item => {
+      if (activeFilter==='newtotry') return item.newToTry;
+      if (activeFilter==='dadhouse') return item.section==='dadhouse' || item.dadHouse;
+      return item.section === activeFilter;
+    }).sort((a,b)=>a.timeMin-b.timeMin);
+
+    counter.textContent = filtered.length;
+    area.innerHTML = filtered.length
+      ? `<div class="card-grid">${filtered.map((it,i)=>renderCard(it,i)).join('')}</div>`
+      : '<div class="card-grid"><div class="empty-state">No interests for this filter.</div></div>';
+  }
+}
+
+// ── CARD AREA DELEGATION (edit / delete confirm) ───────────────────────────
+document.getElementById('cardArea').addEventListener('click', e => {
+  if (e.target.closest('.act-btn.edit')) {
+    openModal(e.target.closest('[data-id]').dataset.id); return;
+  }
+  if (e.target.closest('.act-btn.del')) {
+    document.querySelectorAll('[data-confirming]').forEach(c=>c.removeAttribute('data-confirming'));
+    e.target.closest('[data-id]').setAttribute('data-confirming','true'); return;
+  }
+  if (e.target.closest('.confirm-yes')) {
+    const id = e.target.closest('[data-id]').dataset.id;
+    state.interests = state.interests.filter(i=>i.id!==id);
+    saveState(); render(); return;
+  }
+  if (e.target.closest('.confirm-no')) {
+    e.target.closest('[data-id]').removeAttribute('data-confirming'); return;
+  }
+});
+
+// ── FILTER PILLS ───────────────────────────────────────────────────────────
+document.getElementById('filterBar').addEventListener('click', e => {
+  const pill = e.target.closest('.pill');
+  if (!pill) return;
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  pill.classList.add('active');
+  activeFilter = pill.dataset.filter;
+  render();
+});
+
+// ── MODAL STATE ────────────────────────────────────────────────────────────
+let editingId = null, effortVal = 3, costVal = 2;
+
+function setEffort(n) {
+  effortVal = n;
+  document.querySelectorAll('#effortPicker .picker-btn').forEach(b=>b.classList.toggle('active',+b.dataset.val===n));
+}
+function setCost(n) {
+  costVal = n;
+  document.querySelectorAll('#costPicker .picker-btn').forEach(b=>b.classList.toggle('active',+b.dataset.val===n));
+}
+
+document.getElementById('effortPicker').addEventListener('click', e=>{
+  const b=e.target.closest('.picker-btn'); if(b) setEffort(+b.dataset.val);
+});
+document.getElementById('costPicker').addEventListener('click', e=>{
+  const b=e.target.closest('.picker-btn'); if(b) setCost(+b.dataset.val);
+});
+
+function openModal(id) {
+  editingId = id || null;
+  document.getElementById('modalTitle').textContent = id ? 'Edit Interest' : 'Add Interest';
+  document.getElementById('saveBtn').textContent    = id ? 'Save Changes' : 'Save Interest';
+
+  ['fName','fTimeLabel','fTimeMin','fDesc','fNote'].forEach(fid=>{
+    document.getElementById(fid).classList.remove('err');
+  });
+
+  if (id) {
+    const it = state.interests.find(i=>i.id===id);
+    if (!it) return;
+    document.getElementById('fName').value      = it.name;
+    document.getElementById('fSection').value   = it.section || 'media';
+    document.getElementById('fTimeLabel').value = it.timeLabel;
+    document.getElementById('fTimeMin').value   = it.timeMin;
+    document.getElementById('fDesc').value      = it.desc;
+    document.getElementById('fNote').value      = it.note || '';
+    document.getElementById('fNew').checked     = !!it.newToTry;
+    document.getElementById('fDad').checked     = !!it.dadHouse;
+    document.getElementById('fDormant').checked = !!it.dormant;
+    setEffort(it.effort||3); setCost(it.cost||2);
+  } else {
+    ['fName','fTimeLabel','fTimeMin','fDesc','fNote'].forEach(fid=>{ document.getElementById(fid).value=''; });
+    document.getElementById('fSection').value='media';
+    document.getElementById('fNew').checked=false;
+    document.getElementById('fDad').checked=false;
+    document.getElementById('fDormant').checked=false;
+    setEffort(3); setCost(2);
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('fName').focus(), 80);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  editingId = null;
+}
+
+document.getElementById('saveBtn').addEventListener('click', () => {
+  const fName     = document.getElementById('fName');
+  const fTL       = document.getElementById('fTimeLabel');
+  const fTM       = document.getElementById('fTimeMin');
+  const fDesc     = document.getElementById('fDesc');
+  const name      = fName.value.trim();
+  const timeLabel = fTL.value.trim();
+  const timeMin   = parseInt(fTM.value);
+  const desc      = fDesc.value.trim();
+  let valid = true;
+  [[fName,name],[fTL,timeLabel],[fTM,fTM.value.trim()],[fDesc,desc]].forEach(([el,val])=>{
+    if (!val) { el.classList.add('err'); valid=false; }
+    else el.classList.remove('err');
+  });
+  if (!valid || isNaN(timeMin)) return;
+
+  const item = {
+    name, desc,
+    section:  document.getElementById('fSection').value,
+    timeLabel, timeMin,
+    effort: effortVal, cost: costVal,
+    note:    document.getElementById('fNote').value.trim(),
+    newToTry:!!document.getElementById('fNew').checked,
+    dadHouse:!!document.getElementById('fDad').checked,
+    dormant: !!document.getElementById('fDormant').checked,
+  };
+
+  if (editingId) {
+    const idx = state.interests.findIndex(i=>i.id===editingId);
+    if (idx!==-1) state.interests[idx] = { ...state.interests[idx], ...item };
+  } else {
+    state.interests.push({ id:'u'+Date.now(), ...item });
+  }
+  saveState(); closeModal(); render();
+});
+
+document.getElementById('cancelBtn').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
+document.getElementById('fabBtn').addEventListener('click', ()=>openModal());
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+loadState();
+render();
+</script>
+</body>
+</html>
