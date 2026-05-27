@@ -1,4 +1,4 @@
-<!-- Common Ground v1.1.0 | 2026-05-26 -->
+<!-- Common Ground v1.1.1 | 2026-05-26 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -538,7 +538,7 @@ async function getSuggestion(cId){
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        model:'claude-sonnet-4-6',max_tokens:1000,
         system:`You are a compassionate, experienced personal finance expert who specializes exclusively in helping newly cohabitating and newly married couples build their financial lives together as a unified team. Your communication style is warm, non-judgmental, practical, and emotionally intelligent. You deeply understand that money conversations carry emotional weight, and that both partners' values deserve equal respect and validation. When one partner has marked a value as non-negotiable, you honor that fully and help the other partner feel genuinely supported within that constraint — never minimizing it or trying to work around it. Your suggestions are specific, actionable, and grounded in real financial planning — never preachy, never generic. You write in plain, conversational language as if speaking directly to the couple sitting in front of you. Keep your response to 3-5 sentences.`,
         messages:[{role:'user',content:`We are a couple working through our money values. The topic is: "${c.title}"\n\n${nameA} says: "${d.aText||'(nothing written)'}"\n${nameA}'s flexibility: ${aEl?aEl.textContent.trim():'Not specified'}\n\n${nameB} says: "${d.bText||'(nothing written)'}"\n${nameB}'s flexibility: ${bEl?bEl.textContent.trim():'Not specified'}\n\nPlease suggest a warm, specific, workable path forward that honors both perspectives. If either partner marked something non-negotiable, acknowledge that kindly and help the other feel respected within that constraint. If values are already well-aligned, affirm that warmly.`}]
       })
