@@ -1,0 +1,614 @@
+<!-- Common Ground v1.1.0 | 2026-05-26 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Common Ground</title>
+  <meta name="theme-color" content="#C4714A" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Common Ground" />
+  <meta name="description" content="A guided money conversation for couples" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --cream:#FAF7F2; --cream-dark:#EFE9DF; --white:#FFFFFF;
+      --brown:#2C2416; --brown-mid:#5C4A32; --brown-light:#9B876A;
+      --terracotta:#C4714A; --terra-dark:#A85C38;
+      --sage:#5F8C77; --sage-bg:#EDF4F0;
+      --mauve:#9076AA; --mauve-bg:#F2EEF8;
+      --gold:#B8902A; --gold-bg:#FDF6E3;
+      --border:#DDD5C8; --red:#B03030; --orange:#C47520; --green:#3A7A55;
+      --shadow-sm:0 2px 12px rgba(44,36,22,.07);
+      --shadow-md:0 4px 24px rgba(44,36,22,.11);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Lora',Georgia,serif;background:var(--cream);color:var(--brown);min-height:100vh;
+      background-image:radial-gradient(ellipse at 15% 40%,rgba(196,113,74,.07) 0%,transparent 55%),
+        radial-gradient(ellipse at 85% 15%,rgba(95,140,119,.07) 0%,transparent 55%),
+        radial-gradient(ellipse at 60% 85%,rgba(144,118,170,.05) 0%,transparent 50%);}
+
+    /* SHARED */
+    .center-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+    .card{background:var(--white);border-radius:20px;padding:3rem 2.75rem;max-width:520px;width:100%;box-shadow:var(--shadow-md);text-align:center}
+    .logo{font-family:'Playfair Display',serif;font-size:2.4rem;font-weight:700;letter-spacing:-.5px;color:var(--brown);line-height:1;margin-bottom:.25rem}
+    .logo span{color:var(--terracotta)}
+    .tagline{font-style:italic;color:var(--brown-light);font-size:.93rem;margin-bottom:2rem}
+    .btn-primary{width:100%;padding:1rem;background:var(--terracotta);color:white;border:none;border-radius:11px;font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;cursor:pointer;transition:background .2s,transform .1s;margin-bottom:.75rem}
+    .btn-primary:hover{background:var(--terra-dark)}
+    .btn-primary:active{transform:scale(.98)}
+    .btn-ghost{width:100%;padding:.7rem;background:transparent;color:var(--brown-light);border:1.5px solid var(--border);border-radius:11px;font-family:'Lora',serif;font-size:.88rem;cursor:pointer;transition:all .2s}
+    .btn-ghost:hover{border-color:var(--brown-light);color:var(--brown-mid)}
+
+    /* API KEY SCREEN */
+    .key-icon{font-size:2.5rem;margin-bottom:1rem}
+    .key-blurb{font-size:.88rem;color:var(--brown-mid);line-height:1.75;text-align:left;border-left:3px solid var(--terracotta);padding-left:1rem;margin-bottom:1.5rem}
+    .key-security{background:var(--cream);border-radius:10px;padding:.9rem 1.1rem;margin-bottom:1.5rem;font-size:.8rem;color:var(--brown-light);text-align:left;line-height:1.6;display:flex;gap:.6rem;align-items:flex-start}
+    .key-security .shield{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+    .key-field{margin-bottom:1rem;text-align:left}
+    .key-field label{display:block;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--brown-light);margin-bottom:.45rem}
+    .key-field input{width:100%;padding:.75rem 1rem;border:2px solid var(--border);border-radius:9px;font-family:'Lora',serif;font-size:.9rem;color:var(--brown);background:var(--cream);outline:none;transition:border-color .2s,box-shadow .2s;letter-spacing:.05em}
+    .key-field input:focus{border-color:var(--terracotta);box-shadow:0 0 0 3px rgba(196,113,74,.15)}
+    .key-hint{font-size:.75rem;color:var(--brown-light);margin-top:.4rem}
+    .key-hint a{color:var(--terracotta);text-decoration:none}
+    .key-hint a:hover{text-decoration:underline}
+
+    /* SETUP SCREEN */
+    .setup-intro{font-size:.9rem;color:var(--brown-mid);line-height:1.8;text-align:left;border-left:3px solid var(--terracotta);padding-left:1rem;margin-bottom:1.5rem}
+    .how-it-works{background:var(--cream);border-radius:12px;padding:1rem 1.2rem;margin-bottom:1.75rem;text-align:left}
+    .how-it-works h4{font-family:'Playfair Display',serif;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--brown-light);margin-bottom:.65rem}
+    .how-it-works ol{list-style:none;display:flex;flex-direction:column;gap:.4rem}
+    .how-it-works li{font-size:.83rem;color:var(--brown-mid);display:flex;align-items:flex-start;gap:.5rem}
+    .step-num{min-width:20px;height:20px;background:var(--terracotta);color:white;border-radius:50%;font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+    .resume-banner{background:var(--gold-bg);border:1.5px solid #E8C86A;border-radius:10px;padding:.9rem 1.1rem;margin-bottom:1.5rem;font-size:.83rem;color:var(--brown-mid);text-align:left;line-height:1.6}
+    .resume-banner strong{color:var(--brown)}
+    .name-inputs{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+    .name-field label{display:block;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.4rem}
+    .name-field.a label{color:var(--sage)}
+    .name-field.b label{color:var(--mauve)}
+    .name-field input{width:100%;padding:.7rem .9rem;border:2px solid var(--border);border-radius:9px;font-family:'Lora',serif;font-size:.95rem;color:var(--brown);background:var(--cream);outline:none;transition:border-color .2s,box-shadow .2s}
+    .name-field.a input:focus{border-color:var(--sage);box-shadow:0 0 0 3px rgba(95,140,119,.15)}
+    .name-field.b input:focus{border-color:var(--mauve);box-shadow:0 0 0 3px rgba(144,118,170,.15)}
+
+    /* MAIN APP */
+    #main-app{display:none;max-width:1440px;margin:0 auto;padding:0 2rem 3rem}
+    .app-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 0 1rem;border-bottom:1px solid var(--border);margin-bottom:1.25rem}
+    .app-header-center{text-align:center;flex:1}
+    .app-header .logo{font-size:1.5rem}
+    .app-header .tagline{margin-bottom:0;font-size:.82rem}
+    .header-actions{display:flex;gap:.5rem;align-items:center;min-width:120px;justify-content:flex-end}
+    .icon-btn{width:34px;height:34px;background:transparent;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.95rem;color:var(--brown-light);transition:all .2s}
+    .icon-btn:hover{border-color:var(--brown-light);color:var(--brown-mid);background:var(--cream)}
+    .install-btn{padding:.3rem .7rem;background:var(--terracotta);color:white;border:none;border-radius:7px;font-family:'Lora',serif;font-size:.75rem;font-weight:500;cursor:pointer;display:none;align-items:center;gap:.3rem;transition:background .2s}
+    .install-btn:hover{background:var(--terra-dark)}
+    .install-btn.visible{display:flex}
+
+    /* PHASE BANNER — compact */
+    .phase-banner{position:sticky;top:.5rem;z-index:200;background:var(--white);border-radius:10px;padding:.6rem 1.1rem;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;box-shadow:var(--shadow-md);border-left:4px solid var(--terracotta);transition:border-color .4s}
+    .phase-banner.phase-a{border-left-color:var(--sage)}
+    .phase-banner.phase-b{border-left-color:var(--mauve)}
+    .phase-banner.phase-done{border-left-color:var(--terracotta)}
+    .phase-info{display:flex;align-items:baseline;gap:.6rem;min-width:0;flex:1}
+    .phase-info h3{font-family:'Playfair Display',serif;font-size:.92rem;font-weight:600;color:var(--brown);white-space:nowrap}
+    .phase-info p{font-size:.75rem;color:var(--brown-light);font-style:italic;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .lock-btn{padding:.45rem 1rem;border:none;border-radius:8px;font-family:'Lora',serif;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0}
+    .lock-btn.sage{background:var(--sage);color:white}
+    .lock-btn.sage:hover{background:#4E7564}
+    .lock-btn.mauve{background:var(--mauve);color:white}
+    .lock-btn.mauve:hover{background:#7A62A0}
+
+    /* PROGRESS */
+    .progress-wrap{display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem}
+    .progress-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--brown-light);white-space:nowrap}
+    .progress-track{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+    .progress-fill{height:100%;background:linear-gradient(90deg,var(--sage),var(--terracotta),var(--mauve));border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+    /* CARDS */
+    .conversation-card{background:var(--white);border-radius:16px;margin-bottom:1.25rem;box-shadow:var(--shadow-sm);overflow:hidden;transition:box-shadow .2s}
+    .conversation-card:hover{box-shadow:var(--shadow-md)}
+    .card-header{padding:1rem 1.5rem;border-bottom:1px solid var(--cream-dark);display:flex;align-items:baseline;gap:.9rem}
+    .card-num{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:var(--terracotta);opacity:.3;min-width:2.2rem;line-height:1}
+    .card-titles h3{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--brown);margin-bottom:.12rem}
+    .card-titles p{font-size:.79rem;color:var(--brown-light);font-style:italic;line-height:1.5}
+    .card-cols{display:grid;grid-template-columns:1fr 1fr 1fr}
+    .col{padding:1.1rem 1rem;position:relative}
+    .col.col-a{background:var(--sage-bg);border-right:1px solid var(--border)}
+    .col.col-compromise{background:var(--gold-bg);border-right:1px solid var(--border)}
+    .col.col-b{background:var(--mauve-bg)}
+    .col-label{display:flex;align-items:center;gap:.4rem;font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.7rem}
+    .col-a .col-label{color:var(--sage)}
+    .col-compromise .col-label{color:var(--gold)}
+    .col-b .col-label{color:var(--mauve)}
+    .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .col-a .dot{background:var(--sage)}
+    .col-compromise .dot{background:var(--gold)}
+    .col-b .dot{background:var(--mauve)}
+    textarea{width:100%;padding:.65rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-family:'Lora',serif;font-size:.88rem;color:var(--brown);resize:vertical;min-height:88px;outline:none;transition:border-color .2s,box-shadow .2s;background:rgba(255,255,255,.75);line-height:1.65}
+    .col-a textarea:focus{border-color:var(--sage);box-shadow:0 0 0 2px rgba(95,140,119,.15)}
+    .col-compromise textarea:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(184,144,42,.15)}
+    .col-b textarea:focus{border-color:var(--mauve);box-shadow:0 0 0 2px rgba(144,118,170,.15)}
+    textarea:disabled{opacity:.45;cursor:not-allowed;background:rgba(255,255,255,.4)}
+
+    /* TAGS */
+    .tag-group{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.6rem}
+    .tag{padding:.2rem .55rem;border-radius:20px;font-size:.69rem;font-weight:500;cursor:pointer;border:1.5px solid;transition:all .15s;opacity:.45;user-select:none}
+    .tag:hover:not(.readonly){opacity:.75}
+    .tag.active{opacity:1}
+    .tag.readonly{cursor:default;pointer-events:none}
+    .tag.non-neg{border-color:var(--red);color:var(--red)}
+    .tag.less-flex{border-color:var(--orange);color:var(--orange)}
+    .tag.flexible{border-color:var(--green);color:var(--green)}
+    .tag.non-neg.active{background:var(--red);color:white}
+    .tag.less-flex.active{background:var(--orange);color:white}
+    .tag.flexible.active{background:var(--green);color:white}
+
+    /* OVERLAYS */
+    .overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.6rem;text-align:center;padding:1.25rem;border-radius:inherit}
+    .overlay.sealed{background:rgba(237,244,240,.96);backdrop-filter:blur(6px)}
+    .overlay.waiting{background:rgba(242,238,248,.94);backdrop-filter:blur(4px)}
+    .overlay.locked{background:rgba(253,246,227,.93);backdrop-filter:blur(4px)}
+    .ov-icon{font-size:1.8rem}
+    .ov-title{font-family:'Playfair Display',serif;font-size:.9rem;font-weight:600;color:var(--brown)}
+    .ov-sub{font-size:.78rem;color:var(--brown-light);font-style:italic;line-height:1.5}
+
+    /* AI */
+    .ai-btn{width:100%;margin-top:.6rem;padding:.5rem .8rem;background:var(--terracotta);color:white;border:none;border-radius:8px;font-family:'Lora',serif;font-size:.82rem;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:background .2s,opacity .2s}
+    .ai-btn:hover:not(:disabled){background:var(--terra-dark)}
+    .ai-btn:disabled{opacity:.5;cursor:not-allowed}
+    .ai-response{margin-top:.65rem;padding:.75rem .9rem;background:white;border-radius:9px;border-left:3px solid var(--terracotta);font-size:.83rem;color:var(--brown-mid);line-height:1.7;font-style:italic}
+    .ai-response .ai-label{font-size:.67rem;font-style:normal;text-transform:uppercase;letter-spacing:.08em;color:var(--terracotta);font-weight:600;margin-bottom:.3rem;display:block}
+    .spinner{width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* SETTINGS MODAL */
+    .modal-bg{display:none;position:fixed;inset:0;z-index:500;background:rgba(44,36,22,.45);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1.5rem}
+    .modal-bg.open{display:flex}
+    .modal{background:var(--white);border-radius:18px;padding:2rem;max-width:420px;width:100%;box-shadow:0 8px 48px rgba(44,36,22,.18)}
+    .modal h2{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--brown);margin-bottom:1.5rem}
+    .modal-section{margin-bottom:1.1rem}
+    .modal-section label{display:block;font-size:.73rem;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--brown-light);margin-bottom:.4rem}
+    .modal-section input{width:100%;padding:.62rem .9rem;border:2px solid var(--border);border-radius:8px;font-family:'Lora',serif;font-size:.9rem;color:var(--brown);background:var(--cream);outline:none;transition:border-color .2s}
+    .modal-section input:focus{border-color:var(--terracotta)}
+    .modal-actions{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.5rem}
+    .modal-actions .btn-primary{margin:0;flex:1;font-size:.9rem;padding:.75rem}
+    .modal-actions .btn-ghost{flex:1;font-size:.9rem;padding:.75rem}
+    .danger-zone{border-top:1px solid var(--border);padding-top:1.25rem;margin-top:1.25rem}
+    .danger-zone h4{font-size:.73rem;text-transform:uppercase;letter-spacing:.09em;color:var(--red);font-weight:600;margin-bottom:.75rem}
+    .btn-danger{width:100%;padding:.62rem;background:transparent;color:var(--red);border:1.5px solid var(--red);border-radius:9px;font-family:'Lora',serif;font-size:.85rem;cursor:pointer;transition:all .2s;margin-bottom:.5rem}
+    .btn-danger:hover{background:var(--red);color:white}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:600;background:var(--brown);color:white;padding:.55rem 1rem;border-radius:8px;font-size:.8rem;font-weight:500;box-shadow:0 4px 16px rgba(44,36,22,.25);opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;pointer-events:none}
+    .toast.show{opacity:1;transform:translateY(0)}
+
+    /* ANIMATIONS */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .reveal-anim{animation:fadeUp .5s ease forwards}
+
+    /* RESPONSIVE */
+    @media(max-width:960px){.card-cols{grid-template-columns:1fr}.col{border-right:none !important;border-bottom:1px solid var(--border)}.col:last-child{border-bottom:none}.phase-info p{display:none}}
+    @media(max-width:600px){#main-app{padding:0 1rem 2rem}.name-inputs{grid-template-columns:1fr}.phase-banner{flex-wrap:wrap}.header-actions{min-width:auto}}
+  </style>
+</head>
+<body>
+
+<!-- API KEY SCREEN -->
+<div id="api-key-screen" class="center-wrap">
+  <div class="card">
+    <div class="key-icon">🔑</div>
+    <div class="logo">Common <span>Ground</span></div>
+    <div class="tagline">A guided money conversation for two</div>
+    <p class="key-blurb">Common Ground uses AI to help you find compromise language when your values differ. To enable this, you'll need a free Anthropic API key.</p>
+    <div class="key-security">
+      <span class="shield">🛡️</span>
+      <span>Your key is stored only on <strong>this device</strong> in your browser's local storage. It is never sent anywhere except directly to Anthropic's servers when you request a suggestion.</span>
+    </div>
+    <div class="key-field">
+      <label>Anthropic API Key</label>
+      <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off" />
+      <p class="key-hint">Don't have one? Get yours at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></p>
+    </div>
+    <button class="btn-primary" onclick="saveApiKey()">Save Key & Continue →</button>
+    <button class="btn-ghost" onclick="skipApiKey()">Skip — I don't need AI suggestions</button>
+  </div>
+</div>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen" class="center-wrap" style="display:none">
+  <div class="card">
+    <div class="logo">Common <span>Ground</span></div>
+    <div class="tagline">A guided money conversation for two</div>
+    <p class="setup-intro">Talking about money is hard. This tool gives you both a low-pressure space to put your financial values into words — separately first, then together. No judgment, no wrong answers.</p>
+    <div id="resume-banner" class="resume-banner" style="display:none">
+      📖 <strong>Welcome back.</strong> A conversation is in progress. Enter the same names to pick up where you left off, or use new names to start fresh.
+    </div>
+    <div class="how-it-works">
+      <h4>How it works</h4>
+      <ol>
+        <li><span class="step-num">1</span><span>Partner One fills in their values alone, then seals their answers</span></li>
+        <li><span class="step-num">2</span><span>Partner Two fills in theirs — without seeing the other's yet</span></li>
+        <li><span class="step-num">3</span><span>Both reveal at the same time and work the middle column together</span></li>
+      </ol>
+    </div>
+    <div class="name-inputs">
+      <div class="name-field a"><label>Partner One</label><input type="text" id="nameA-input" placeholder="Your name" /></div>
+      <div class="name-field b"><label>Partner Two</label><input type="text" id="nameB-input" placeholder="Their name" /></div>
+    </div>
+    <button class="btn-primary" onclick="startApp()">Begin the Conversation →</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app">
+  <header class="app-header">
+    <div style="min-width:110px">
+      <button class="install-btn" id="install-btn" onclick="installPwa()">⬇ Install App</button>
+    </div>
+    <div class="app-header-center">
+      <div class="logo">Common <span>Ground</span></div>
+      <div class="tagline">A guided money conversation for two</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="saveProgress()" title="Save progress">💾</button>
+      <button class="icon-btn" onclick="openSettings()" title="Settings">⚙️</button>
+    </div>
+  </header>
+
+  <div id="phase-banner" class="phase-banner phase-a">
+    <div class="phase-info">
+      <h3 id="phase-title"></h3>
+      <p id="phase-desc"></p>
+    </div>
+    <button id="phase-btn" class="lock-btn sage" onclick="handlePhaseAction()"></button>
+  </div>
+
+  <div class="progress-wrap">
+    <span class="progress-label" id="progress-label">Step 1 of 3</span>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:33%"></div></div>
+  </div>
+
+  <div id="cards-container"></div>
+
+  <footer style="text-align:center;padding:2rem 0 1rem;color:var(--brown-light);font-size:.78rem;font-style:italic;border-top:1px solid var(--border);margin-top:2rem;">
+    Common Ground — built for the conversations that matter most
+  </footer>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-bg" id="settings-modal" onclick="closeSettingsOnBg(event)">
+  <div class="modal">
+    <h2>⚙️ Settings</h2>
+    <div class="modal-section"><label>Partner One's Name</label><input type="text" id="settings-nameA" /></div>
+    <div class="modal-section"><label>Partner Two's Name</label><input type="text" id="settings-nameB" /></div>
+    <div class="modal-section">
+      <label>Anthropic API Key</label>
+      <input type="password" id="settings-api-key" placeholder="sk-ant-..." autocomplete="off" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" onclick="saveSettings()">Save Changes</button>
+      <button class="btn-ghost" onclick="closeSettings()">Cancel</button>
+    </div>
+    <div class="danger-zone">
+      <h4>Danger Zone</h4>
+      <button class="btn-danger" onclick="resetProgress()">🔄 Start a New Conversation</button>
+      <button class="btn-danger" onclick="resetEverything()">🗑️ Clear Everything & Start Over</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const LS={API_KEY:'cg_api_key',NAME_A:'cg_nameA',NAME_B:'cg_nameB',PHASE:'cg_phase',STORE:'cg_store'};
+const CONVS=[
+  {id:'day-to-day',    title:'Day-to-Day Spending',          desc:'Impulse buys, personal "fun money," and how much freedom each of you wants to spend without checking in first.'},
+  {id:'budgeting',     title:'Budgeting Style',              desc:'Strict tracking vs. loose awareness vs. no budget at all — what feels sustainable and not suffocating to each of you.'},
+  {id:'accounts',      title:'Shared vs. Separate Accounts', desc:'Fully merged finances, fully separate, or a hybrid "yours, mine, and ours" model — what feels right.'},
+  {id:'splitting',     title:'Bill & Expense Splitting',     desc:'50/50, proportional to income, or one person handles it all — and what "fair" actually means to each of you.'},
+  {id:'saving',        title:'Saving Philosophy',            desc:'How aggressively to save, what savings are for, and how you each define what financial security feels like.'},
+  {id:'emergency',     title:'Emergency Fund',               desc:'How big, what counts as an emergency, and who has access and decision-making power over it.'},
+  {id:'debt',          title:'Debt Attitudes',               desc:'Comfort with carrying debt, credit cards, loans, and the difference between strategic debt and debt that keeps you up at night.'},
+  {id:'big-purchases', title:'Big Purchase Threshold',       desc:'At what dollar amount does a purchase need a conversation first? (This one matters more than most couples expect.)'},
+  {id:'lifestyle',     title:'Lifestyle Spending',           desc:'Dining out, travel, entertainment, subscriptions — experiences vs. things, and how you each prioritize them.'},
+  {id:'giving',        title:'Giving & Generosity',          desc:'Charitable donations, gifts to friends and family, tithing, tipping habits — how generosity fits into your financial picture.'},
+  {id:'family',        title:'Family Financial Support',     desc:'Helping parents, siblings, or extended family with money — expectations, limits, and how you each feel about it. (This one can be spicy.)'},
+  {id:'investing',     title:'Investment & Risk Tolerance',  desc:'How to grow savings over time, comfort with market swings, and how hands-on or hands-off each of you wants to be.'},
+  {id:'career',        title:'Career & Income Priorities',   desc:"Ambition levels, income expectations, and how you'd handle one partner pausing a career, switching fields, or taking a pay cut."},
+  {id:'transparency',  title:'Financial Transparency',      desc:'How openly you share account access, spending habits, and financial history — including the parts that feel vulnerable.'},
+  {id:'future',        title:'Future Milestones',            desc:'Buying a home, having children, retirement timeline — the big dreams and how you each picture the road to get there.'},
+];
+
+let nameA='Partner A',nameB='Partner B',phase='partnerA';
+const store={};
+CONVS.forEach(c=>{store[c.id]={aText:'',aTag:'',bText:'',bTag:'',compromise:'',aiSugg:''};});
+
+// ── PWA ──────────────────────────────────────────────
+let deferredInstall=null;
+function initPwa(){
+  function makeIcon(size){
+    const c=document.createElement('canvas');c.width=c.height=size;
+    const ctx=c.getContext('2d'),r=size*.2;
+    ctx.beginPath();ctx.moveTo(r,0);ctx.lineTo(size-r,0);ctx.quadraticCurveTo(size,0,size,r);
+    ctx.lineTo(size,size-r);ctx.quadraticCurveTo(size,size,size-r,size);
+    ctx.lineTo(r,size);ctx.quadraticCurveTo(0,size,0,size-r);
+    ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);ctx.closePath();
+    ctx.fillStyle='#C4714A';ctx.fill();
+    ctx.fillStyle='white';ctx.font=`bold ${Math.round(size*.42)}px Georgia,serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText('CG',size/2,size/2+size*.03);
+    return c.toDataURL('image/png');
+  }
+  try{
+    const i192=makeIcon(192),i512=makeIcon(512);
+    const mf={name:'Common Ground',short_name:'Common Ground',description:'A guided money conversation for couples',
+      start_url:window.location.href,display:'standalone',
+      background_color:'#FAF7F2',theme_color:'#C4714A',
+      icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
+    const bl=new Blob([JSON.stringify(mf)],{type:'application/manifest+json'});
+    const lk=document.createElement('link');lk.rel='manifest';lk.href=URL.createObjectURL(bl);
+    document.head.appendChild(lk);
+    const ti=document.createElement('link');ti.rel='apple-touch-icon';ti.href=i192;
+    document.head.appendChild(ti);
+  }catch(e){}
+  if('serviceWorker' in navigator){
+    const sw=`const C='cg-v1';self.addEventListener('install',e=>e.waitUntil(self.skipWaiting()));self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(caches.open(C).then(cache=>cache.match(e.request).then(hit=>{const net=fetch(e.request).then(r=>{cache.put(e.request,r.clone());return r;});return hit||net;})).catch(()=>caches.match(e.request)));});`;
+    try{navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});}catch(e){}
+  }
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;document.getElementById('install-btn').classList.add('visible');});
+  window.addEventListener('appinstalled',()=>{deferredInstall=null;document.getElementById('install-btn').classList.remove('visible');showToast('App installed! 🎉');});
+}
+function installPwa(){if(!deferredInstall)return;deferredInstall.prompt();deferredInstall.userChoice.then(()=>{deferredInstall=null;});}
+
+// ── PERSISTENCE ──────────────────────────────────────
+function saveProgress(silent=false){
+  CONVS.forEach(c=>{
+    const d=store[c.id];
+    if(phase==='partnerA'){const ta=document.getElementById(`ta-${c.id}`);if(ta)d.aText=ta.value;const ap=document.querySelector(`#tg-a-${c.id} .tag.active`);if(ap)d.aTag=ap.dataset.tag;}
+    else if(phase==='partnerB'){const tb=document.getElementById(`tb-${c.id}`);if(tb)d.bText=tb.value;const bp=document.querySelector(`#tg-b-${c.id} .tag.active`);if(bp)d.bTag=bp.dataset.tag;}
+    else if(phase==='revealed'){const tc=document.getElementById(`tc-${c.id}`);if(tc)d.compromise=tc.value;}
+  });
+  try{
+    localStorage.setItem(LS.NAME_A,nameA);localStorage.setItem(LS.NAME_B,nameB);
+    localStorage.setItem(LS.PHASE,phase);localStorage.setItem(LS.STORE,JSON.stringify(store));
+    if(!silent)showToast('Progress saved ✓');
+  }catch(e){showToast('Could not save — storage may be full');}
+}
+function loadProgress(){
+  try{
+    const sA=localStorage.getItem(LS.NAME_A),sB=localStorage.getItem(LS.NAME_B),
+          sP=localStorage.getItem(LS.PHASE),sS=localStorage.getItem(LS.STORE);
+    if(sA)nameA=sA;if(sB)nameB=sB;if(sP)phase=sP;
+    if(sS){const p=JSON.parse(sS);Object.keys(p).forEach(id=>{if(store[id])Object.assign(store[id],p[id]);});}
+    return !!(sA&&sB&&sP);
+  }catch(e){return false;}
+}
+let saveTimer=null;
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>saveProgress(true),2000);}
+
+// ── SCREENS ──────────────────────────────────────────
+function showScreen(id){
+  ['api-key-screen','setup-screen','main-app'].forEach(s=>{
+    const el=document.getElementById(s);if(!el)return;
+    el.style.display=s===id?(s==='main-app'?'block':'flex'):'none';
+  });
+}
+
+// ── API KEY ──────────────────────────────────────────
+function saveApiKey(){
+  const key=document.getElementById('api-key-input').value.trim();
+  if(!key){showToast('Please enter an API key');return;}
+  try{localStorage.setItem(LS.API_KEY,key);}catch(e){}
+  goToSetup();
+}
+function skipApiKey(){goToSetup();}
+function goToSetup(){
+  const hasProgress=loadProgress();
+  showScreen('setup-screen');
+  if(hasProgress){
+    document.getElementById('resume-banner').style.display='block';
+    document.getElementById('nameA-input').value=nameA;
+    document.getElementById('nameB-input').value=nameB;
+  }
+}
+
+// ── SETUP ────────────────────────────────────────────
+function startApp(){
+  const inA=document.getElementById('nameA-input').value.trim();
+  const inB=document.getElementById('nameB-input').value.trim();
+  const resuming=inA&&inA===localStorage.getItem(LS.NAME_A)&&inB&&inB===localStorage.getItem(LS.NAME_B);
+  nameA=inA||'Partner A';nameB=inB||'Partner B';
+  if(!resuming){CONVS.forEach(c=>{store[c.id]={aText:'',aTag:'',bText:'',bTag:'',compromise:'',aiSugg:''};});phase='partnerA';}
+  showScreen('main-app');renderAll();saveProgress(true);
+}
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Enter')return;
+  if(document.getElementById('setup-screen').style.display!=='none')startApp();
+  if(document.getElementById('api-key-screen').style.display!=='none')saveApiKey();
+});
+
+// ── PHASE ────────────────────────────────────────────
+function handlePhaseAction(){
+  if(phase==='partnerA'){
+    snapshotValues('a');
+    if(confirm(`${nameA}, ready to seal your answers?\n\n${nameB} won't see them until they've written theirs.`)){
+      phase='partnerB';renderAll();saveProgress(true);window.scrollTo({top:0,behavior:'smooth'});
+    }
+  }else if(phase==='partnerB'){
+    snapshotValues('b');
+    if(confirm(`${nameB}, ready?\n\nLocking your answers will reveal both at the same moment.`)){
+      phase='revealed';renderAll();saveProgress(true);window.scrollTo({top:0,behavior:'smooth'});
+    }
+  }
+}
+function snapshotValues(partner){
+  CONVS.forEach(c=>{
+    const d=store[c.id];
+    if(partner==='a'){const ta=document.getElementById(`ta-${c.id}`);if(ta)d.aText=ta.value;const ap=document.querySelector(`#tg-a-${c.id} .tag.active`);d.aTag=ap?ap.dataset.tag:d.aTag;}
+    else{const tb=document.getElementById(`tb-${c.id}`);if(tb)d.bText=tb.value;const bp=document.querySelector(`#tg-b-${c.id} .tag.active`);d.bTag=bp?bp.dataset.tag:d.bTag;}
+  });
+}
+
+// ── RENDER ───────────────────────────────────────────
+function renderAll(){updateBanner();renderCards();attachAutoSave();}
+function updateBanner(){
+  const banner=document.getElementById('phase-banner'),
+        title=document.getElementById('phase-title'),
+        desc=document.getElementById('phase-desc'),
+        btn=document.getElementById('phase-btn'),
+        fill=document.getElementById('progress-fill'),
+        label=document.getElementById('progress-label');
+  banner.className='phase-banner';
+  if(phase==='partnerA'){
+    banner.classList.add('phase-a');title.textContent=`${nameA}'s turn`;
+    desc.textContent=`Fill in your values honestly. ${nameB} won't see them until they've written theirs.`;
+    btn.textContent=`🔒 Seal My Answers`;btn.className='lock-btn sage';btn.style.display='';
+    fill.style.width='33%';label.textContent=`Step 1 of 3 — ${nameA}`;
+  }else if(phase==='partnerB'){
+    banner.classList.add('phase-b');title.textContent=`${nameB}'s turn`;
+    desc.textContent=`${nameA} is sealed. Fill in your values — you'll both see each other's at the same moment.`;
+    btn.textContent=`🔒 Seal My Answers`;btn.className='lock-btn mauve';btn.style.display='';
+    fill.style.width='66%';label.textContent=`Step 2 of 3 — ${nameB}`;
+  }else{
+    banner.classList.add('phase-done');title.textContent=`The Full Picture`;
+    desc.textContent=`Both of your values are on the table. Work the middle column together.`;
+    btn.style.display='none';fill.style.width='100%';label.textContent=`Step 3 of 3 — Find Common Ground`;
+  }
+}
+function renderCards(){
+  const container=document.getElementById('cards-container');container.innerHTML='';
+  CONVS.forEach((c,i)=>{
+    const el=document.createElement('div');
+    el.className='conversation-card'+(phase==='revealed'?' reveal-anim':'');
+    el.style.animationDelay=phase==='revealed'?`${i*.04}s`:'0s';
+    el.id=`card-${c.id}`;el.innerHTML=buildCard(c,i);container.appendChild(el);
+  });
+}
+function buildCard(c,i){
+  return `<div class="card-header"><div class="card-num">${String(i+1).padStart(2,'0')}</div><div class="card-titles"><h3>${c.title}</h3><p>${c.desc}</p></div></div>
+  <div class="card-cols">${colA(c)}${colCompromise(c)}${colB(c)}</div>`;
+}
+function colA(c){
+  const d=store[c.id],active=phase==='partnerA',show=active||phase==='revealed';
+  const seal=phase==='partnerB'?`<div class="overlay sealed"><div class="ov-icon">🔒</div><div class="ov-title">${h(nameA)}'s answers are sealed</div><div class="ov-sub">Reveals when ${h(nameB)} locks theirs</div></div>`:'';
+  return `<div class="col col-a"><div class="col-label"><div class="dot"></div>${h(nameA)}</div>
+    <textarea id="ta-${c.id}" ${!active?'disabled':''} placeholder="What does this look like for you?">${h(d.aText)}</textarea>
+    ${show?tagGroup(`tg-a-${c.id}`,d.aTag,!active):''}${seal}</div>`;
+}
+function colB(c){
+  const d=store[c.id],active=phase==='partnerB',show=active||phase==='revealed';
+  const wait=phase==='partnerA'?`<div class="overlay waiting"><div class="ov-icon">⏳</div><div class="ov-title">${h(nameB)}'s turn is next</div><div class="ov-sub">They'll fill this in after ${h(nameA)} seals theirs</div></div>`:'';
+  return `<div class="col col-b"><div class="col-label"><div class="dot"></div>${h(nameB)}</div>
+    <textarea id="tb-${c.id}" ${!active?'disabled':''} placeholder="What does this look like for you?">${h(d.bText)}</textarea>
+    ${show?tagGroup(`tg-b-${c.id}`,d.bTag,!active):''}${wait}</div>`;
+}
+function colCompromise(c){
+  const d=store[c.id],rev=phase==='revealed';
+  const lock=!rev?`<div class="overlay locked"><div class="ov-icon">🤝</div><div class="ov-title">Common Ground</div><div class="ov-sub">Available once both of you have shared your values</div></div>`:'';
+  const ai=rev?`<button class="ai-btn" id="ai-btn-${c.id}" onclick="getSuggestion('${c.id}')"><span>✨</span> Suggest a Compromise</button>${d.aiSugg?`<div class="ai-response"><span class="ai-label">AI Suggestion</span>${h(d.aiSugg)}</div>`:''}`:'';
+  return `<div class="col col-compromise"><div class="col-label"><div class="dot"></div>Common Ground</div>
+    <textarea id="tc-${c.id}" ${!rev?'disabled':''} placeholder="What might work for both of you?">${h(d.compromise)}</textarea>
+    ${ai}${lock}</div>`;
+}
+function tagGroup(id,activeTag,disabled){
+  const tags=[{key:'non-neg',cls:'non-neg',label:'🔴 Non-negotiable'},{key:'less-flex',cls:'less-flex',label:'🟡 Less Flexible'},{key:'flexible',cls:'flexible',label:'🟢 Flexible'}];
+  return `<div class="tag-group" id="${id}">${tags.map(t=>`<span class="tag ${t.cls}${activeTag===t.key?' active':''}${disabled?' readonly':''}" data-tag="${t.key}" ${!disabled?`onclick="toggleTag('${id}','${t.key}')"`:''}>${t.label}</span>`).join('')}</div>`;
+}
+function toggleTag(gId,tag){
+  const grp=document.getElementById(gId);if(!grp)return;
+  grp.querySelectorAll('.tag').forEach(p=>p.classList.toggle('active',p.dataset.tag===tag&&!p.classList.contains('active')));
+  scheduleSave();
+}
+function attachAutoSave(){
+  document.getElementById('cards-container').querySelectorAll('textarea:not(:disabled)').forEach(ta=>ta.addEventListener('input',scheduleSave));
+}
+
+// ── AI ───────────────────────────────────────────────
+async function getSuggestion(cId){
+  const apiKey=localStorage.getItem(LS.API_KEY);
+  if(!apiKey){showToast('No API key saved — add one in ⚙️ Settings');return;}
+  const c=CONVS.find(cv=>cv.id===cId),d=store[cId];
+  const tc=document.getElementById(`tc-${cId}`);if(tc)d.compromise=tc.value;
+  const aEl=document.querySelector(`#tg-a-${cId} .tag.active`),bEl=document.querySelector(`#tg-b-${cId} .tag.active`);
+  const btn=document.getElementById(`ai-btn-${cId}`);
+  btn.disabled=true;btn.innerHTML=`<div class="spinner"></div> Thinking...`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:`You are a compassionate, experienced personal finance expert who specializes exclusively in helping newly cohabitating and newly married couples build their financial lives together as a unified team. Your communication style is warm, non-judgmental, practical, and emotionally intelligent. You deeply understand that money conversations carry emotional weight, and that both partners' values deserve equal respect and validation. When one partner has marked a value as non-negotiable, you honor that fully and help the other partner feel genuinely supported within that constraint — never minimizing it or trying to work around it. Your suggestions are specific, actionable, and grounded in real financial planning — never preachy, never generic. You write in plain, conversational language as if speaking directly to the couple sitting in front of you. Keep your response to 3-5 sentences.`,
+        messages:[{role:'user',content:`We are a couple working through our money values. The topic is: "${c.title}"\n\n${nameA} says: "${d.aText||'(nothing written)'}"\n${nameA}'s flexibility: ${aEl?aEl.textContent.trim():'Not specified'}\n\n${nameB} says: "${d.bText||'(nothing written)'}"\n${nameB}'s flexibility: ${bEl?bEl.textContent.trim():'Not specified'}\n\nPlease suggest a warm, specific, workable path forward that honors both perspectives. If either partner marked something non-negotiable, acknowledge that kindly and help the other feel respected within that constraint. If values are already well-aligned, affirm that warmly.`}]
+      })
+    });
+    if(res.status===401)throw new Error('Invalid API key — check it in ⚙️ Settings');
+    const data=await res.json();
+    if(data.error)throw new Error(data.error.message||'API error');
+    const sugg=data.content?.[0]?.text||'Unable to generate a suggestion.';
+    store[cId].aiSugg=sugg;saveProgress(true);
+    const card=document.getElementById(`card-${cId}`);
+    let rEl=card.querySelector('.ai-response');
+    if(rEl){rEl.innerHTML=`<span class="ai-label">AI Suggestion</span>${h(sugg)}`;}
+    else{rEl=document.createElement('div');rEl.className='ai-response reveal-anim';rEl.innerHTML=`<span class="ai-label">AI Suggestion</span>${h(sugg)}`;btn.after(rEl);}
+  }catch(err){showToast(err.message||'Something went wrong — try again');}
+  finally{btn.disabled=false;btn.innerHTML=`<span>✨</span> Suggest a Compromise`;}
+}
+
+// ── SETTINGS ─────────────────────────────────────────
+function openSettings(){
+  document.getElementById('settings-nameA').value=nameA;
+  document.getElementById('settings-nameB').value=nameB;
+  document.getElementById('settings-api-key').value=localStorage.getItem(LS.API_KEY)||'';
+  document.getElementById('settings-modal').classList.add('open');
+}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+function closeSettingsOnBg(e){if(e.target===document.getElementById('settings-modal'))closeSettings();}
+function saveSettings(){
+  const nA=document.getElementById('settings-nameA').value.trim()||nameA;
+  const nB=document.getElementById('settings-nameB').value.trim()||nameB;
+  const nK=document.getElementById('settings-api-key').value.trim();
+  nameA=nA;nameB=nB;
+  try{if(nK)localStorage.setItem(LS.API_KEY,nK);}catch(e){}
+  saveProgress(true);closeSettings();renderAll();showToast('Settings saved ✓');
+}
+function resetProgress(){
+  if(!confirm('Start a new conversation? Your current answers will be cleared.'))return;
+  CONVS.forEach(c=>{store[c.id]={aText:'',aTag:'',bText:'',bTag:'',compromise:'',aiSugg:''};});
+  phase='partnerA';
+  try{localStorage.removeItem(LS.PHASE);localStorage.removeItem(LS.STORE);}catch(e){}
+  closeSettings();showScreen('setup-screen');
+  document.getElementById('nameA-input').value=nameA;
+  document.getElementById('nameB-input').value=nameB;
+  document.getElementById('resume-banner').style.display='none';
+  showToast('Starting fresh ✓');
+}
+function resetEverything(){
+  if(!confirm('Clear everything including your API key and names? This cannot be undone.'))return;
+  try{localStorage.clear();}catch(e){}
+  CONVS.forEach(c=>{store[c.id]={aText:'',aTag:'',bText:'',bTag:'',compromise:'',aiSugg:''};});
+  phase='partnerA';nameA='Partner A';nameB='Partner B';
+  closeSettings();showScreen('api-key-screen');showToast('Everything cleared ✓');
+}
+
+// ── TOAST ────────────────────────────────────────────
+let toastTimer=null;
+function showToast(msg){
+  const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
+}
+function h(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── INIT ─────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  initPwa();
+  const hasKey=!!localStorage.getItem(LS.API_KEY);
+  const hasProgress=loadProgress();
+  if(!hasKey){showScreen('api-key-screen');}
+  else if(!hasProgress){showScreen('setup-screen');}
+  else{showScreen('main-app');renderAll();}
+});
+</script>
+</body>
+</html>
