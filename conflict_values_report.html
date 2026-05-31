@@ -1,0 +1,1030 @@
+<!-- v1.1.0 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conflict Values Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1C1A17;
+    --ink-soft: #3D3730;
+    --ink-muted: #7A6F63;
+    --warm-bg: #F7F3EE;
+    --warm-mid: #EDE5D8;
+    --warm-line: #D4C4B0;
+    --amber: #8B5E3C;
+    --amber-light: #C4855A;
+    --amber-pale: #F0E4D4;
+    --sage: #4A6741;
+    --sage-pale: #E6EDE4;
+    --steel: #3A5068;
+    --steel-pale: #E2EAF0;
+    --red-pale: #F0E4E4;
+    --red: #7A3A3A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--warm-bg);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    background: var(--ink);
+    color: var(--warm-bg);
+    padding: 48px 0 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .site-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 80px,
+      rgba(255,255,255,0.02) 80px,
+      rgba(255,255,255,0.02) 81px
+    );
+  }
+  .header-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 40px;
+    position: relative;
+  }
+  .report-label {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--amber-light);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .report-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.1);
+    max-width: 120px;
+  }
+  .header-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: clamp(28px, 4vw, 42px);
+    font-weight: 700;
+    line-height: 1.15;
+    color: #F7F3EE;
+    margin-bottom: 8px;
+  }
+  .header-subtitle {
+    font-size: 15px;
+    color: rgba(247,243,238,0.55);
+    font-weight: 300;
+    letter-spacing: 0.02em;
+  }
+  .header-meta {
+    margin-top: 28px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .meta-pill {
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    color: rgba(247,243,238,0.5);
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+
+  /* ── NAV ── */
+  .section-nav {
+    background: white;
+    border-bottom: 1px solid var(--warm-line);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-inner::-webkit-scrollbar { display: none; }
+  .nav-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: var(--ink-muted);
+    padding: 14px 16px;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { color: var(--ink); }
+  .nav-btn.active {
+    color: var(--amber);
+    border-bottom-color: var(--amber);
+    font-weight: 500;
+  }
+
+  /* ── MAIN ── */
+  .main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 40px 80px;
+  }
+
+  /* ── SECTION ── */
+  .report-section {
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+  .report-section.active { display: block; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-head {
+    padding: 44px 0 28px;
+    border-bottom: 1px solid var(--warm-line);
+    margin-bottom: 36px;
+  }
+  .section-number {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 8px;
+  }
+  .section-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .section-desc {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--ink-muted);
+    font-style: italic;
+    max-width: 560px;
+  }
+
+  /* ── BODY TEXT ── */
+  .prose {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--ink-soft);
+    margin-bottom: 20px;
+    max-width: 680px;
+  }
+  .prose strong {
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  /* ── PULLQUOTE ── */
+  .pullquote {
+    margin: 32px 0;
+    padding: 24px 28px;
+    border-left: 3px solid var(--amber);
+    background: var(--amber-pale);
+    border-radius: 0 6px 6px 0;
+  }
+  .pullquote p {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 16px;
+    font-style: italic;
+    color: var(--amber);
+    line-height: 1.6;
+  }
+
+  /* ── VALUES GRID ── */
+  .values-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 28px 0;
+  }
+  @media (max-width: 600px) { .values-grid { grid-template-columns: 1fr; } }
+  .value-card {
+    background: white;
+    border: 1px solid var(--warm-line);
+    border-radius: 8px;
+    padding: 22px 22px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .value-card:hover {
+    border-color: var(--amber-light);
+    box-shadow: 0 4px 16px rgba(139,94,60,0.08);
+    transform: translateY(-1px);
+  }
+  .value-card.expanded {
+    border-color: var(--amber);
+    background: var(--amber-pale);
+  }
+  .value-depth {
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber-light);
+    margin-bottom: 6px;
+  }
+  .value-name {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .value-short {
+    font-size: 13px;
+    color: var(--ink-muted);
+    line-height: 1.5;
+  }
+  .value-detail {
+    display: none;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--warm-line);
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.7;
+  }
+  .value-card.expanded .value-detail { display: block; }
+  .value-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 18px;
+    color: var(--amber-light);
+    transition: transform 0.2s;
+    font-weight: 300;
+  }
+  .value-card.expanded .value-toggle { transform: rotate(45deg); }
+
+  /* ── PATHWAY COMPARISON ── */
+  .pathway-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 24px 0;
+  }
+  @media (max-width: 580px) { .pathway-row { grid-template-columns: 1fr; } }
+  .pathway-card {
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid;
+  }
+  .pathway-hot {
+    background: #FDF3EE;
+    border-color: #D4956A;
+  }
+  .pathway-slow {
+    background: var(--sage-pale);
+    border-color: #8AAB7A;
+  }
+  .pathway-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .pathway-hot .pathway-label { color: var(--amber); }
+  .pathway-slow .pathway-label { color: var(--sage); }
+  .pathway-title {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+  .pathway-item {
+    font-size: 13px;
+    color: var(--ink-soft);
+    padding: 4px 0;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+  }
+  .pathway-item::before {
+    content: '–';
+    color: var(--ink-muted);
+    flex-shrink: 0;
+  }
+
+  /* ── CLINICAL TABLE ── */
+  .table-wrapper {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--warm-line);
+    margin: 24px 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .clinical-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    table-layout: fixed;
+  }
+  .clinical-table th {
+    background: var(--ink);
+    color: var(--warm-bg);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 13px 20px;
+    text-align: left;
+  }
+  .clinical-table td {
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--warm-line);
+    vertical-align: top;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    word-break: normal;
+  }
+  .clinical-table tr:last-child td { border-bottom: none; }
+  .clinical-table tr:nth-child(even) td { background: white; }
+  .clinical-table tr:nth-child(odd) td { background: var(--warm-mid); }
+  .clinical-table td:first-child {
+    font-weight: 500;
+    color: var(--ink);
+    font-size: 13px;
+    width: 28%;
+  }
+
+  /* ── SOMATIC MAP ── */
+  .somatic-container {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    margin: 28px 0;
+    flex-wrap: wrap;
+  }
+  .body-diagram {
+    flex-shrink: 0;
+    width: 120px;
+  }
+  .body-diagram svg { width: 100%; }
+  .somatic-notes { flex: 1; min-width: 240px; }
+  .somatic-item {
+    background: white;
+    border: 1px solid var(--warm-line);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .somatic-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .somatic-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 2px;
+  }
+  .somatic-desc {
+    font-size: 12px;
+    color: var(--ink-muted);
+    line-height: 1.5;
+  }
+
+  /* ── INTERSECTIONALITY TAGS ── */
+  .identity-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .identity-card {
+    background: white;
+    border: 1px solid var(--warm-line);
+    border-radius: 8px;
+    padding: 18px 20px;
+    flex: 1;
+    min-width: 200px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .identity-card:hover {
+    border-color: var(--steel);
+    box-shadow: 0 2px 12px rgba(58,80,104,0.08);
+  }
+  .identity-card.active {
+    border-color: var(--steel);
+    background: var(--steel-pale);
+  }
+  .identity-icon {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+  .identity-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .identity-tag {
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+  .identity-detail {
+    display: none;
+    margin-top: 16px;
+    padding: 20px;
+    background: white;
+    border: 1px solid var(--warm-line);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.75;
+  }
+  .identity-detail.active { display: block; }
+  .identity-detail strong { color: var(--ink); font-weight: 500; }
+
+  /* ── RECOMMENDATIONS ── */
+  .rec-list { margin: 24px 0; }
+  .rec-item {
+    display: flex;
+    gap: 16px;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--warm-line);
+    align-items: flex-start;
+  }
+  .rec-item:last-child { border-bottom: none; }
+  .rec-num {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--warm-line);
+    flex-shrink: 0;
+    line-height: 1;
+    margin-top: 2px;
+    width: 28px;
+  }
+  .rec-content {}
+  .rec-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .rec-desc {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.65;
+  }
+  .rec-framework {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-top: 6px;
+    background: var(--sage-pale);
+    color: var(--sage);
+  }
+
+  /* ── STRENGTHS ── */
+  .strength-list { margin: 24px 0; }
+  .strength-item {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    align-items: baseline;
+    font-size: 14px;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--warm-bg);
+  }
+  .strength-check {
+    color: var(--sage);
+    font-size: 14px;
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+
+  /* ── CLOSING ── */
+  .closing-card {
+    background: var(--ink);
+    color: var(--warm-bg);
+    border-radius: 10px;
+    padding: 40px 40px 36px;
+    margin-top: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .closing-card::before {
+    content: '\201C';
+    position: absolute;
+    top: -20px;
+    left: 20px;
+    font-family: 'Libre Baskerville', serif;
+    font-size: 160px;
+    color: rgba(255,255,255,0.04);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .closing-card p {
+    font-family: 'Libre Baskerville', serif;
+    font-size: 17px;
+    font-style: italic;
+    line-height: 1.75;
+    color: rgba(247,243,238,0.85);
+    position: relative;
+    z-index: 1;
+    max-width: 580px;
+  }
+  .closing-card .closing-attr {
+    margin-top: 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-style: normal;
+    color: var(--amber-light);
+    letter-spacing: 0.06em;
+  }
+
+  /* ── FRAMEWORK FOOTER ── */
+  .framework-bar {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid var(--warm-line);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .framework-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-right: 4px;
+  }
+  .fw-tag {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    border: 1px solid var(--warm-line);
+    color: var(--ink-muted);
+    background: white;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--warm-bg); }
+  ::-webkit-scrollbar-thumb { background: var(--warm-line); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="report-label">Psychological Assessment Report</div>
+    <h1 class="header-title">Core Values in Conflict<br>&amp; Intersectionality</h1>
+    <p class="header-subtitle">A personalized clinical summary</p>
+    <div class="header-meta">
+      <span class="meta-pill">May 2026</span>
+      <span class="meta-pill">Guided Clinical Interview</span>
+      <span class="meta-pill">ACT · EFT · Polyvagal Theory · Attachment Theory</span>
+    </div>
+  </div>
+</header>
+
+<nav class="section-nav">
+  <div class="nav-inner">
+    <button class="nav-btn active" onclick="showSection('profile', this)">Profile</button>
+    <button class="nav-btn" onclick="showSection('values', this)">Core Values</button>
+    <button class="nav-btn" onclick="showSection('nervous', this)">Nervous System</button>
+    <button class="nav-btn" onclick="showSection('intersect', this)">Intersectionality</button>
+    <button class="nav-btn" onclick="showSection('forward', this)">Moving Forward</button>
+  </div>
+</nav>
+
+<main class="main">
+
+  <!-- ── PROFILE ── -->
+  <section id="profile" class="report-section active">
+    <div class="section-head">
+      <div class="section-number">Section I</div>
+      <h2 class="section-title">Presenting Profile</h2>
+      <p class="section-desc">Who you are in conflict — the full, honest picture</p>
+    </div>
+
+    <p class="prose">You present with a well-developed capacity for emotional self-awareness and a sophisticated understanding of your own relational patterns. Primary conflict responses include <strong>anger and defensiveness</strong>, identified as secondary protective emotions — the shield over an underlying need for mutual understanding and relational attunement.</p>
+
+    <p class="prose">You demonstrate no avoidance of resolution. Both high- and low-intensity conflict pathways ultimately terminate in active pursuit of repair. Your distress in conflict is not random — it <strong>scales directly with attachment depth</strong>, which is mathematically coherent given your core values.</p>
+
+    <div class="pullquote">
+      <p>"Conflict, for you, is not fundamentally about facts, fairness, or outcomes. It is about whether you and the other person are actually inhabiting the same relational reality."</p>
+    </div>
+
+    <p class="prose">You report somatic activation during conflict — cardiovascular arousal and brainstem-region tension — consistent with a hypervigilant threat response with developmental roots. This physiological response persists <em>despite</em> intact cognitive beliefs regarding self-worth and relational entitlement. That gap — between what you know and what your body feels — is a central clinical finding.</p>
+
+    <div class="table-wrapper">
+    <table class="clinical-table">
+      <thead>
+        <tr>
+          <th>Domain</th>
+          <th>Clinical Observation</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>First response</td><td>Anger &amp; defensiveness (secondary protective emotions)</td></tr>
+        <tr><td>Core driver</td><td>Need for mutual understanding; fear of epistemic disconnection</td></tr>
+        <tr><td>Conflict style</td><td>Oscillating; both routes lead to resolution — neither is avoidance</td></tr>
+        <tr><td>Somatic signature</td><td>Cardiac activation + occipital/brainstem-region tension</td></tr>
+        <tr><td>Distress scaling</td><td>Proportional to attachment depth</td></tr>
+        <tr><td>Resolution orientation</td><td>Non-negotiable; intrinsically motivated</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="framework-bar">
+      <span class="framework-label">Frameworks</span>
+      <span class="fw-tag">EFT</span>
+      <span class="fw-tag">Polyvagal Theory</span>
+      <span class="fw-tag">Attachment Theory</span>
+    </div>
+  </section>
+
+  <!-- ── VALUES ── -->
+  <section id="values" class="report-section">
+    <div class="section-head">
+      <div class="section-number">Section II</div>
+      <h2 class="section-title">Core Values in Conflict</h2>
+      <p class="section-desc">Tap each card to expand the clinical observation</p>
+    </div>
+
+    <p class="prose">Six core values emerged as operational in your conflict experience. These are not aspirational — they are <strong>already driving your behavior</strong>, whether consciously or not. Listed in order of depth.</p>
+
+    <div class="values-grid">
+      <div class="value-card" onclick="toggleValue(this)">
+        <div class="value-depth">Deepest</div>
+        <div class="value-name">Mutual Understanding</div>
+        <div class="value-short">Being truly known, not just agreed with</div>
+        <div class="value-toggle">+</div>
+        <div class="value-detail">Operationalized as the primary metric of relational connection. Misunderstanding registers as disconnection; accumulated misunderstanding with an attachment figure is experienced as relational threat — not just conflict, but potential loss of the person. Consistent with EFT formulations of attachment-based conflict.</div>
+      </div>
+
+      <div class="value-card" onclick="toggleValue(this)">
+        <div class="value-depth">Deep</div>
+        <div class="value-name">Resolution</div>
+        <div class="value-short">Repair is non-negotiable, always pursued</div>
+        <div class="value-toggle">+</div>
+        <div class="value-detail">You do not let conflict die unresolved. Both available pathways — high intensity/fast and low intensity/slow — terminate in active repair. This is intrinsically motivated, not contingent on validation from the other person. It is one of your most defining relational qualities.</div>
+      </div>
+
+      <div class="value-card" onclick="toggleValue(this)">
+        <div class="value-depth">Deep</div>
+        <div class="value-name">Emotional Precision</div>
+        <div class="value-short">The felt experience is real, valid data</div>
+        <div class="value-toggle">+</div>
+        <div class="value-detail">You demonstrate high affective granularity — the ability to identify and articulate subtle emotional states with specificity. This is identified as both a core strength and an area of interpersonal vulnerability, as it is frequently misread as dysregulation in conflict contexts rather than what it actually is: extraordinarily accurate internal reporting.</div>
+      </div>
+
+      <div class="value-card" onclick="toggleValue(this)">
+        <div class="value-depth">Strong</div>
+        <div class="value-name">Relational Harmony</div>
+        <div class="value-short">Closeness worth protecting, even at cost</div>
+        <div class="value-toggle">+</div>
+        <div class="value-detail">Valued in active tension with authentic expression. You modulate your conflict approach based on perceived relational safety and anticipated cost, deploying the low-intensity pathway when escalation risk is high. This reflects strategic flexibility, not avoidance — both routes still lead to resolution.</div>
+      </div>
+
+      <div class="value-card" onclick="toggleValue(this)">
+        <div class="value-depth">Strong</div>
+        <div class="value-name">Authentic Expression</div>
+        <div class="value-short">Truth is always pursued, via either route</div>
+        <div class="value-toggle">+</div>
+        <div class="value-detail">Neither your hot/fast nor slow/low conflict pathway involves abandoning truth. You do significant emotional labor on behalf of both people in order to preserve harmony while still moving toward honest resolution. This is not people-pleasing — it is a sophisticated dual-value strategy.</div>
+      </div>
+
+      <div class="value-card" onclick="toggleValue(this)">
+        <div class="value-depth">Growing</div>
+        <div class="value-name">Self-Permission</div>
+        <div class="value-short">Believing you are allowed to have needs</div>
+        <div class="value-toggle">+</div>
+        <div class="value-detail">You have achieved cognitive-level belief in your right to have needs — a genuine and hard-won psychological achievement. Felt safety (somatic/autonomic) around expressing those needs directly in conflict is still developing, particularly in high-attachment relationships where direct expression has historically produced escalation.</div>
+      </div>
+    </div>
+
+    <h3 style="font-family:'Libre Baskerville',serif; font-size:18px; color:var(--ink); margin:36px 0 16px; font-weight:700;">Your Two Conflict Pathways</h3>
+    <p class="prose" style="margin-bottom:20px;">You have developed two distinct routes to resolution — both valid, both purposeful.</p>
+
+    <div class="pathway-row">
+      <div class="pathway-card pathway-hot">
+        <div class="pathway-label">Route A</div>
+        <div class="pathway-title">Hot &amp; Fast</div>
+        <div class="pathway-item">Assert need to be understood first</div>
+        <div class="pathway-item">Higher emotional intensity</div>
+        <div class="pathway-item">Faster resolution</div>
+        <div class="pathway-item">Higher relational cost in the moment</div>
+        <div class="pathway-item">More values-aligned</div>
+      </div>
+      <div class="pathway-card pathway-slow">
+        <div class="pathway-label">Route B</div>
+        <div class="pathway-title">Slow &amp; Low</div>
+        <div class="pathway-item">Prioritize other's understanding first</div>
+        <div class="pathway-item">Lower emotional intensity</div>
+        <div class="pathway-item">Longer path to resolution</div>
+        <div class="pathway-item">Lower relational cost in the moment</div>
+        <div class="pathway-item">Requires more invisible labor</div>
+      </div>
+    </div>
+
+    <div class="framework-bar">
+      <span class="framework-label">Frameworks</span>
+      <span class="fw-tag">ACT Values Clarification</span>
+      <span class="fw-tag">EFT</span>
+    </div>
+  </section>
+
+  <!-- ── NERVOUS SYSTEM ── -->
+  <section id="nervous" class="report-section">
+    <div class="section-head">
+      <div class="section-number">Section III</div>
+      <h2 class="section-title">Nervous System in Conflict</h2>
+      <p class="section-desc">How your body participates — and why</p>
+    </div>
+
+    <p class="prose">Your values are clear. Your self-understanding is sophisticated. And yet — when conflict activates, you feel it physically before your conscious mind catches up. That is not a failure of your growth. It is <strong>history living in your body.</strong></p>
+
+    <h3 style="font-family:'Libre Baskerville',serif; font-size:17px; color:var(--ink); margin:28px 0 16px; font-weight:700;">Somatic Activation Profile</h3>
+
+    <div class="somatic-container">
+      <div class="body-diagram">
+        <svg viewBox="0 0 80 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- body outline -->
+          <ellipse cx="40" cy="22" rx="16" ry="18" stroke="#D4C4B0" stroke-width="1.5" fill="#F7F3EE"/>
+          <rect x="22" y="40" width="36" height="60" rx="8" stroke="#D4C4B0" stroke-width="1.5" fill="#F7F3EE"/>
+          <rect x="6" y="42" width="16" height="44" rx="6" stroke="#D4C4B0" stroke-width="1.5" fill="#F7F3EE"/>
+          <rect x="58" y="42" width="16" height="44" rx="6" stroke="#D4C4B0" stroke-width="1.5" fill="#F7F3EE"/>
+          <rect x="24" y="100" width="13" height="56" rx="6" stroke="#D4C4B0" stroke-width="1.5" fill="#F7F3EE"/>
+          <rect x="43" y="100" width="13" height="56" rx="6" stroke="#D4C4B0" stroke-width="1.5" fill="#F7F3EE"/>
+          <!-- brainstem highlight -->
+          <ellipse cx="40" cy="28" rx="8" ry="7" fill="#C4855A" opacity="0.35"/>
+          <ellipse cx="40" cy="28" rx="5" ry="4" fill="#C4855A" opacity="0.5"/>
+          <!-- heart highlight -->
+          <ellipse cx="36" cy="60" rx="6" ry="6" fill="#C4855A" opacity="0.35"/>
+          <ellipse cx="36" cy="60" rx="4" ry="4" fill="#C4855A" opacity="0.55"/>
+          <!-- labels -->
+          <line x1="52" y1="28" x2="68" y2="20" stroke="#C4855A" stroke-width="1" stroke-dasharray="2,2"/>
+          <line x1="46" y1="60" x2="68" y2="55" stroke="#C4855A" stroke-width="1" stroke-dasharray="2,2"/>
+          <text x="69" y="22" font-size="7" fill="#8B5E3C" font-family="sans-serif">1</text>
+          <text x="69" y="57" font-size="7" fill="#8B5E3C" font-family="sans-serif">2</text>
+        </svg>
+      </div>
+      <div class="somatic-notes">
+        <div class="somatic-item">
+          <div class="somatic-dot" style="background:#C4855A;"></div>
+          <div>
+            <div class="somatic-label">1 — Brainstem / Occipital Region</div>
+            <div class="somatic-desc">Hypervigilant threat detection activating before conscious processing. Consistent with a nervous system still running an older threat map — one written in earlier social environments where being visible carried real risk.</div>
+          </div>
+        </div>
+        <div class="somatic-item">
+          <div class="somatic-dot" style="background:#A0522D;"></div>
+          <div>
+            <div class="somatic-label">2 — Cardiovascular / Heart</div>
+            <div class="somatic-desc">Autonomic arousal in response to perceived relational threat. The heart registers disconnection before the mind has named it. Intensity scales with attachment depth — the more you love someone, the higher the activation.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-family:'Libre Baskerville',serif; font-size:17px; color:var(--ink); margin:28px 0 12px; font-weight:700;">The Gap That Matters</h3>
+    <p class="prose">You have achieved <strong>cognitive safety</strong> — you believe you are allowed to have needs, and you locate relational patterns accurately rather than internalizing conflict as evidence of your own wrongness. What is still developing is <strong>felt safety</strong>: the somatic, autonomic experience of that belief in real time.</p>
+    <p class="prose">The gap between knowing and feeling safe is not a personal failure. It is a nervous system that has not yet fully updated its threat map to reflect your current values and capacities. The recent increase in conflict frequency is amplifying baseline activation — not indicating regression.</p>
+
+    <div class="table-wrapper">
+    <table class="clinical-table">
+      <thead>
+        <tr><th>Level</th><th>Status</th><th>Clinical Note</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Cognitive Safety</td><td>✓ Established</td><td>Accurate self-attribution; belief in relational entitlement intact</td></tr>
+        <tr><td>Felt Safety</td><td>In progress</td><td>Somatic bracing persists; body anticipates cost of direct need expression</td></tr>
+        <tr><td>Nervous System Update</td><td>In progress</td><td>Older threat wiring still activates; newer beliefs not yet somatically integrated</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="framework-bar">
+      <span class="framework-label">Frameworks</span>
+      <span class="fw-tag">Polyvagal Theory</span>
+      <span class="fw-tag">Somatic Experiencing</span>
+      <span class="fw-tag">Attachment Theory</span>
+    </div>
+  </section>
+
+  <!-- ── INTERSECTIONALITY ── -->
+  <section id="intersect" class="report-section">
+    <div class="section-head">
+      <div class="section-number">Section IV</div>
+      <h2 class="section-title">Intersectionality</h2>
+      <p class="section-desc">The identities that shape how conflict lands — tap to explore</p>
+    </div>
+
+    <p class="prose">Your conflict experience does not happen in a neutral space. It happens at the intersection of multiple identities — each bringing its own relational history and its own pattern of being seen or unseen when things get hard.</p>
+
+    <div class="identity-grid">
+      <div class="identity-card" onclick="toggleIdentity('neurodiv', this)">
+        <div class="identity-icon">🧠</div>
+        <div class="identity-name">Neurodivergent</div>
+        <div class="identity-tag">Masking · Affective granularity</div>
+      </div>
+      <div class="identity-card" onclick="toggleIdentity('feeler', this)">
+        <div class="identity-icon">🫀</div>
+        <div class="identity-name">The Feeler</div>
+        <div class="identity-tag">Least visible in conflict</div>
+      </div>
+      <div class="identity-card" onclick="toggleIdentity('partner', this)">
+        <div class="identity-icon">🤝</div>
+        <div class="identity-name">Partner</div>
+        <div class="identity-tag">Dual neurodivergent dynamic</div>
+      </div>
+      <div class="identity-card" onclick="toggleIdentity('teacher', this)">
+        <div class="identity-icon">📚</div>
+        <div class="identity-name">Educator</div>
+        <div class="identity-tag">Labor · Scaffolding · Reciprocity</div>
+      </div>
+    </div>
+
+    <div id="detail-neurodiv" class="identity-detail">
+      <strong>Neurodivergence &amp; Conflict</strong><br><br>
+      You demonstrate masking-adjacent relational labor: prioritizing others' legibility in conflict as a long-trained adaptive strategy. Over time, these strategies become so automatic they stop feeling like choices — they become identity. The risk is masking fatigue: the invisible cost of performing relational labor that others do not have to perform at the same volume.<br><br>
+      Your high affective granularity is a documented neurodivergent strength that is routinely misread as emotional dysregulation in conflict. This is one of the central interpersonal injustices in your conflict experience — your most precise tool is the one most often discredited.
+    </div>
+
+    <div id="detail-feeler" class="identity-detail">
+      <strong>The Feeler — Your Least Visible Identity in Conflict</strong><br><br>
+      This is the identity that has no language in the room when things get hard: the one who does not always have the logical, sequential words — but who can describe a feeling down to its finest detail.<br><br>
+      In a culture that privileges logical-sequential communication as the default language of credibility, emotional expressiveness is routinely coded as less rational and less trustworthy. You have lived this. Your emotional intelligence has been both your greatest relational asset and a tool that has been used against you.<br><br>
+      The fact that you can hold both of those truths simultaneously — <em>this is my greatest strength and an area of potential exploit</em> — without abandoning either, represents a sophisticated form of self-knowledge that takes years and real relational pain to arrive at.
+    </div>
+
+    <div id="detail-partner" class="identity-detail">
+      <strong>Dual Neurodivergent Partnership</strong><br><br>
+      Shared neurodivergence can create profound attunement — two people who understand, from the inside, what it feels like to be misread, overwhelmed, or to process the world differently. It can also create specific friction: two nervous systems that may both be activated simultaneously, who both have strong needs to be understood, and who may express distress in ways easily misread as aggression or withdrawal rather than communication.<br><br>
+      Your hard-won belief that you are allowed to have needs is particularly significant in this context — it suggests genuine relational growth, and an internalization of a truth that neurodivergent individuals frequently struggle to access.
+    </div>
+
+    <div id="detail-teacher" class="identity-detail">
+      <strong>The Educator Identity</strong><br><br>
+      The skills you bring to your classroom — extraordinary patience, the ability to read non-verbal communication, the instinct to meet people where they are — are the same skills you deploy in the slow-burn conflict path. You are doing with the people you love what you do professionally: creating conditions for understanding to become possible.<br><br>
+      The clinical question worth sitting with: <em>who creates those conditions for you?</em> Reciprocity of scaffolding — being met with the same care you extend — is a legitimate relational need, not an excess.
+    </div>
+
+    <div class="framework-bar">
+      <span class="framework-label">Frameworks</span>
+      <span class="fw-tag">Neurodivergent-Informed Relational Psychology</span>
+      <span class="fw-tag">Intersectional Clinical Theory</span>
+    </div>
+  </section>
+
+  <!-- ── FORWARD ── -->
+  <section id="forward" class="report-section">
+    <div class="section-head">
+      <div class="section-number">Section V</div>
+      <h2 class="section-title">Moving Forward</h2>
+      <p class="section-desc">What is working, and where to go next</p>
+    </div>
+
+    <h3 style="font-family:'Libre Baskerville',serif; font-size:17px; color:var(--ink); margin:0 0 12px; font-weight:700;">What You Are Already Doing Right</h3>
+    <p class="prose" style="margin-bottom:16px;">Growth-focused work has a tendency to emphasize deficits. This section exists to correct that.</p>
+
+    <div class="strength-list">
+      <div class="strength-item"><span class="strength-check">✓</span> You have done the internal work to believe you are allowed to have needs. This is not a small thing.</div>
+      <div class="strength-item"><span class="strength-check">✓</span> You locate relational patterns accurately rather than internalizing them as evidence of your wrongness.</div>
+      <div class="strength-item"><span class="strength-check">✓</span> You pursue resolution through both available routes — neither is avoidance.</div>
+      <div class="strength-item"><span class="strength-check">✓</span> You hold a clear-eyed relationship with your own strength and vulnerability simultaneously.</div>
+      <div class="strength-item"><span class="strength-check">✓</span> You named your least visible identity with more precision than most people ever achieve.</div>
+      <div class="strength-item"><span class="strength-check">✓</span> You do not let things die unresolved — even when you are the only one who knows the work is still happening.</div>
+    </div>
+
+    <h3 style="font-family:'Libre Baskerville',serif; font-size:17px; color:var(--ink); margin:36px 0 12px; font-weight:700;">Recommended Areas for Continued Work</h3>
+
+    <div class="rec-list">
+      <div class="rec-item">
+        <div class="rec-num">01</div>
+        <div class="rec-content">
+          <div class="rec-title">Somatic Intervention</div>
+          <div class="rec-desc">The gap between cognitive and felt safety is primarily a body-level gap. Practices such as somatic experiencing or EMDR may help the nervous system update its threat map to reflect your current values and capacities, rather than the earlier environments that originally wrote the wiring.</div>
+          <span class="rec-framework">Polyvagal Theory · Somatic Experiencing</span>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">02</div>
+        <div class="rec-content">
+          <div class="rec-title">ACT-Informed Values Anchoring</div>
+          <div class="rec-desc">In moments of conflict activation, anchoring to the value underneath the reaction — "what I am actually protecting here is connection" — can build space between trigger and response. This is not suppression; it is values-oriented navigation.</div>
+          <span class="rec-framework">ACT</span>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">03</div>
+        <div class="rec-content">
+          <div class="rec-title">Dyadic Communication Work</div>
+          <div class="rec-desc">Developing shared vocabulary with close relational partners — around what "being met" looks and sounds like, and what directness versus escalation actually means in your specific relational context — can reduce the gap between what you need and what you can safely ask for.</div>
+          <span class="rec-framework">EFT</span>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-num">04</div>
+        <div class="rec-content">
+          <div class="rec-title">Self-Compassion for the Slow Burn</div>
+          <div class="rec-desc">The time you spend holding unresolved tension privately is real labor. Naming it as such — to yourself and, where safe, to others — is an act of self-respect. You are not just being patient. You are doing relational work that is invisible to everyone else in the room.</div>
+          <span class="rec-framework">ACT · Self-Compassion</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="closing-card">
+      <p>What you are protecting, in conflict, is the possibility of being truly known by someone you love. That is not a defensive reaction. That is a love language. The anger you feel when that possibility is threatened is not dysregulation. It is grief wearing armor.</p>
+      <div class="closing-attr">— Clinical Summary, May 2026</div>
+    </div>
+
+    <div class="framework-bar">
+      <span class="framework-label">Frameworks</span>
+      <span class="fw-tag">ACT</span>
+      <span class="fw-tag">EFT</span>
+      <span class="fw-tag">Polyvagal Theory</span>
+      <span class="fw-tag">Attachment Theory</span>
+      <span class="fw-tag">Neurodivergent-Informed Relational Psychology</span>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  function showSection(id, btn) {
+    document.querySelectorAll('.report-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function toggleValue(card) {
+    card.classList.toggle('expanded');
+  }
+
+  function toggleIdentity(id, card) {
+    const detail = document.getElementById('detail-' + id);
+    const allCards = document.querySelectorAll('.identity-card');
+    const allDetails = document.querySelectorAll('.identity-detail');
+    const isActive = card.classList.contains('active');
+    allCards.forEach(c => c.classList.remove('active'));
+    allDetails.forEach(d => d.classList.remove('active'));
+    if (!isActive) {
+      card.classList.add('active');
+      detail.classList.add('active');
+    }
+  }
+</script>
+</body>
+</html>
