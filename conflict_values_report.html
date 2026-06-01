@@ -1,4 +1,4 @@
-<!-- v1.1.0 -->
+<!-- v1.2.0 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -433,18 +433,21 @@
 
   /* ── INTERSECTIONALITY TAGS ── */
   .identity-grid {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
     margin: 24px 0;
+  }
+  @media (max-width: 580px) { .identity-grid { grid-template-columns: 1fr; } }
+  .identity-item {
+    display: flex;
+    flex-direction: column;
   }
   .identity-card {
     background: white;
     border: 1px solid var(--warm-line);
     border-radius: 8px;
     padding: 18px 20px;
-    flex: 1;
-    min-width: 200px;
     cursor: pointer;
     transition: all 0.2s;
   }
@@ -455,6 +458,7 @@
   .identity-card.active {
     border-color: var(--steel);
     background: var(--steel-pale);
+    border-radius: 8px 8px 0 0;
   }
   .identity-icon {
     font-size: 20px;
@@ -472,14 +476,15 @@
   }
   .identity-detail {
     display: none;
-    margin-top: 16px;
     padding: 20px;
-    background: white;
-    border: 1px solid var(--warm-line);
-    border-radius: 8px;
+    background: var(--steel-pale);
+    border: 1px solid var(--steel);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
     font-size: 14px;
     color: var(--ink-soft);
     line-height: 1.75;
+    animation: fadeIn 0.2s ease;
   }
   .identity-detail.active { display: block; }
   .identity-detail strong { color: var(--ink); font-weight: 500; }
@@ -676,7 +681,7 @@
       <tbody>
         <tr><td>First response</td><td>Anger &amp; defensiveness (secondary protective emotions)</td></tr>
         <tr><td>Core driver</td><td>Need for mutual understanding; fear of epistemic disconnection</td></tr>
-        <tr><td>Conflict style</td><td>Oscillating; both routes lead to resolution — neither is avoidance</td></tr>
+        <tr><td>Conflict style</td><td>Oscillating across three modes: <strong>Assert</strong> — push to be understood first; high intensity, faster resolution, higher relational cost. <strong>Accommodate</strong> — prioritize the other's understanding first; lower intensity, slower burn, requires significant invisible labor. <strong>Absorb</strong> — withdraw inward while privately holding the unresolved thread; outwardly appears resolved but continues internal processing until repair is possible. All three routes terminate in active pursuit of repair.</td></tr>
         <tr><td>Somatic signature</td><td>Cardiac activation + occipital/brainstem-region tension</td></tr>
         <tr><td>Distress scaling</td><td>Proportional to attachment depth</td></tr>
         <tr><td>Resolution orientation</td><td>Non-negotiable; intrinsically motivated</td></tr>
@@ -872,51 +877,58 @@
     <p class="prose">Your conflict experience does not happen in a neutral space. It happens at the intersection of multiple identities — each bringing its own relational history and its own pattern of being seen or unseen when things get hard.</p>
 
     <div class="identity-grid">
-      <div class="identity-card" onclick="toggleIdentity('neurodiv', this)">
-        <div class="identity-icon">🧠</div>
-        <div class="identity-name">Neurodivergent</div>
-        <div class="identity-tag">Masking · Affective granularity</div>
+      <div class="identity-item">
+        <div class="identity-card" onclick="toggleIdentity('neurodiv', this)">
+          <div class="identity-icon">🧠</div>
+          <div class="identity-name">Neurodivergent</div>
+          <div class="identity-tag">Masking · Affective granularity</div>
+        </div>
+        <div id="detail-neurodiv" class="identity-detail">
+          <strong>Neurodivergence &amp; Conflict</strong><br><br>
+          You demonstrate masking-adjacent relational labor: prioritizing others' legibility in conflict as a long-trained adaptive strategy. Over time, these strategies become so automatic they stop feeling like choices — they become identity. The risk is masking fatigue: the invisible cost of performing relational labor that others do not have to perform at the same volume.<br><br>
+          Your high affective granularity is a documented neurodivergent strength that is routinely misread as emotional dysregulation in conflict. This is one of the central interpersonal injustices in your conflict experience — your most precise tool is the one most often discredited.
+        </div>
       </div>
-      <div class="identity-card" onclick="toggleIdentity('feeler', this)">
-        <div class="identity-icon">🫀</div>
-        <div class="identity-name">The Feeler</div>
-        <div class="identity-tag">Least visible in conflict</div>
+
+      <div class="identity-item">
+        <div class="identity-card" onclick="toggleIdentity('feeler', this)">
+          <div class="identity-icon">🫀</div>
+          <div class="identity-name">The Feeler</div>
+          <div class="identity-tag">Least visible in conflict</div>
+        </div>
+        <div id="detail-feeler" class="identity-detail">
+          <strong>The Feeler — Your Least Visible Identity in Conflict</strong><br><br>
+          This is the identity that has no language in the room when things get hard: the one who does not always have the logical, sequential words — but who can describe a feeling down to its finest detail.<br><br>
+          In a culture that privileges logical-sequential communication as the default language of credibility, emotional expressiveness is routinely coded as less rational and less trustworthy. You have lived this. Your emotional intelligence has been both your greatest relational asset and a tool that has been used against you.<br><br>
+          The fact that you can hold both of those truths simultaneously — <em>this is my greatest strength and an area of potential exploit</em> — without abandoning either, represents a sophisticated form of self-knowledge that takes years and real relational pain to arrive at.
+        </div>
       </div>
-      <div class="identity-card" onclick="toggleIdentity('partner', this)">
-        <div class="identity-icon">🤝</div>
-        <div class="identity-name">Partner</div>
-        <div class="identity-tag">Dual neurodivergent dynamic</div>
+
+      <div class="identity-item">
+        <div class="identity-card" onclick="toggleIdentity('partner', this)">
+          <div class="identity-icon">🤝</div>
+          <div class="identity-name">Partner</div>
+          <div class="identity-tag">Dual neurodivergent dynamic</div>
+        </div>
+        <div id="detail-partner" class="identity-detail">
+          <strong>Dual Neurodivergent Partnership</strong><br><br>
+          Shared neurodivergence can create profound attunement — two people who understand, from the inside, what it feels like to be misread, overwhelmed, or to process the world differently. It can also create specific friction: two nervous systems that may both be activated simultaneously, who both have strong needs to be understood, and who may express distress in ways easily misread as aggression or withdrawal rather than communication.<br><br>
+          Your hard-won belief that you are allowed to have needs is particularly significant in this context — it suggests genuine relational growth, and an internalization of a truth that neurodivergent individuals frequently struggle to access.
+        </div>
       </div>
-      <div class="identity-card" onclick="toggleIdentity('teacher', this)">
-        <div class="identity-icon">📚</div>
-        <div class="identity-name">Educator</div>
-        <div class="identity-tag">Labor · Scaffolding · Reciprocity</div>
+
+      <div class="identity-item">
+        <div class="identity-card" onclick="toggleIdentity('teacher', this)">
+          <div class="identity-icon">📚</div>
+          <div class="identity-name">Educator</div>
+          <div class="identity-tag">Labor · Scaffolding · Reciprocity</div>
+        </div>
+        <div id="detail-teacher" class="identity-detail">
+          <strong>The Educator Identity</strong><br><br>
+          The skills you bring to your classroom — extraordinary patience, the ability to read non-verbal communication, the instinct to meet people where they are — are the same skills you deploy in the slow-burn conflict path. You are doing with the people you love what you do professionally: creating conditions for understanding to become possible.<br><br>
+          The clinical question worth sitting with: <em>who creates those conditions for you?</em> Reciprocity of scaffolding — being met with the same care you extend — is a legitimate relational need, not an excess.
+        </div>
       </div>
-    </div>
-
-    <div id="detail-neurodiv" class="identity-detail">
-      <strong>Neurodivergence &amp; Conflict</strong><br><br>
-      You demonstrate masking-adjacent relational labor: prioritizing others' legibility in conflict as a long-trained adaptive strategy. Over time, these strategies become so automatic they stop feeling like choices — they become identity. The risk is masking fatigue: the invisible cost of performing relational labor that others do not have to perform at the same volume.<br><br>
-      Your high affective granularity is a documented neurodivergent strength that is routinely misread as emotional dysregulation in conflict. This is one of the central interpersonal injustices in your conflict experience — your most precise tool is the one most often discredited.
-    </div>
-
-    <div id="detail-feeler" class="identity-detail">
-      <strong>The Feeler — Your Least Visible Identity in Conflict</strong><br><br>
-      This is the identity that has no language in the room when things get hard: the one who does not always have the logical, sequential words — but who can describe a feeling down to its finest detail.<br><br>
-      In a culture that privileges logical-sequential communication as the default language of credibility, emotional expressiveness is routinely coded as less rational and less trustworthy. You have lived this. Your emotional intelligence has been both your greatest relational asset and a tool that has been used against you.<br><br>
-      The fact that you can hold both of those truths simultaneously — <em>this is my greatest strength and an area of potential exploit</em> — without abandoning either, represents a sophisticated form of self-knowledge that takes years and real relational pain to arrive at.
-    </div>
-
-    <div id="detail-partner" class="identity-detail">
-      <strong>Dual Neurodivergent Partnership</strong><br><br>
-      Shared neurodivergence can create profound attunement — two people who understand, from the inside, what it feels like to be misread, overwhelmed, or to process the world differently. It can also create specific friction: two nervous systems that may both be activated simultaneously, who both have strong needs to be understood, and who may express distress in ways easily misread as aggression or withdrawal rather than communication.<br><br>
-      Your hard-won belief that you are allowed to have needs is particularly significant in this context — it suggests genuine relational growth, and an internalization of a truth that neurodivergent individuals frequently struggle to access.
-    </div>
-
-    <div id="detail-teacher" class="identity-detail">
-      <strong>The Educator Identity</strong><br><br>
-      The skills you bring to your classroom — extraordinary patience, the ability to read non-verbal communication, the instinct to meet people where they are — are the same skills you deploy in the slow-burn conflict path. You are doing with the people you love what you do professionally: creating conditions for understanding to become possible.<br><br>
-      The clinical question worth sitting with: <em>who creates those conditions for you?</em> Reciprocity of scaffolding — being met with the same care you extend — is a legitimate relational need, not an excess.
     </div>
 
     <div class="framework-bar">
@@ -1014,7 +1026,7 @@
   }
 
   function toggleIdentity(id, card) {
-    const detail = document.getElementById('detail-' + id);
+    const detail = card.parentElement.querySelector('.identity-detail');
     const allCards = document.querySelectorAll('.identity-card');
     const allDetails = document.querySelectorAll('.identity-detail');
     const isActive = card.classList.contains('active');
