@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Cozy Calories</title>
+<meta name="description" content="A cozy, cute calorie tracker with a mascot buddy who reacts to your day.">
+
+<!-- PWA metadata -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#FFB6C9">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Cozy Calories">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+
+<style>
+  :root{
+    --cream:#FFF8F0;
+    --cream-deep:#FBEEDF;
+    --card:#FFFFFF;
+    --pink:#FFD6E8;
+    --pink-deep:#FF9EB5;
+    --lavender:#E6D9F7;
+    --lavender-deep:#C6A8ED;
+    --mint:#CFF3E1;
+    --mint-deep:#8FDCB6;
+    --peach:#FFE3C7;
+    --peach-deep:#FFC48C;
+    --text:#6B4F4F;
+    --text-soft:#9C8484;
+    --shadow: 0 8px 24px rgba(180, 140, 150, 0.18);
+    --shadow-sm: 0 4px 12px rgba(180, 140, 150, 0.14);
+    --radius-lg: 28px;
+    --radius-md: 20px;
+    --radius-sm: 14px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 10%, rgba(255,214,232,0.5), transparent 40%),
+      radial-gradient(circle at 90% 15%, rgba(198,168,237,0.35), transparent 40%),
+      radial-gradient(circle at 50% 95%, rgba(143,220,182,0.25), transparent 45%),
+      var(--cream);
+    color:var(--text);
+    font-family: "Segoe UI Rounded", "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Trebuchet MS", "Comic Sans MS", sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  #app{
+    max-width:480px;
+    margin:0 auto;
+    padding:18px 16px 100px;
+    position:relative;
+    min-height:100vh;
+  }
+
+  /* ---------- decorative doodles ---------- */
+  .doodle{
+    position:fixed;
+    pointer-events:none;
+    opacity:0.55;
+    z-index:0;
+    animation: float 6s ease-in-out infinite;
+  }
+  .doodle.d1{top:6%; left:6%; animation-delay:0s;}
+  .doodle.d2{top:14%; right:8%; animation-delay:1.2s;}
+  .doodle.d3{bottom:10%; left:10%; animation-delay:2s;}
+  .doodle.d4{bottom:20%; right:6%; animation-delay:0.6s;}
+  @keyframes float{
+    0%,100%{transform:translateY(0) rotate(0deg);}
+    50%{transform:translateY(-10px) rotate(8deg);}
+  }
+
+  h1,h2,h3{margin:0; font-weight:800;}
+  p{margin:0;}
+
+  .hidden{display:none !important;}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+    position:relative;
+    z-index:1;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:1.15rem;
+    font-weight:800;
+    color:var(--text);
+  }
+  .brand .heart{color:var(--pink-deep);}
+  .icon-btn{
+    width:42px;height:42px;
+    border-radius:50%;
+    border:none;
+    background:var(--card);
+    box-shadow:var(--shadow-sm);
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.2rem;
+    cursor:pointer;
+    transition: transform .15s ease;
+  }
+  .icon-btn:active{transform:scale(0.9);}
+
+  /* ---------- cards ---------- */
+  .card{
+    background:var(--card);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow);
+    padding:20px;
+    position:relative;
+    z-index:1;
+  }
+
+  /* ---------- setup screen ---------- */
+  #setup-screen{
+    padding-top:8vh;
+    position:relative;
+    z-index:1;
+  }
+  .setup-header{
+    text-align:center;
+    margin-bottom:22px;
+  }
+  .setup-header h1{
+    font-size:1.7rem;
+    color:var(--text);
+  }
+  .setup-header p{
+    color:var(--text-soft);
+    margin-top:6px;
+    font-size:0.95rem;
+  }
+  .setup-card{margin-bottom:16px;}
+  .setup-card label{
+    display:block;
+    font-weight:700;
+    margin-bottom:10px;
+    font-size:1rem;
+  }
+  .target-input-wrap{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--cream-deep);
+    border-radius:var(--radius-md);
+    padding:10px 16px;
+  }
+  #target-input{
+    flex:1;
+    border:none;
+    background:transparent;
+    font-size:1.4rem;
+    font-weight:800;
+    color:var(--text);
+    outline:none;
+    width:100%;
+    -moz-appearance:textfield;
+  }
+  #target-input::-webkit-outer-spin-button,
+  #target-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .unit{color:var(--text-soft); font-weight:700; font-size:0.9rem;}
+
+  .mascot-choices{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+  }
+  .mascot-choice{
+    border:3px solid transparent;
+    border-radius:var(--radius-md);
+    background:var(--cream-deep);
+    padding:12px 6px 10px;
+    text-align:center;
+    cursor:pointer;
+    transition: transform .15s ease, border-color .15s ease, background .15s ease;
+  }
+  .mascot-choice:active{transform:scale(0.95);}
+  .mascot-choice.selected{
+    border-color:var(--pink-deep);
+    background:var(--pink);
+  }
+  .mascot-choice .mini-mascot{width:58px; height:58px; margin:0 auto 6px;}
+  .mascot-choice span{font-size:0.85rem; font-weight:700;}
+
+  .primary-btn{
+    width:100%;
+    border:none;
+    border-radius:var(--radius-md);
+    padding:15px;
+    font-size:1.05rem;
+    font-weight:800;
+    color:#fff;
+    background:linear-gradient(135deg, var(--pink-deep), var(--lavender-deep));
+    box-shadow:var(--shadow-sm);
+    cursor:pointer;
+    transition: transform .15s ease, opacity .15s ease;
+  }
+  .primary-btn:active{transform:scale(0.97);}
+  .primary-btn:disabled{opacity:0.5; cursor:not-allowed;}
+  .secondary-btn{
+    width:100%;
+    border:2px solid var(--pink);
+    border-radius:var(--radius-md);
+    padding:13px;
+    font-size:0.95rem;
+    font-weight:700;
+    color:var(--text);
+    background:transparent;
+    cursor:pointer;
+    margin-top:10px;
+  }
+  .secondary-btn:active{transform:scale(0.97);}
+  .danger-btn{
+    width:100%;
+    border:2px solid #FFB0B0;
+    border-radius:var(--radius-md);
+    padding:13px;
+    font-size:0.95rem;
+    font-weight:700;
+    color:#D9636B;
+    background:#FFF3F3;
+    cursor:pointer;
+    margin-top:10px;
+  }
+  .danger-btn:active{transform:scale(0.97);}
+
+  /* ---------- home screen: mascot + bubble ---------- */
+  .mascot-stage{
+    text-align:center;
+    padding:6px 0 4px;
+    position:relative;
+  }
+  .speech-bubble{
+    display:inline-block;
+    max-width:88%;
+    background:var(--card);
+    border:2px solid var(--pink);
+    border-radius:20px;
+    padding:10px 16px;
+    font-size:0.9rem;
+    font-weight:700;
+    color:var(--text);
+    box-shadow:var(--shadow-sm);
+    margin-bottom:6px;
+    opacity:0;
+    transform:translateY(6px) scale(0.9);
+    transition: opacity .25s ease, transform .25s ease;
+    position:relative;
+  }
+  .speech-bubble.show{
+    opacity:1;
+    transform:translateY(0) scale(1);
+    animation: bubble-pop .35s ease;
+  }
+  @keyframes bubble-pop{
+    0%{transform:scale(0.85);}
+    55%{transform:scale(1.05);}
+    100%{transform:scale(1);}
+  }
+  .speech-bubble::after{
+    content:"";
+    position:absolute;
+    bottom:-9px;
+    left:50%;
+    transform:translateX(-50%);
+    border-width:9px 8px 0 8px;
+    border-style:solid;
+    border-color:var(--pink) transparent transparent transparent;
+  }
+
+  .mascot-wrap{
+    width:150px;height:150px;
+    margin:4px auto 2px;
+    position:relative;
+  }
+  .mascot-wrap svg{
+    width:100%;height:100%;
+    animation: bob 3.2s ease-in-out infinite;
+    filter:drop-shadow(0 10px 14px rgba(180,140,150,0.25));
+  }
+  @keyframes bob{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-6px);}
+  }
+  .mascot-wrap.pulse svg{animation: bob 3.2s ease-in-out infinite, pulse-bump .5s ease;}
+  @keyframes pulse-bump{
+    0%{transform:scale(1);}
+    40%{transform:scale(1.12);}
+    100%{transform:scale(1);}
+  }
+
+  /* ---------- progress ring ---------- */
+  .progress-section{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    margin-top:8px;
+  }
+  .ring-wrap{
+    position:relative;
+    width:132px;height:132px;
+    flex-shrink:0;
+  }
+  .ring-wrap svg{width:100%;height:100%; transform:rotate(-90deg);}
+  .ring-bg{fill:none; stroke:var(--cream-deep); stroke-width:12;}
+  .ring-fg{
+    fill:none;
+    stroke:url(#ringGradient);
+    stroke-width:12;
+    stroke-linecap:round;
+    transition: stroke-dashoffset .6s cubic-bezier(.34,1.56,.64,1), stroke .3s ease;
+  }
+  .ring-center{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    text-align:center;
+  }
+  .ring-center .big-num{font-size:1.5rem; font-weight:800; color:var(--text); line-height:1;}
+  .ring-center .small-label{font-size:0.68rem; color:var(--text-soft); font-weight:700; margin-top:3px;}
+
+  .stat-block{flex:1;}
+  .stat-block .status-line{
+    font-size:1rem;
+    font-weight:800;
+    margin-bottom:4px;
+  }
+  .stat-block .status-line.over{color:#D9636B;}
+  .stat-block .status-line.ok{color:#4FAE7D;}
+  .stat-block .sub-line{
+    font-size:0.8rem;
+    color:var(--text-soft);
+    font-weight:600;
+  }
+
+  /* ---------- meal category grid ---------- */
+  .section-title{
+    font-size:0.95rem;
+    font-weight:800;
+    margin: 22px 0 10px 4px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .meal-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:12px;
+  }
+  .meal-card{
+    background:var(--card);
+    border-radius:var(--radius-md);
+    box-shadow:var(--shadow-sm);
+    padding:14px 12px;
+    text-align:center;
+    cursor:pointer;
+    border:2px solid transparent;
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  .meal-card:active{transform:scale(0.96);}
+  .meal-card .emoji{font-size:1.6rem; display:block; margin-bottom:4px;}
+  .meal-card .label{font-weight:800; font-size:0.9rem;}
+  .meal-card .amount{font-size:0.75rem; color:var(--text-soft); font-weight:700; margin-top:2px;}
+  .meal-card.breakfast{border-color: var(--peach);}
+  .meal-card.lunch{border-color: var(--mint);}
+  .meal-card.dinner{border-color: var(--lavender);}
+  .meal-card.snack{border-color: var(--pink);}
+
+  /* ---------- add panel (inline) ---------- */
+  #add-panel{
+    margin-top:14px;
+    padding:16px;
+  }
+  #add-panel .add-title{
+    font-weight:800;
+    margin-bottom:10px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .add-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .add-row input[type="number"]{
+    flex:1;
+    border:2px solid var(--cream-deep);
+    border-radius:var(--radius-sm);
+    padding:12px;
+    font-size:1.1rem;
+    font-weight:800;
+    color:var(--text);
+    outline:none;
+    background:var(--cream);
+    -moz-appearance:textfield;
+  }
+  .add-row input[type="number"]::-webkit-outer-spin-button,
+  .add-row input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .add-row input[type="text"]{
+    flex:1.3;
+    border:2px solid var(--cream-deep);
+    border-radius:var(--radius-sm);
+    padding:12px;
+    font-size:0.9rem;
+    font-weight:600;
+    color:var(--text);
+    outline:none;
+    background:var(--cream);
+  }
+  .quick-chips{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .chip{
+    border:none;
+    background:var(--cream-deep);
+    color:var(--text);
+    font-weight:700;
+    font-size:0.78rem;
+    padding:7px 12px;
+    border-radius:20px;
+    cursor:pointer;
+  }
+  .chip:active{transform:scale(0.94);}
+  .add-actions{display:flex; gap:10px;}
+  .add-actions button{flex:1;}
+
+  /* ---------- entries list ---------- */
+  #entries-list{
+    margin-top:8px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .entry-row{
+    background:var(--card);
+    border-radius:var(--radius-sm);
+    box-shadow:var(--shadow-sm);
+    padding:12px 14px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    animation: entry-in .3s ease;
+  }
+  @keyframes entry-in{
+    from{opacity:0; transform:translateY(8px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .entry-emoji{font-size:1.3rem; width:32px; text-align:center;}
+  .entry-info{flex:1; min-width:0;}
+  .entry-info .e-label{font-weight:800; font-size:0.9rem;}
+  .entry-info .e-meta{font-size:0.72rem; color:var(--text-soft); font-weight:600;}
+  .entry-cal{font-weight:800; color:var(--pink-deep); font-size:0.95rem; white-space:nowrap;}
+  .entry-actions{display:flex; gap:6px;}
+  .entry-actions button{
+    border:none;
+    background:var(--cream-deep);
+    width:30px;height:30px;
+    border-radius:50%;
+    font-size:0.85rem;
+    cursor:pointer;
+  }
+  .entry-actions button:active{transform:scale(0.9);}
+  .empty-state{
+    text-align:center;
+    color:var(--text-soft);
+    font-size:0.85rem;
+    font-weight:600;
+    padding:26px 10px;
+  }
+
+  /* ---------- modal (settings / confirm) ---------- */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(107,79,79,0.35);
+    display:flex; align-items:flex-end;
+    justify-content:center;
+    z-index:50;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease;
+  }
+  .modal-overlay.show{opacity:1; pointer-events:auto;}
+  .modal-sheet{
+    background:var(--cream);
+    width:100%;
+    max-width:480px;
+    border-radius:26px 26px 0 0;
+    padding:22px 20px calc(24px + env(safe-area-inset-bottom));
+    box-shadow:0 -10px 30px rgba(0,0,0,0.15);
+    transform:translateY(20px);
+    transition:transform .25s ease;
+    max-height:85vh;
+    overflow-y:auto;
+  }
+  .modal-overlay.show .modal-sheet{transform:translateY(0);}
+  .modal-sheet h2{
+    font-size:1.15rem;
+    margin-bottom:14px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .modal-sheet h2 button{
+    border:none; background:var(--cream-deep);
+    width:32px;height:32px; border-radius:50%;
+    font-size:1rem; cursor:pointer;
+  }
+  .settings-group{margin-bottom:18px;}
+  .settings-group label{
+    display:block; font-weight:700; font-size:0.85rem; margin-bottom:8px; color:var(--text-soft);
+  }
+
+  #confirm-modal .modal-sheet{text-align:center;}
+  #confirm-modal p{font-size:0.95rem; margin-bottom:16px; color:var(--text);}
+  #confirm-modal .confirm-actions{display:flex; gap:10px;}
+
+  footer.tag{
+    text-align:center;
+    color:var(--text-soft);
+    font-size:0.72rem;
+    margin-top:24px;
+    font-weight:600;
+  }
+
+  @media (max-width:340px){
+    .mascot-wrap{width:120px;height:120px;}
+    .ring-wrap{width:112px;height:112px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="doodle d1" style="font-size:22px;">✦</div>
+<div class="doodle d2" style="font-size:18px;">♡</div>
+<div class="doodle d3" style="font-size:16px;">✧</div>
+<div class="doodle d4" style="font-size:20px;">♡</div>
+
+<div id="app">
+
+  <!-- ============ SETUP SCREEN ============ -->
+  <section id="setup-screen">
+    <div class="setup-header">
+      <h1>Welcome to Cozy Calories ♡</h1>
+      <p>Let's set up your cozy little tracker~</p>
+    </div>
+
+    <div class="card setup-card">
+      <label for="target-input">Daily calorie target</label>
+      <div class="target-input-wrap">
+        <input type="number" id="target-input" placeholder="2000" min="500" max="8000" inputmode="numeric">
+        <span class="unit">kcal</span>
+      </div>
+    </div>
+
+    <div class="card setup-card">
+      <label>Choose your buddy</label>
+      <div class="mascot-choices" id="setup-mascot-choices"></div>
+    </div>
+
+    <button class="primary-btn" id="setup-confirm-btn" disabled>Let's get cozy ✦</button>
+  </section>
+
+  <!-- ============ HOME SCREEN ============ -->
+  <section id="home-screen" class="hidden">
+    <div class="topbar">
+      <div class="brand"><span class="heart">♡</span> Cozy Calories</div>
+      <button class="icon-btn" id="settings-btn" aria-label="Settings">⚙️</button>
+    </div>
+
+    <div class="card">
+      <div class="mascot-stage">
+        <div class="speech-bubble" id="speech-bubble">Hi there! ♡</div>
+        <div class="mascot-wrap" id="mascot-wrap"></div>
+      </div>
+
+      <div class="progress-section">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 132 132">
+            <defs>
+              <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF9EB5"/>
+                <stop offset="100%" stop-color="#C6A8ED"/>
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg" cx="66" cy="66" r="54"/>
+            <circle class="ring-fg" id="ring-fg" cx="66" cy="66" r="54"/>
+          </svg>
+          <div class="ring-center">
+            <div class="big-num" id="ring-total">0</div>
+            <div class="small-label" id="ring-target">/ 2000 kcal</div>
+          </div>
+        </div>
+        <div class="stat-block">
+          <div class="status-line" id="status-line">Ready when you are!</div>
+          <div class="sub-line" id="sub-line">0 entries today</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">✦ Add a meal</div>
+    <div class="meal-grid" id="meal-grid">
+      <div class="meal-card breakfast" data-meal="breakfast">
+        <span class="emoji">🍳</span>
+        <span class="label">Breakfast</span>
+        <span class="amount" id="sum-breakfast">0 kcal</span>
+      </div>
+      <div class="meal-card lunch" data-meal="lunch">
+        <span class="emoji">🍱</span>
+        <span class="label">Lunch</span>
+        <span class="amount" id="sum-lunch">0 kcal</span>
+      </div>
+      <div class="meal-card dinner" data-meal="dinner">
+        <span class="emoji">🍲</span>
+        <span class="label">Dinner</span>
+        <span class="amount" id="sum-dinner">0 kcal</span>
+      </div>
+      <div class="meal-card snack" data-meal="snack">
+        <span class="emoji">🍡</span>
+        <span class="label">Snack</span>
+        <span class="amount" id="sum-snack">0 kcal</span>
+      </div>
+    </div>
+
+    <div class="card hidden" id="add-panel">
+      <div class="add-title" id="add-panel-title">🍳 Add breakfast</div>
+      <div class="add-row">
+        <input type="number" id="add-cal-input" placeholder="Calories" inputmode="numeric" min="0" max="5000">
+        <input type="text" id="add-label-input" placeholder="What did you eat? (optional)">
+      </div>
+      <div class="quick-chips" id="quick-chips"></div>
+      <div class="add-actions">
+        <button class="secondary-btn" id="add-cancel-btn">Cancel</button>
+        <button class="primary-btn" id="add-confirm-btn">Add ♡</button>
+      </div>
+    </div>
+
+    <div class="section-title">✧ Today's entries</div>
+    <div id="entries-list"></div>
+
+    <footer class="tag">made with ♡ for cozy days</footer>
+  </section>
+</div>
+
+<!-- ============ SETTINGS MODAL ============ -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal-sheet">
+    <h2>Settings <button id="settings-close-btn">✕</button></h2>
+
+    <div class="settings-group">
+      <label for="settings-target-input">Daily calorie target (kcal)</label>
+      <div class="target-input-wrap">
+        <input type="number" id="settings-target-input" min="500" max="8000" inputmode="numeric">
+        <span class="unit">kcal</span>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <label>Change your buddy</label>
+      <div class="mascot-choices" id="settings-mascot-choices"></div>
+    </div>
+
+    <button class="primary-btn" id="settings-save-btn">Save changes</button>
+    <button class="danger-btn" id="reset-today-btn">Reset today's entries</button>
+    <button class="danger-btn" id="reset-app-btn">Reset entire app</button>
+  </div>
+</div>
+
+<!-- ============ CONFIRM MODAL ============ -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-sheet">
+    <h2 id="confirm-title">Are you sure?</h2>
+    <p id="confirm-body">This action cannot be undone.</p>
+    <div class="confirm-actions">
+      <button class="secondary-btn" id="confirm-cancel-btn">Cancel</button>
+      <button class="danger-btn" id="confirm-ok-btn">Yes, do it</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============================================================
+     STORAGE KEYS
+     ============================================================ */
+  const KEYS = {
+    target: 'cozycal_target',
+    mascot: 'cozycal_mascot',
+    date: 'cozycal_date',
+    entries: 'cozycal_entries',
+    setupDone: 'cozycal_setup_done'
+  };
+
+  const MEAL_META = {
+    breakfast: {emoji:'🍳', label:'Breakfast', quick:[250,350,450,600]},
+    lunch:     {emoji:'🍱', label:'Lunch',     quick:[400,550,650,800]},
+    dinner:    {emoji:'🍲', label:'Dinner',    quick:[450,600,750,900]},
+    snack:     {emoji:'🍡', label:'Snack',     quick:[100,150,200,300]}
+  };
+
+  /* ============================================================
+     STATE
+     ============================================================ */
+  let state = {
+    target: 2000,
+    mascot: 'bunny',
+    date: todayStr(),
+    entries: [] // {id, meal, calories, label, time}
+  };
+
+  let editingId = null;      // entry currently being edited (null = adding new)
+  let activeMeal = null;     // which meal card the add-panel is open for
+  let bloatTimer = null;     // temporary "extra full" reaction timer
+  let confirmCallback = null;
+
+  function todayStr(){
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  /* ============================================================
+     PERSISTENCE
+     ============================================================ */
+  function loadState(){
+    const target = localStorage.getItem(KEYS.target);
+    const mascot = localStorage.getItem(KEYS.mascot);
+    const date = localStorage.getItem(KEYS.date);
+    const entriesRaw = localStorage.getItem(KEYS.entries);
+
+    if (target) state.target = parseInt(target, 10);
+    if (mascot) state.mascot = mascot;
+    if (date) state.date = date;
+    if (entriesRaw) {
+      try { state.entries = JSON.parse(entriesRaw) || []; } catch(e){ state.entries = []; }
+    }
+
+    // daily reset check
+    const now = todayStr();
+    if (state.date !== now) {
+      state.date = now;
+      state.entries = [];
+      persistEntries();
+      persistDate();
+    }
+  }
+
+  function persistTarget(){ localStorage.setItem(KEYS.target, String(state.target)); }
+  function persistMascot(){ localStorage.setItem(KEYS.mascot, state.mascot); }
+  function persistDate(){ localStorage.setItem(KEYS.date, state.date); }
+  function persistEntries(){ localStorage.setItem(KEYS.entries, JSON.stringify(state.entries)); }
+  function persistSetupDone(){ localStorage.setItem(KEYS.setupDone, 'true'); }
+  function isSetupDone(){ return localStorage.getItem(KEYS.setupDone) === 'true'; }
+
+  /* ============================================================
+     MASCOT SVG GENERATION
+     States: 'happy' | 'content' | 'full' | 'bloated'
+     ============================================================ */
+  function mascotSVG(type, mstate){
+    const eyes = {
+      happy:   {L:'M -13,-4 Q -9,-9 -5,-4', R:'M 5,-4 Q 9,-9 13,-4', stroke:true},
+      content: {L:'M -13,-4 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0', R:'M 5,-4 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0', stroke:false},
+      full:    {L:'M -14,-4 Q -9,0 -4,-4', R:'M 4,-4 Q 9,0 14,-4', stroke:true},
+      bloated: {L:'M -14,-6 L -4,-2 M -4,-6 L -14,-2', R:'M 4,-6 L 14,-2 M 14,-6 L 4,-2', stroke:true}
+    }[mstate];
+
+    const mouths = {
+      happy:   'M -7,7 Q 0,14 7,7',
+      content: 'M -6,8 Q 0,11 6,8',
+      full:    'M -8,8 Q 0,4 8,8',
+      bloated: 'M -6,9 Q 0,6 6,9'
+    };
+
+    const blushOpacity = {happy:0.5, content:0.6, full:0.75, bloated:0.85}[mstate];
+    const bodyScale = {happy:1, content:1.03, full:1.08, bloated:1.16}[mstate];
+    const sweatDrop = mstate === 'bloated' ? '<path d="M 32,-30 q 4,6 0,10 q -4,-2 -4,-6 q 0,-3 4,-4 z" fill="#BEE3F8"/>' : '';
+    const wobbleClass = mstate === 'bloated' ? 'wobble' : '';
+
+    const palettes = {
+      bunny: {body:'#FFF6EC', ear:'#FFF6EC', earIn:'#FFD6E8', accent:'#FFD6E8'},
+      bear:  {body:'#F3DEC2', ear:'#F3DEC2', earIn:'#FFE3C7', accent:'#FFE3C7'},
+      cat:   {body:'#F5EFE3', ear:'#F5EFE3', earIn:'#E6D9F7', accent:'#E6D9F7'}
+    };
+    const pal = palettes[type] || palettes.bunny;
+
+    let ears = '';
+    if (type === 'bunny') {
+      ears = `
+        <ellipse cx="-16" cy="-46" rx="8" ry="24" fill="${pal.ear}" transform="rotate(-10 -16 -46)"/>
+        <ellipse cx="16" cy="-46" rx="8" ry="24" fill="${pal.ear}" transform="rotate(10 16 -46)"/>
+        <ellipse cx="-16" cy="-46" rx="4" ry="17" fill="${pal.earIn}" transform="rotate(-10 -16 -46)"/>
+        <ellipse cx="16" cy="-46" rx="4" ry="17" fill="${pal.earIn}" transform="rotate(10 16 -46)"/>`;
+    } else if (type === 'bear') {
+      ears = `
+        <circle cx="-30" cy="-32" r="12" fill="${pal.ear}"/>
+        <circle cx="30" cy="-32" r="12" fill="${pal.ear}"/>
+        <circle cx="-30" cy="-32" r="6" fill="${pal.earIn}"/>
+        <circle cx="30" cy="-32" r="6" fill="${pal.earIn}"/>`;
+    } else { // cat
+      ears = `
+        <path d="M -32,-30 L -20,-52 L -10,-30 Z" fill="${pal.ear}"/>
+        <path d="M 32,-30 L 20,-52 L 10,-30 Z" fill="${pal.ear}"/>
+        <path d="M -27,-32 L -20,-45 L -14,-31 Z" fill="${pal.earIn}"/>
+        <path d="M 27,-32 L 20,-45 L 14,-31 Z" fill="${pal.earIn}"/>`;
+    }
+
+    const whiskers = type === 'cat' ? `
+        <g stroke="#D8C8B8" stroke-width="1.4" opacity="0.8">
+          <line x1="-38" y1="2" x2="-16" y2="0"/>
+          <line x1="-38" y1="9" x2="-16" y2="8"/>
+          <line x1="38" y1="2" x2="16" y2="0"/>
+          <line x1="38" y1="9" x2="16" y2="8"/>
+        </g>` : '';
+
+    const eyeShapes = eyes.stroke
+      ? `<path d="${eyes.L}" stroke="#6B4F4F" stroke-width="3" fill="none" stroke-linecap="round"/>
+         <path d="${eyes.R}" stroke="#6B4F4F" stroke-width="3" fill="none" stroke-linecap="round"/>`
+      : `<path d="${eyes.L}" fill="#6B4F4F"/><path d="${eyes.R}" fill="#6B4F4F"/>`;
+
+    return `
+    <svg viewBox="-70 -80 140 160" class="${wobbleClass}">
+      <ellipse cx="0" cy="52" rx="34" ry="7" fill="rgba(180,140,150,0.15)"/>
+      <g transform="scale(${bodyScale})" transform-origin="0 10">
+        ${ears}
+        <circle cx="0" cy="0" r="42" fill="${pal.body}"/>
+        ${whiskers}
+        <ellipse cx="-22" cy="10" rx="7" ry="5" fill="${pal.accent}" opacity="${blushOpacity}"/>
+        <ellipse cx="22" cy="10" rx="7" ry="5" fill="${pal.accent}" opacity="${blushOpacity}"/>
+        <g transform="translate(0,-2)">
+          ${eyeShapes}
+        </g>
+        <path d="${mouths[mstate]}" stroke="#6B4F4F" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      </g>
+      ${sweatDrop}
+    </svg>`;
+  }
+
+  const MASCOT_TYPES = [
+    {id:'bunny', label:'Bunny'},
+    {id:'bear', label:'Bear'},
+    {id:'cat', label:'Cat'}
+  ];
+
+  /* ============================================================
+     DOM refs
+     ============================================================ */
+  const setupScreen = document.getElementById('setup-screen');
+  const homeScreen = document.getElementById('home-screen');
+  const targetInput = document.getElementById('target-input');
+  const setupMascotChoices = document.getElementById('setup-mascot-choices');
+  const setupConfirmBtn = document.getElementById('setup-confirm-btn');
+
+  const mascotWrap = document.getElementById('mascot-wrap');
+  const speechBubble = document.getElementById('speech-bubble');
+  const ringFg = document.getElementById('ring-fg');
+  const ringTotal = document.getElementById('ring-total');
+  const ringTarget = document.getElementById('ring-target');
+  const statusLine = document.getElementById('status-line');
+  const subLine = document.getElementById('sub-line');
+  const entriesList = document.getElementById('entries-list');
+
+  const addPanel = document.getElementById('add-panel');
+  const addPanelTitle = document.getElementById('add-panel-title');
+  const addCalInput = document.getElementById('add-cal-input');
+  const addLabelInput = document.getElementById('add-label-input');
+  const quickChips = document.getElementById('quick-chips');
+  const addCancelBtn = document.getElementById('add-cancel-btn');
+  const addConfirmBtn = document.getElementById('add-confirm-btn');
+
+  const settingsBtn = document.getElementById('settings-btn');
+  const settingsModal = document.getElementById('settings-modal');
+  const settingsCloseBtn = document.getElementById('settings-close-btn');
+  const settingsTargetInput = document.getElementById('settings-target-input');
+  const settingsMascotChoices = document.getElementById('settings-mascot-choices');
+  const settingsSaveBtn = document.getElementById('settings-save-btn');
+  const resetTodayBtn = document.getElementById('reset-today-btn');
+  const resetAppBtn = document.getElementById('reset-app-btn');
+
+  const confirmModal = document.getElementById('confirm-modal');
+  const confirmTitle = document.getElementById('confirm-title');
+  const confirmBody = document.getElementById('confirm-body');
+  const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+  const confirmOkBtn = document.getElementById('confirm-ok-btn');
+
+  /* ============================================================
+     SETUP SCREEN
+     ============================================================ */
+  let setupSelectedMascot = 'bunny';
+
+  function renderMascotChoiceGrid(container, selected, onSelect){
+    container.innerHTML = '';
+    MASCOT_TYPES.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'mascot-choice' + (m.id === selected ? ' selected' : '');
+      div.innerHTML = `<div class="mini-mascot">${mascotSVG(m.id, 'happy')}</div><span>${m.label}</span>`;
+      div.addEventListener('click', () => onSelect(m.id));
+      container.appendChild(div);
+    });
+  }
+
+  function refreshSetupMascotGrid(){
+    renderMascotChoiceGrid(setupMascotChoices, setupSelectedMascot, (id) => {
+      setupSelectedMascot = id;
+      refreshSetupMascotGrid();
+      checkSetupReady();
+    });
+  }
+
+  function checkSetupReady(){
+    const val = parseInt(targetInput.value, 10);
+    setupConfirmBtn.disabled = !(val && val > 0);
+  }
+
+  targetInput.addEventListener('input', checkSetupReady);
+
+  setupConfirmBtn.addEventListener('click', () => {
+    const val = parseInt(targetInput.value, 10);
+    if (!val || val <= 0) return;
+    state.target = val;
+    state.mascot = setupSelectedMascot;
+    state.date = todayStr();
+    state.entries = [];
+    persistTarget();
+    persistMascot();
+    persistDate();
+    persistEntries();
+    persistSetupDone();
+    showHome();
+  });
+
+  /* ============================================================
+     SCREEN SWITCH
+     ============================================================ */
+  function showHome(){
+    setupScreen.classList.add('hidden');
+    homeScreen.classList.remove('hidden');
+    renderAll();
+    setBubble(pickGreeting(), false);
+  }
+
+  /* ============================================================
+     RENDERING
+     ============================================================ */
+  function totalCalories(){
+    return state.entries.reduce((sum, e) => sum + e.calories, 0);
+  }
+
+  function mealSum(meal){
+    return state.entries.filter(e => e.meal === meal).reduce((s,e) => s + e.calories, 0);
+  }
+
+  function getMascotState(total, target){
+    const ratio = target > 0 ? total / target : 0;
+    if (ratio > 1) return 'bloated';
+    if (ratio >= 0.85) return 'full';
+    if (ratio >= 0.4) return 'content';
+    return 'happy';
+  }
+
+  function renderMascot(mstate){
+    mascotWrap.innerHTML = mascotSVG(state.mascot, mstate);
+  }
+
+  function renderRing(){
+    const total = totalCalories();
+    const target = state.target || 1;
+    const ratio = Math.max(0, Math.min(1, total / target));
+    const circumference = 2 * Math.PI * 54;
+    const offset = circumference * (1 - ratio);
+    ringFg.style.strokeDasharray = String(circumference);
+    ringFg.style.strokeDashoffset = String(offset);
+    ringFg.style.stroke = total > target ? '#FF8A8A' : 'url(#ringGradient)';
+
+    ringTotal.textContent = total;
+    ringTarget.textContent = '/ ' + target + ' kcal';
+
+    if (total > target){
+      statusLine.textContent = (total - target) + ' kcal over';
+      statusLine.className = 'status-line over';
+    } else {
+      statusLine.textContent = (target - total) + ' kcal remaining';
+      statusLine.className = 'status-line ok';
+    }
+    subLine.textContent = state.entries.length + (state.entries.length === 1 ? ' entry today' : ' entries today');
+  }
+
+  function renderMealSums(){
+    Object.keys(MEAL_META).forEach(meal => {
+      document.getElementById('sum-' + meal).textContent = mealSum(meal) + ' kcal';
+    });
+  }
+
+  function entryEmoji(meal){ return MEAL_META[meal].emoji; }
+
+  function renderEntries(){
+    entriesList.innerHTML = '';
+    if (state.entries.length === 0){
+      entriesList.innerHTML = '<div class="empty-state">No entries yet today ~ add your first meal above! ♡</div>';
+      return;
+    }
+    const sorted = [...state.entries].sort((a,b) => b.time - a.time);
+    sorted.forEach(entry => {
+      const row = document.createElement('div');
+      row.className = 'entry-row';
+      const timeStr = new Date(entry.time).toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+      row.innerHTML = `
+        <div class="entry-emoji">${entryEmoji(entry.meal)}</div>
+        <div class="entry-info">
+          <div class="e-label">${entry.label ? escapeHTML(entry.label) : MEAL_META[entry.meal].label}</div>
+          <div class="e-meta">${MEAL_META[entry.meal].label} · ${timeStr}</div>
+        </div>
+        <div class="entry-cal">${entry.calories} kcal</div>
+        <div class="entry-actions">
+          <button data-action="edit" data-id="${entry.id}" aria-label="Edit">✎</button>
+          <button data-action="delete" data-id="${entry.id}" aria-label="Delete">✕</button>
+        </div>
+      `;
+      entriesList.appendChild(row);
+    });
+  }
+
+  function escapeHTML(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  entriesList.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const id = btn.getAttribute('data-id');
+    const action = btn.getAttribute('data-action');
+    if (action === 'delete'){
+      confirmAction('Delete this entry?', 'This will remove it from today\'s log.', () => {
+        state.entries = state.entries.filter(en => en.id !== id);
+        persistEntries();
+        renderAll();
+      });
+    } else if (action === 'edit'){
+      const entry = state.entries.find(en => en.id === id);
+      if (entry) openAddPanel(entry.meal, entry);
+    }
+  });
+
+  function renderAll(){
+    const total = totalCalories();
+    const mstate = getMascotState(total, state.target);
+    renderMascot(mstate);
+    renderRing();
+    renderMealSums();
+    renderEntries();
+  }
+
+  /* ============================================================
+     MASCOT REACTIONS / SPEECH BUBBLE
+     ============================================================ */
+  const GREETING_LINES = [
+    "Hi there! Ready for a cozy day~ ♡",
+    "Let's track today together! ✧"
+  ];
+
+  const REACTION_LINES = {
+    happy: [
+      "I'm ready for breakfast! ♡",
+      "Yay, let's keep going~",
+      "Ooh, yummy! Nice choice ♡"
+    ],
+    content: [
+      "Mmm, I'm getting cozy~",
+      "That was tasty! ♡",
+      "Feeling good and comfy~"
+    ],
+    full: [
+      "I'm so full and happy!",
+      "Just about perfectly cozy~",
+      "Getting nice and snug ♡"
+    ],
+    bloated: [
+      "O-oh... my tummy is getting a little too full...",
+      "Mmph~ a bit stuffed, but still happy ♡",
+      "So cozy it's almost too cozy...!"
+    ]
+  };
+
+  const BLOAT_LINES = [
+    "Whoa, that was a big one! *pats belly*",
+    "Ooh~ my tummy just did a little jump!",
+    "Big meal energy! Time to waddle a bit~"
+  ];
+
+  function pickGreeting(){
+    return GREETING_LINES[Math.floor(Math.random() * GREETING_LINES.length)];
+  }
+
+  function pickReaction(mstate){
+    const arr = REACTION_LINES[mstate];
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function setBubble(text, animate){
+    speechBubble.textContent = text;
+    if (animate){
+      speechBubble.classList.remove('show');
+      // eslint-disable-next-line no-unused-expressions
+      void speechBubble.offsetWidth; // restart animation
+      speechBubble.classList.add('show');
+    } else {
+      speechBubble.classList.add('show');
+    }
+  }
+
+  function bumpMascot(){
+    mascotWrap.classList.remove('pulse');
+    void mascotWrap.offsetWidth;
+    mascotWrap.classList.add('pulse');
+  }
+
+  function reactToNewEntry(entry){
+    const total = totalCalories();
+    const mstate = getMascotState(total, state.target);
+    bumpMascot();
+
+    if (entry.calories >= 800){
+      renderMascot('bloated');
+      setBubble(BLOAT_LINES[Math.floor(Math.random()*BLOAT_LINES.length)], true);
+      clearTimeout(bloatTimer);
+      bloatTimer = setTimeout(() => {
+        renderMascot(mstate);
+        setBubble(pickReaction(mstate), true);
+      }, 2600);
+    } else {
+      renderMascot(mstate);
+      setBubble(pickReaction(mstate), true);
+    }
+  }
+
+  /* ============================================================
+     ADD PANEL
+     ============================================================ */
+  document.getElementById('meal-grid').addEventListener('click', (e) => {
+    const card = e.target.closest('.meal-card');
+    if (!card) return;
+    openAddPanel(card.getAttribute('data-meal'), null);
+  });
+
+  function openAddPanel(meal, entryToEdit){
+    activeMeal = meal;
+    editingId = entryToEdit ? entryToEdit.id : null;
+    const meta = MEAL_META[meal];
+    addPanelTitle.textContent = (editingId ? 'Edit ' : 'Add ') + meta.emoji + ' ' + meta.label.toLowerCase();
+    addCalInput.value = entryToEdit ? entryToEdit.calories : '';
+    addLabelInput.value = entryToEdit ? (entryToEdit.label || '') : '';
+    addConfirmBtn.textContent = editingId ? 'Save changes' : 'Add ♡';
+
+    quickChips.innerHTML = '';
+    meta.quick.forEach(val => {
+      const chip = document.createElement('button');
+      chip.className = 'chip';
+      chip.type = 'button';
+      chip.textContent = val + ' kcal';
+      chip.addEventListener('click', () => { addCalInput.value = val; });
+      quickChips.appendChild(chip);
+    });
+
+    addPanel.classList.remove('hidden');
+    addPanel.scrollIntoView({behavior:'smooth', block:'center'});
+    addCalInput.focus();
+  }
+
+  function closeAddPanel(){
+    addPanel.classList.add('hidden');
+    activeMeal = null;
+    editingId = null;
+  }
+
+  addCancelBtn.addEventListener('click', closeAddPanel);
+
+  addConfirmBtn.addEventListener('click', () => {
+    const cal = parseInt(addCalInput.value, 10);
+    if (!cal || cal <= 0){
+      addCalInput.focus();
+      return;
+    }
+    const label = addLabelInput.value.trim().slice(0, 60);
+
+    if (editingId){
+      const entry = state.entries.find(en => en.id === editingId);
+      if (entry){
+        entry.calories = cal;
+        entry.label = label;
+      }
+      persistEntries();
+      renderAll();
+      closeAddPanel();
+    } else {
+      const entry = {
+        id: 'e' + Date.now() + Math.floor(Math.random()*1000),
+        meal: activeMeal,
+        calories: cal,
+        label: label,
+        time: Date.now()
+      };
+      state.entries.push(entry);
+      persistEntries();
+      renderAll();
+      reactToNewEntry(entry);
+      closeAddPanel();
+    }
+  });
+
+  /* ============================================================
+     SETTINGS MODAL
+     ============================================================ */
+  let settingsSelectedMascot = state.mascot;
+
+  function openSettings(){
+    settingsTargetInput.value = state.target;
+    settingsSelectedMascot = state.mascot;
+    refreshSettingsMascotGrid();
+    settingsModal.classList.add('show');
+  }
+  function closeSettings(){ settingsModal.classList.remove('show'); }
+
+  function refreshSettingsMascotGrid(){
+    renderMascotChoiceGrid(settingsMascotChoices, settingsSelectedMascot, (id) => {
+      settingsSelectedMascot = id;
+      refreshSettingsMascotGrid();
+    });
+  }
+
+  settingsBtn.addEventListener('click', openSettings);
+  settingsCloseBtn.addEventListener('click', closeSettings);
+  settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) closeSettings(); });
+
+  settingsSaveBtn.addEventListener('click', () => {
+    const val = parseInt(settingsTargetInput.value, 10);
+    if (val && val > 0){
+      state.target = val;
+      persistTarget();
+    }
+    state.mascot = settingsSelectedMascot;
+    persistMascot();
+    renderAll();
+    closeSettings();
+  });
+
+  resetTodayBtn.addEventListener('click', () => {
+    confirmAction('Reset today\'s entries?', 'This clears all meals logged today. Your target and buddy stay the same.', () => {
+      state.entries = [];
+      persistEntries();
+      renderAll();
+      closeSettings();
+    });
+  });
+
+  resetAppBtn.addEventListener('click', () => {
+    confirmAction('Reset the entire app?', 'This clears your target, buddy, and all entries — like starting fresh from setup.', () => {
+      localStorage.removeItem(KEYS.target);
+      localStorage.removeItem(KEYS.mascot);
+      localStorage.removeItem(KEYS.date);
+      localStorage.removeItem(KEYS.entries);
+      localStorage.removeItem(KEYS.setupDone);
+      closeSettings();
+      location.reload();
+    });
+  });
+
+  /* ============================================================
+     CONFIRM MODAL (generic)
+     ============================================================ */
+  function confirmAction(title, body, onConfirm){
+    confirmTitle.textContent = title;
+    confirmBody.textContent = body;
+    confirmCallback = onConfirm;
+    confirmModal.classList.add('show');
+  }
+  confirmCancelBtn.addEventListener('click', () => {
+    confirmModal.classList.remove('show');
+    confirmCallback = null;
+  });
+  confirmOkBtn.addEventListener('click', () => {
+    confirmModal.classList.remove('show');
+    if (confirmCallback) confirmCallback();
+    confirmCallback = null;
+  });
+  confirmModal.addEventListener('click', (e) => {
+    if (e.target === confirmModal){
+      confirmModal.classList.remove('show');
+      confirmCallback = null;
+    }
+  });
+
+  /* ============================================================
+     MIDNIGHT WATCHER — checks periodically for date change
+     ============================================================ */
+  setInterval(() => {
+    const now = todayStr();
+    if (now !== state.date){
+      state.date = now;
+      state.entries = [];
+      persistDate();
+      persistEntries();
+      renderAll();
+      setBubble("A brand new cozy day has begun! ♡", true);
+    }
+  }, 60 * 1000);
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+  function init(){
+    loadState();
+    if (isSetupDone()){
+      setupScreen.classList.add('hidden');
+      homeScreen.classList.remove('hidden');
+      renderAll();
+      setBubble(pickGreeting(), false);
+    } else {
+      refreshSetupMascotGrid();
+      checkSetupReady();
+    }
+
+    // add a subtle wobble keyframe once (bloated state)
+    const styleTag = document.createElement('style');
+    styleTag.textContent = `
+      .wobble{ animation: wobble-anim 0.6s ease-in-out infinite alternate; }
+      @keyframes wobble-anim{
+        from{ transform: rotate(-2deg); }
+        to{ transform: rotate(2deg); }
+      }
+    `;
+    document.head.appendChild(styleTag);
+  }
+
+  init();
+
+  /* ============================================================
+     SERVICE WORKER REGISTRATION
+     ============================================================ */
+  if ('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(() => {
+        // Offline registration failures are non-fatal; app still works.
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>
