@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tonight’s Entry Ticket</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f2a20">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Entry Ticket">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+:root{--bg:#0f2a20;--panel:#163a2c;--line:#2d5c47;--gold:#d4af5a;--ink:#f6efdc;--mut:#9fb5a6;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Georgia,"Times New Roman",serif;-webkit-tap-highlight-color:transparent}
+main{max-width:460px;margin:0 auto;padding:22px 20px 110px}
+h1{font-size:26px;font-weight:400;font-style:italic;margin:4px 0 2px;color:var(--gold);text-align:center}
+.sub{text-align:center;color:var(--mut);margin:0 0 18px;font-size:15px}
+h2{font-size:15px;font-weight:400;color:var(--gold);margin:22px 0 10px}
+.hide{display:none!important}
+#pv{display:block;width:min(52vw,230px);height:auto;aspect-ratio:9/16;margin:0 auto;border-radius:10px;box-shadow:0 10px 30px #0008}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.em{font-size:30px;line-height:1;padding:12px 0;background:var(--panel);border:1.5px solid transparent;border-radius:16px;cursor:pointer}
+.em.on{border-color:var(--gold);background:#1d4a38}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.sw{width:42px;height:42px;border-radius:50%;border:2px solid transparent;outline:0;cursor:pointer;padding:0}
+.sw.on{border-color:var(--ink);box-shadow:0 0 0 3px var(--gold)}
+input[type=color]{width:42px;height:42px;border:0;padding:0;background:none;border-radius:50%;overflow:hidden}
+input[type=text]{width:100%;font:inherit;font-size:18px;color:var(--ink);background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;outline:0}
+input[type=text]:focus{border-color:var(--gold)}
+#ce{margin-top:10px;font-size:16px;padding:10px 14px}
+.btn{width:100%;font:inherit;font-size:17px;padding:15px;border-radius:999px;border:1.5px solid var(--gold);background:none;color:var(--gold);margin-top:12px;cursor:pointer}
+.btn.p{background:var(--gold);color:#0f2a20;font-weight:700;margin-top:24px}
+.item{display:flex;gap:14px;align-items:center;width:100%;text-align:left;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:10px;cursor:pointer}
+.dot{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-size:24px}
+.item b{display:block;font-weight:400;font-style:italic;font-size:18px}
+.item small{color:var(--mut)}
+#cg{display:grid;grid-template-columns:repeat(5,1fr);gap:14px 6px}
+.cw{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;color:var(--mut)}
+.empty{text-align:center;color:var(--mut);padding:40px 10px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:#0b1f17;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;font:inherit;font-size:16px;padding:16px;background:none;border:0;color:var(--mut)}
+nav button.on{color:var(--gold)}
+#md{position:fixed;inset:0;background:#06140eee;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;z-index:9}
+#md img{max-height:66vh;max-width:100%;border-radius:10px}
+#md .row{margin-top:14px;width:100%;max-width:420px}
+#md .btn{flex:1;margin:0;padding:12px 6px;font-size:15px;white-space:nowrap}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--gold);color:#0f2a20;padding:10px 18px;border-radius:999px;font-size:15px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:10}
+#toast.on{opacity:1}
+</style>
+</head>
+<body>
+<main id="v1">
+  <h1>Tonight’s Entry Ticket</h1>
+  <p class="sub">Pick a feeling, a color, and a few words.</p>
+  <canvas id="pv" width="1080" height="1920"></canvas>
+  <h2>Mood</h2><div class="grid" id="eg"></div>
+  <input type="text" id="ce" placeholder="or type any emoji" maxlength="12" aria-label="Custom emoji">
+  <h2>Color</h2><div class="row" id="cg"></div>
+  <h2>In a few words</h2>
+  <input type="text" id="wd" maxlength="40" placeholder="soft, hopeful, a little tired" aria-label="A few words">
+  <button class="btn p" id="sv">Save &amp; share</button>
+  <button class="btn" id="so">Just save to log</button>
+</main>
+<main id="v2" class="hide">
+  <h1>Your log</h1>
+  <p class="sub" id="cnt"></p>
+  <div id="ls"></div>
+  <div class="row"><button class="btn" id="ex" style="flex:1">Export backup</button><button class="btn" id="im" style="flex:1">Import</button></div>
+  <input type="file" id="fi" accept=".json" class="hide">
+</main>
+<nav><button id="t1" class="on">Check in</button><button id="t2">Log</button></nav>
+<div id="md" class="hide"><img id="mi" alt="Entry ticket"><div class="row"><button class="btn" id="ms">Share</button><button class="btn" id="mx">Close</button><button class="btn" id="mdl">Delete</button></div></div>
+<div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s),SERIF='Georgia,"Times New Roman",serif',
+EMO='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif',
+EM=['😊','🥰','😌','🤩','😎','🥳','🙃','🫠','😴','🥲','😔','😰','😤','😵‍💫','🤯','😭'],
+CO=[['#F5D76E','Joyful'],['#F2A1B3','Loved'],['#F4A56A','Energized'],['#A8D08D','Hopeful'],['#8FD1C4','Calm'],['#8CA6D1','Sad'],['#B9A4DC','Anxious'],['#E88B8B','Angry'],['#B8BCC4','Tired']],K='entryTickets';
+let log=[],cur={emoji:'😊',color:CO[0][0],words:''},openE=null,armed=0;
+try{log=JSON.parse(localStorage.getItem(K)||'[]')}catch(_){}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(log))}catch(_){toast('Could not save in this browser')}};
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2200)}
+const mix=(h,a)=>{const n=parseInt(h.slice(1),16);return'rgb('+[n>>16&255,n>>8&255,n&255].map(v=>Math.round(v+(255-v)*a)).join()+')'};
+function wrap(x,t,w){const L=[];let l='';for(const s of t.split(/\s+/)){const m=l?l+' '+s:s;if(x.measureText(m).width>w&&l){L.push(l);l=s}else l=m}L.push(l);return L}
+function arch(x,cx,top,w,h){const r=w/2;x.beginPath();x.moveTo(cx-r,top+h);x.lineTo(cx-r,top+r);x.arc(cx,top+r,r,Math.PI,0);x.lineTo(cx+r,top+h);x.closePath()}
+function draw(c,e){
+  const x=c.getContext('2d'),W=1080,G='#d4af5a',I='#f6efdc',P=1530,d=new Date(e.t||Date.now());
+  x.clearRect(0,0,W,1920);x.fillStyle='#0f2a20';x.fillRect(0,0,W,1920);
+  const g=x.createRadialGradient(540,760,80,540,760,1100);g.addColorStop(0,'#1a4433');g.addColorStop(1,'#0f2a20');x.fillStyle=g;x.fillRect(0,0,W,1920);
+  x.strokeStyle=G;x.lineWidth=4;x.beginPath();x.roundRect(48,48,984,1824,36);x.stroke();
+  x.globalAlpha=.45;x.lineWidth=2;x.beginPath();x.roundRect(68,68,944,1784,24);x.stroke();x.globalAlpha=1;
+  for(const px of[48,1032]){x.fillStyle='#0f2a20';x.beginPath();x.arc(px,P,44,0,7);x.fill();x.lineWidth=4;x.beginPath();x.arc(px,P,44,0,7);x.stroke()}
+  x.setLineDash([4,16]);x.lineWidth=4;x.globalAlpha=.7;x.beginPath();x.moveTo(110,P);x.lineTo(970,P);x.stroke();x.setLineDash([]);x.globalAlpha=1;
+  x.textAlign='center';x.textBaseline='middle';x.fillStyle=G;
+  x.font='600 38px '+SERIF;x.letterSpacing='9px';x.fillText('TONIGHT’S ENTRY TICKET',540,170);
+  x.font='28px '+SERIF;x.letterSpacing='5px';x.fillStyle=I;x.globalAlpha=.75;
+  x.fillText((d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+' · '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})).toUpperCase(),540,232);
+  x.globalAlpha=1;x.letterSpacing='0px';x.fillStyle=G;x.font='34px '+SERIF;x.fillText('✦',540,296);
+  const T=350,AW=600,AH=660;
+  arch(x,540,T-24,AW+48,AH+24);x.strokeStyle=G;x.globalAlpha=.55;x.lineWidth=3;x.stroke();x.globalAlpha=1;
+  arch(x,540,T,AW,AH);const ag=x.createLinearGradient(0,T,0,T+AH);ag.addColorStop(0,mix(e.color,.4));ag.addColorStop(1,e.color);x.fillStyle=ag;x.fill();
+  x.font='300px '+EMO;x.fillStyle='#000';x.fillText(e.emoji,540,T+AH/2+40);
+  x.fillStyle=G;x.font='40px '+SERIF;x.globalAlpha=.8;x.fillText('✦',170,470);x.fillText('✦',915,640);x.font='26px '+SERIF;x.fillText('✦',150,880);x.fillText('✦',935,420);x.globalAlpha=1;
+  x.font='24px '+SERIF;x.letterSpacing='8px';x.fillText('FEELING',540,1100);x.letterSpacing='0px';
+  x.fillStyle=I;let sz=112,L;
+  for(;sz>=34;sz-=4){x.font='italic '+sz+'px '+SERIF;L=wrap(x,e.words||'…',780);if(L.length*sz*1.2<=320&&L.every(l=>x.measureText(l).width<=780))break}
+  const lh=sz*1.2,y0=1320-(L.length-1)*lh/2;L.forEach((l,i)=>x.fillText(l,540,y0+i*lh));
+  x.fillStyle=e.color;x.beginPath();x.roundRect(140,1620,130,130,26);x.fill();x.strokeStyle=G;x.lineWidth=3;x.stroke();
+  x.textAlign='left';x.fillStyle=I;x.font='44px '+SERIF;x.fillText(e.color.toUpperCase(),300,1668);
+  x.fillStyle=G;x.font='22px '+SERIF;x.letterSpacing='5px';x.fillText('MOOD COLOR',302,1718);
+  x.textAlign='right';x.font='30px '+SERIF;x.fillText('No. '+String(e.n||log.length+1).padStart(3,'0'),940,1668);
+  x.font='22px '+SERIF;x.fillText('ADMIT ONE',944,1718);x.letterSpacing='0px';
+}
+const pv=$('#pv'),oc=document.createElement('canvas'),nextN=()=>log.reduce((m,l)=>Math.max(m,l.n||0),0)+1,key=e=>[e.emoji,e.color,e.words.trim(),e.n,e.t].join('|'),jpg=c=>new Promise(r=>c.toBlob(r,'image/jpeg',.92));
+oc.width=1080;oc.height=1920;let cache=null,wt,raf;
+function warm(){const k=key(cur);pv.toBlob(b=>{if(b&&k===key(cur))cache={k,b}},'image/jpeg',.92)}
+function paint(){cur.t=Date.now();cur.n=nextN();cache=null;clearTimeout(wt);wt=setTimeout(warm,400);cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>draw(pv,cur))}
+function pick(sel,el){document.querySelectorAll(sel).forEach(b=>b.classList.toggle('on',b===el))}
+EM.forEach((m,i)=>{const b=document.createElement('button');b.className='em'+(i?'':' on');b.textContent=m;b.onclick=()=>{cur.emoji=m;pick('.em',b);$('#ce').value='';paint()};$('#eg').append(b)});
+CO.forEach(([c,n],i)=>{const w=document.createElement('div'),b=document.createElement('button');w.className='cw';b.className='sw'+(i?'':' on');b.style.background=c;b.setAttribute('aria-label',n);b.onclick=()=>{cur.color=c;pick('.sw',b);paint()};w.append(b,n);$('#cg').append(w)});
+const cw=document.createElement('div'),cp=document.createElement('input');cw.className='cw';cp.type='color';cp.value=cur.color;cp.setAttribute('aria-label','Custom color');cp.oninput=()=>{cur.color=cp.value;pick('.sw',null);paint()};cw.append(cp,'Custom');$('#cg').append(cw);
+$('#ce').oninput=e=>{const v=e.target.value.trim();if(!v)return;const g=[...new Intl.Segmenter().segment(v)][0].segment;cur.emoji=g;pick('.em',null);paint()};
+$('#wd').oninput=e=>{cur.words=e.target.value;paint()};
+function commit(){if(!cur.words.trim()){$('#wd').focus();toast('Add a few words first');return null}
+  const e={...cur,words:cur.words.trim()};log.unshift(e);save();return e}
+async function share(e){let b=cache&&cache.k===key(e)?cache.b:null;if(!b){draw(oc,e);b=await jpg(oc)}
+  const f=new File([b],'entry-ticket-'+String(e.n).padStart(3,'0')+'.jpg',{type:'image/jpeg'});
+  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(err){if(err.name==='AbortError')return}
+  show(e);toast('Press and hold the image to save it')}
+function reset(){cur.words='';$('#wd').value='';paint()}
+$('#sv').onclick=async()=>{const e=commit();if(e){toast('Saved to your log');await share(e);reset()}};
+$('#so').onclick=()=>{if(commit()){toast('Saved to your log');reset()}};
+function show(e){openE=e;armed=0;$('#mdl').textContent='Delete';draw(oc,e);$('#mi').src=oc.toDataURL('image/jpeg',.92);$('#md').classList.remove('hide')}
+$('#mx').onclick=()=>$('#md').classList.add('hide');
+$('#ms').onclick=()=>share(openE);
+$('#mdl').onclick=()=>{if(!armed){armed=1;$('#mdl').textContent='Tap again';return}log=log.filter(l=>l!==openE);save();$('#md').classList.add('hide');render()};
+function render(){const ls=$('#ls');ls.innerHTML='';$('#cnt').textContent=log.length?log.length+(log.length>1?' entries':' entry'):'';
+  if(!log.length){ls.innerHTML='<div class="empty">No tickets yet. Your first check-in will appear here.</div>';return}
+  log.forEach(e=>{const b=document.createElement('button');b.className='item';
+    const d=document.createElement('div');d.className='dot';d.style.background=e.color;d.textContent=e.emoji;
+    const t=document.createElement('div'),w=document.createElement('b'),s=document.createElement('small');w.textContent=e.words;
+    s.textContent=new Date(e.t).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+' · '+new Date(e.t).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    t.append(w,s);b.append(d,t);b.onclick=()=>show(e);ls.append(b)})}
+function tab(n){$('#v1').classList.toggle('hide',n!=1);$('#v2').classList.toggle('hide',n!=2);$('#t1').classList.toggle('on',n==1);$('#t2').classList.toggle('on',n==2);if(n==2)render();scrollTo(0,0)}
+$('#t1').onclick=()=>tab(1);$('#t2').onclick=()=>tab(2);
+$('#ex').onclick=async()=>{const f=new File([JSON.stringify(log)],'entry-tickets-backup.json',{type:'application/json'});
+  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(_){}
+  const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;a.click()};
+$('#im').onclick=()=>$('#fi').click();
+$('#fi').onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(!Array.isArray(d))throw 0;
+  const seen=new Set(log.map(l=>l.t));d.forEach(l=>{if(l&&l.t&&!seen.has(l.t))log.push(l)});log.sort((a,b)=>b.t-a.t);save();render();toast('Backup imported')}catch(_){toast('That file could not be read')}};
+paint();
+(function(){try{const ic=n=>{const c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');x.fillStyle='#0f2a20';x.fillRect(0,0,n,n);x.strokeStyle='#d4af5a';x.lineWidth=n*.02;x.strokeRect(n*.08,n*.08,n*.84,n*.84);x.fillStyle='#d4af5a';x.font=n*.5+'px '+SERIF;x.textAlign='center';x.textBaseline='middle';x.fillText('✦',n/2,n/2);return c.toDataURL()};
+  const a=document.createElement('link');a.rel='apple-touch-icon';a.href=ic(180);document.head.append(a);
+  const m={name:'Tonight’s Entry Ticket',short_name:'Entry Ticket',display:'standalone',background_color:'#0f2a20',theme_color:'#0f2a20',start_url:location.href.split('#')[0],icons:[{src:ic(512),sizes:'512x512',type:'image/png'}]};
+  const k=document.createElement('link');k.rel='manifest';k.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));document.head.append(k)}catch(_){}})();
+</script>
+</body>
+</html>
