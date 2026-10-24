@@ -1,10 +1,11 @@
 <!doctype html>
 <!--
-  TONIGHT’S ENTRY TICKET — VERSION 2.7
-  File name: entry-ticket-v2.7.html
+  TONIGHT’S ENTRY TICKET — VERSION 2.8
+  File name: entry-ticket-v2.8.html
   On every update, keep these three in sync: this header, VERSION in the script, and the file name.
 
   Changelog (newest first)
+  2.8  install fix: manifest scope/id/start_url use this file's own URL
   2.7  Fix: words no longer overlap “FEELING” when plans are added (words get a reserved zone); faster share (reuses the on-screen card, lighter JPEG, earlier pre-render)
   2.6  Card: footer shrunk to one small line (ADMIT ONE · No.), perforation moved down; emoji window and plans area use the freed space so nothing overlaps
   2.5  Card: check-in box on one line directly under the emoji/color window; bottom color chip removed; ticket number centered on the stub
@@ -131,7 +132,7 @@ nav button.on{color:var(--gold)}
 <div id="es" class="hide"><div class="sheet"><div class="sh-h"><b>Pick an emoji</b><button id="esx">Close</button></div><div id="eg2"></div><input type="text" id="et" placeholder="or type one with your keyboard" aria-label="Type an emoji"></div></div>
 <div id="toast"></div>
 <script>
-const VERSION='2.7',$=s=>document.querySelector(s),SERIF='Georgia,"Times New Roman",serif',
+const VERSION='2.8',$=s=>document.querySelector(s),SERIF='Georgia,"Times New Roman",serif',
 EMO='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif',
 EM=['😊','🥰','😌','🤩','😎','🥳','🙃','🫠','😴','🥲','😔','😰','😤','😵‍💫','🤯','😭'],
 CO=[['#F5D76E','Joyful'],['#F2A1B3','Loved'],['#F4A56A','Energized'],['#A8D08D','Hopeful'],['#8FD1C4','Calm'],['#8CA6D1','Sad'],['#B9A4DC','Anxious'],['#E88B8B','Angry'],['#B8BCC4','Tired']],K='entryTickets';
@@ -250,7 +251,8 @@ $('#fi').onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text(
 paint();
 (function(){try{const ic=n=>{const c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');x.fillStyle='#0f2a20';x.fillRect(0,0,n,n);x.strokeStyle='#d4af5a';x.lineWidth=n*.02;x.strokeRect(n*.08,n*.08,n*.84,n*.84);x.fillStyle='#d4af5a';x.font=n*.5+'px '+SERIF;x.textAlign='center';x.textBaseline='middle';x.fillText('✦',n/2,n/2);return c.toDataURL()};
   const a=document.createElement('link');a.rel='apple-touch-icon';a.href=ic(180);document.head.append(a);
-  const m={name:'Tonight’s Entry Ticket',short_name:'Entry Ticket',display:'standalone',background_color:'#0f2a20',theme_color:'#0f2a20',start_url:location.href.split('#')[0],icons:[{src:ic(512),sizes:'512x512',type:'image/png'}]};
+  const w=/^https?:/.test(location.protocol)?location.origin+location.pathname:'.';
+  const m={name:'Tonight’s Entry Ticket',short_name:'Entry Ticket',display:'standalone',background_color:'#0f2a20',theme_color:'#0f2a20',start_url:w,id:w,scope:w,icons:[{src:ic(192),sizes:'192x192',type:'image/png'},{src:ic(512),sizes:'512x512',type:'image/png'}]};
   const k=document.createElement('link');k.rel='manifest';k.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));document.head.append(k)}catch(_){}})();
 </script>
 </body>
