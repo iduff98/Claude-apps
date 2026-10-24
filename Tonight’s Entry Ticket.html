@@ -1,10 +1,12 @@
 <!doctype html>
 <!--
-  TONIGHT’S ENTRY TICKET — VERSION 2.5
-  File name: entry-ticket-v2.5.html
+  TONIGHT’S ENTRY TICKET — VERSION 2.7
+  File name: entry-ticket-v2.7.html
   On every update, keep these three in sync: this header, VERSION in the script, and the file name.
 
   Changelog (newest first)
+  2.7  Fix: words no longer overlap “FEELING” when plans are added (words get a reserved zone); faster share (reuses the on-screen card, lighter JPEG, earlier pre-render)
+  2.6  Card: footer shrunk to one small line (ADMIT ONE · No.), perforation moved down; emoji window and plans area use the freed space so nothing overlaps
   2.5  Card: check-in box on one line directly under the emoji/color window; bottom color chip removed; ticket number centered on the stub
   2.4  Card: removed the color hex code and “MOOD COLOR” label; the check-in box now sits beside the color chip
   2.3  Custom plans: emoji box + name box, removable with ×; in-app emoji picker (with keyboard fallback) for custom plans and the main “More emojis” field
@@ -129,7 +131,7 @@ nav button.on{color:var(--gold)}
 <div id="es" class="hide"><div class="sheet"><div class="sh-h"><b>Pick an emoji</b><button id="esx">Close</button></div><div id="eg2"></div><input type="text" id="et" placeholder="or type one with your keyboard" aria-label="Type an emoji"></div></div>
 <div id="toast"></div>
 <script>
-const VERSION='2.5',$=s=>document.querySelector(s),SERIF='Georgia,"Times New Roman",serif',
+const VERSION='2.7',$=s=>document.querySelector(s),SERIF='Georgia,"Times New Roman",serif',
 EMO='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif',
 EM=['😊','🥰','😌','🤩','😎','🥳','🙃','🫠','😴','🥲','😔','😰','😤','😵‍💫','🤯','😭'],
 CO=[['#F5D76E','Joyful'],['#F2A1B3','Loved'],['#F4A56A','Energized'],['#A8D08D','Hopeful'],['#8FD1C4','Calm'],['#8CA6D1','Sad'],['#B9A4DC','Anxious'],['#E88B8B','Angry'],['#B8BCC4','Tired']],K='entryTickets';
@@ -141,7 +143,7 @@ const mix=(h,a)=>{const n=parseInt(h.slice(1),16);return'rgb('+[n>>16&255,n>>8&2
 function wrap(x,t,w){const L=[];let l='';for(const s of t.split(/\s+/)){const m=l?l+' '+s:s;if(x.measureText(m).width>w&&l){L.push(l);l=s}else l=m}L.push(l);return L}
 function arch(x,cx,top,w,h){const r=w/2;x.beginPath();x.moveTo(cx-r,top+h);x.lineTo(cx-r,top+r);x.arc(cx,top+r,r,Math.PI,0);x.lineTo(cx+r,top+h);x.closePath()}
 function draw(c,e){
-  const x=c.getContext('2d'),W=1080,G='#d4af5a',I='#f6efdc',P=1530,d=new Date(e.t||Date.now());
+  const x=c.getContext('2d'),W=1080,G='#d4af5a',I='#f6efdc',P=1730,d=new Date(e.t||Date.now());
   x.clearRect(0,0,W,1920);x.fillStyle='#0f2a20';x.fillRect(0,0,W,1920);
   const g=x.createRadialGradient(540,760,80,540,760,1100);g.addColorStop(0,'#1a4433');g.addColorStop(1,'#0f2a20');x.fillStyle=g;x.fillRect(0,0,W,1920);
   x.strokeStyle=G;x.lineWidth=4;x.beginPath();x.roundRect(48,48,984,1824,36);x.stroke();
@@ -153,36 +155,36 @@ function draw(c,e){
   x.font='28px '+SERIF;x.letterSpacing='5px';x.fillStyle=I;x.globalAlpha=.75;
   x.fillText((d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+' · '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})).toUpperCase(),540,232);
   x.globalAlpha=1;x.letterSpacing='0px';x.fillStyle=G;x.font='34px '+SERIF;x.fillText('✦',540,296);
-  const pl=e.sp&&e.pl&&e.pl.length?[...e.pl].sort((a,b)=>b.p-a.p):null,oy=pl?(6-Math.min(pl.length,6))*62:0,dl=Math.min(oy,300),T=350,AW=600,AH=pl?360+dl:660;
+  const pl=e.sp&&e.pl&&e.pl.length?[...e.pl].sort((a,b)=>b.p-a.p):null,oy=pl?(6-Math.min(pl.length,6))*62:0,dl=Math.min(oy,220),T=350,AW=600,AH=pl?520+dl:740;
   arch(x,540,T-24,AW+48,AH+24);x.strokeStyle=G;x.globalAlpha=.55;x.lineWidth=3;x.stroke();x.globalAlpha=1;
   arch(x,540,T,AW,AH);const ag=x.createLinearGradient(0,T,0,T+AH);ag.addColorStop(0,mix(e.color,.4));ag.addColorStop(1,e.color);x.fillStyle=ag;x.fill();
-  const es=pl?190+dl*.367:300;x.font=es+'px '+EMO;x.fillStyle='#000';x.fillText(e.emoji,540,T+AH/2+es*.133);
+  const es=AH*.455;x.font=es+'px '+EMO;x.fillStyle='#000';x.fillText(e.emoji,540,T+AH/2+es*.133);
   x.fillStyle=G;x.font='40px '+SERIF;x.globalAlpha=.8;x.fillText('✦',170,470);x.fillText('✦',915,640);x.font='26px '+SERIF;if(!pl)x.fillText('✦',150,880);x.fillText('✦',935,420);x.globalAlpha=1;
   x.font='24px '+SERIF;x.letterSpacing='8px';x.fillText('FEELING',540,T+AH+130);x.letterSpacing='0px';
-  x.fillStyle=I;let sz=112,L;
-  for(;sz>=34;sz-=4){x.font='italic '+sz+'px '+SERIF;L=wrap(x,e.words||'…',780);if(L.length*sz*1.2<=(pl?170:280)&&L.every(l=>x.measureText(l).width<=780))break}
-  const lh=sz*1.2,y0=(pl?T+AH+210:T+AH+330)-(L.length-1)*lh/2;L.forEach((l,i)=>x.fillText(l,540,y0+i*lh));
-  if(pl){x.fillStyle=G;x.font='600 24px '+SERIF;x.letterSpacing='4px';x.fillText('I WANT TO DO SOMETHING SPECIFIC TONIGHT',540,1062+oy);x.letterSpacing='0px';
-    pl.slice(0,pl.length>6?5:pl.length).forEach((p,i)=>{const y=1135+oy+i*62;x.textAlign='center';x.font='34px '+EMO;x.fillStyle='#000';x.fillText(p.e,170,y);
+  x.fillStyle=I;const zt=T+AH+165,Z=pl?157+oy-dl:300;let sz=112,L;
+  for(;sz>=34;sz-=4){x.font='italic '+sz+'px '+SERIF;L=wrap(x,e.words||'…',780);if(L.length*sz*1.2<=Z&&L.every(l=>x.measureText(l).width<=780))break}
+  const lh=sz*1.2,y0=zt+Z/2-(L.length-1)*lh/2;L.forEach((l,i)=>x.fillText(l,540,y0+i*lh));
+  if(pl){x.fillStyle=G;x.font='600 24px '+SERIF;x.letterSpacing='4px';x.fillText('I WANT TO DO SOMETHING SPECIFIC TONIGHT',540,1222+oy);x.letterSpacing='0px';
+    pl.slice(0,pl.length>6?5:pl.length).forEach((p,i)=>{const y=1295+oy+i*62;x.textAlign='center';x.font='34px '+EMO;x.fillStyle='#000';x.fillText(p.e,170,y);
       x.textAlign='left';x.fillStyle=I;for(let f=34;f>=22;f-=2){x.font=f+'px '+SERIF;if(x.measureText(p.n).width<=520)break}x.fillText(p.n,225,y);
       x.strokeStyle=G;x.lineWidth=3;x.beginPath();x.roundRect(782,y-22,128,44,22);if(p.p){x.fillStyle=G;x.fill()}else x.stroke();
       x.textAlign='center';x.font='600 21px '+SERIF;x.letterSpacing='3px';x.fillStyle=p.p?'#0f2a20':G;x.fillText(p.p?'NEED':'WANT',846,y+1);x.letterSpacing='0px'});
-    if(pl.length>6){x.textAlign='center';x.fillStyle=G;x.font='italic 26px '+SERIF;x.fillText('+ '+(pl.length-5)+' more',540,1135+oy+5*62)}}
+    if(pl.length>6){x.textAlign='center';x.fillStyle=G;x.font='italic 26px '+SERIF;x.fillText('+ '+(pl.length-5)+' more',540,1295+oy+5*62)}}
   
   x.textAlign='left';
   x.fillStyle=G;x.letterSpacing='5px';
-  x.textAlign='center';x.font='30px '+SERIF;x.fillText('No. '+String(e.n||log.length+1).padStart(3,'0'),540,1668);
-  x.font='22px '+SERIF;x.fillText('ADMIT ONE',540,1716);
+  x.textAlign='center';x.font='22px '+SERIF;x.fillText('ADMIT ONE  ·  No. '+String(e.n||log.length+1).padStart(3,'0'),540,1791);
+  
   x.textAlign='left';x.font='24px '+SERIF;x.letterSpacing='4px';
   const tw=x.measureText('I WANT A CHECK-IN').width,bx=540-(tw+66)/2,by=T+AH+52-23;
   x.strokeStyle=G;x.lineWidth=4;x.beginPath();x.roundRect(bx,by,46,46,12);x.stroke();
   if(e.ci){x.fillStyle=G;x.fill();x.strokeStyle='#0f2a20';x.lineWidth=7;x.lineCap='round';x.lineJoin='round';x.beginPath();x.moveTo(bx+11,by+24);x.lineTo(bx+20,by+33);x.lineTo(bx+36,by+14);x.stroke();x.lineCap='butt'}
   x.fillStyle=G;x.fillText('I WANT A CHECK-IN',bx+66,by+24);x.letterSpacing='0px';
 }
-const pv=$('#pv'),oc=document.createElement('canvas'),nextN=()=>log.reduce((m,l)=>Math.max(m,l.n||0),0)+1,key=e=>[e.emoji,e.color,e.words.trim(),e.n,e.t,e.ci?1:0,e.sp?(e.pl||[]).map(p=>p.n+p.p).join(','):''].join('|'),jpg=c=>new Promise(r=>c.toBlob(r,'image/jpeg',.92));
-oc.width=1080;oc.height=1920;let cache=null,wt,raf;
-function warm(){const k=key(cur);pv.toBlob(b=>{if(b&&k===key(cur))cache={k,b}},'image/jpeg',.92)}
-function paint(){cur.t=Date.now();cur.n=nextN();cache=null;clearTimeout(wt);wt=setTimeout(warm,400);cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>draw(pv,cur))}
+const pv=$('#pv'),oc=document.createElement('canvas'),nextN=()=>log.reduce((m,l)=>Math.max(m,l.n||0),0)+1,key=e=>[e.emoji,e.color,e.words.trim(),e.n,e.t,e.ci?1:0,e.sp?(e.pl||[]).map(p=>p.n+p.p).join(','):''].join('|'),jpg=c=>new Promise(r=>c.toBlob(r,'image/jpeg',.85));
+oc.width=1080;oc.height=1920;let cache=null,wt,raf,dirty=false;
+function warm(){const k=key(cur);if(dirty)return;pv.toBlob(b=>{if(b&&k===key(cur))cache={k,b}},'image/jpeg',.85)}
+function paint(){cur.t=Date.now();cur.n=nextN();cache=null;dirty=true;clearTimeout(wt);wt=setTimeout(warm,250);cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{draw(pv,cur);dirty=false})}
 function pick(sel,el){document.querySelectorAll(sel).forEach(b=>b.classList.toggle('on',b===el))}
 EM.forEach((m,i)=>{const b=document.createElement('button');b.className='em'+(i?'':' on');b.textContent=m;b.onclick=()=>{cur.emoji=m;pick('.em',b);$('#ce').value='';paint()};$('#eg').append(b)});
 CO.forEach(([c,n],i)=>{const w=document.createElement('div'),b=document.createElement('button');w.className='cw';b.className='sw'+(i?'':' on');b.style.background=c;b.setAttribute('aria-label',n);b.onclick=()=>{cur.color=c;pick('.sw',b);paint()};w.append(b,n);$('#cg').append(w)});
@@ -219,14 +221,14 @@ function tapWord(n){const i=$('#wd'),a=i.value.split(',').map(s=>s.trim()).filte
   i.value=a.join(', ');cur.words=i.value;paint();mark()}
 function commit(){if(!cur.words.trim()){$('#wd').focus();toast('Add a few words first');return null}
   const e={...cur,words:cur.words.trim(),pl:cur.pl.map(p=>({...p}))};log.unshift(e);save();return e}
-async function share(e){let b=cache&&cache.k===key(e)?cache.b:null;if(!b){draw(oc,e);b=await jpg(oc)}
+async function share(e){let b=cache&&cache.k===key(e)?cache.b:!dirty&&key(e)===key(cur)?await jpg(pv):null;if(!b){draw(oc,e);b=await jpg(oc)}
   const f=new File([b],'entry-ticket-'+String(e.n).padStart(3,'0')+'.jpg',{type:'image/jpeg'});
   try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f]});return}}catch(err){if(err.name==='AbortError')return}
   show(e);toast('Press and hold the image to save it')}
 function reset(){cur.words='';cur.ci=false;cur.sp=false;cur.pl=[];$('#wd').value='';$('#ci').checked=false;$('#sp').checked=false;mark();bnSync();paint()}
 $('#sv').onclick=async()=>{const e=commit();if(e){toast('Saved to your log');await share(e);reset()}};
 $('#so').onclick=()=>{if(commit()){toast('Saved to your log');reset()}};
-function show(e){openE=e;armed=0;$('#mdl').textContent='Delete';draw(oc,e);$('#mi').src=oc.toDataURL('image/jpeg',.92);$('#md').classList.remove('hide')}
+function show(e){openE=e;armed=0;$('#mdl').textContent='Delete';draw(oc,e);$('#mi').src=oc.toDataURL('image/jpeg',.85);$('#md').classList.remove('hide')}
 $('#mx').onclick=()=>$('#md').classList.add('hide');
 $('#ms').onclick=()=>share(openE);
 $('#mdl').onclick=()=>{if(!armed){armed=1;$('#mdl').textContent='Tap again';return}log=log.filter(l=>l!==openE);save();$('#md').classList.add('hide');render()};
