@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <!--
-  SWIPE NIGHT  v1.3   (file: swipe-night-v1.3.html)
+  SWIPE NIGHT  v1.4   (file: swipe-night-v1.4.html)
   Two people, one phone. Each swipes separately; only shared yeses get revealed.
   Single file, no backend. Saves to localStorage (key "sn1"). Add to home screen to use like an app.
   Swipe: right = yes, left = no, up = maybe. Scores: no 0, maybe 1, yes 2.
+  v1.4: Build tab movie moods are multi-select (match any or all).
   v1.3: Build tab. Endless swipe to grow the library (TMDB for movies, Claude API for food/outings).
   v1.2: install fix. App id/start/scope use this file's own URL; bigger icon.
   v1.1: neon intro animation, full swipe breakdown on results, Log tab of chosen picks.
@@ -93,7 +94,7 @@ outings:[ '🛍️|TJ Maxx treasure hunt|1','🎮|Dave & Buster’s|3','🚶|Nei
 const TY={movies:'🎬 Movies',food:'🍽️ Food',outings:'🧭 Outings'};
 const P=x=>{const[e,t,c]=x.split('|');return{e,t,c:c==null?-1:+c}};
 const cl=c=>c<0?'':['Free','$','$$','$$$'][c];
-let S={n:['Isaiah','Zack'],ty:'movies',src:'lib',mode:'match',cu:{movies:[],food:[],outings:[]},done:{},log:[],seen:{},k:{tmdb:'',ai:''},bf:'pop',bv:'',last:0},G={};
+let S={n:['Isaiah','Zack'],ty:'movies',src:'lib',mode:'match',cu:{movies:[],food:[],outings:[]},done:{},log:[],seen:{},k:{tmdb:'',ai:''},bfs:['pop'],bm:'any',bv:'',last:0},G={};
 try{Object.assign(S,JSON.parse(localStorage.sn1||'{}'))}catch(e){}
 const save=()=>{try{localStorage.sn1=JSON.stringify(S)}catch(e){}};
 const pool=()=>(S.src=='own'?[]:LIB[S.ty].map(P)).concat(S.src=='lib'?[]:S.cu[S.ty]);
@@ -118,7 +119,7 @@ function setup(){
   ${S.src=='lib'?'':`<h3>Our ${TY[S.ty].split(' ')[1].toLowerCase()} list</h3>${mine.map((x,i)=>`<div class="li"><span>${E(x.e)} ${E(x.t)} <small class="sub">${cl(x.c)}</small></span><button data-a="del" data-v="${i}" aria-label="Remove">×</button></div>`).join('')||'<p class="sub">Nothing here yet. Add a few!</p>'}
   <div class="row" style="margin-top:10px"><input id="ne" placeholder="🍩" maxlength="4" style="flex:.5"><input id="nt" placeholder="Add a pick" maxlength="40" style="flex:2"><select id="nc" style="flex:.8"><option value="-1">—</option><option value="0">Free</option><option value="1">$</option><option value="2">$$</option><option value="3">$$$</option></select></div><button class="ch" data-a="add">+ Add</button>`}
   <button class="go" data-a="start"${n<2?' disabled':''}>${n<2?'Add at least 2 picks':'Start swiping →'}</button>
-  <p class="tip">${n} picks in the pile · deals up to 15 · v1.3</p>`);
+  <p class="tip">${n} picks in the pile · deals up to 15 · v1.4</p>`);
 }
 function cover(p,kind){
   const[a,b]=S.n.map(E);document.body.className=kind=='ready'?'':'p'+p;
@@ -162,14 +163,15 @@ function fly(v){
     if(G.i<G.deck.length)swipe();else if(G.p==0){G.p=1;G.i=0;cover(1,'pass')}else cover(1,'ready')},230);
 }
 const MF={pop:'🔥 Popular',anime:'🎌 Anime',animated:'🎨 Animated',marvel:'🦸 Marvel',scifi:'🚀 Sci-fi',fantasy:'🧙 Fantasy',family:'🏠 Family',action:'💥 Action',thriller:'🔪 Thriller',like:'💞 Like my picks'},
-M={anime:'with_genres=16&with_original_language=ja',animated:'with_genres=16',marvel:'with_companies=420',scifi:'with_genres=878',fantasy:'with_genres=14',family:'with_genres=10751,12',action:'with_genres=28',thriller:'with_genres=53'},
+M={anime:{g:'16',l:'ja'},animated:{g:'16'},marvel:{c:'420'},scifi:{g:'878'},fantasy:{g:'14'},family:{g:'10751,12'},action:{g:'28'},thriller:{g:'53'}},
 TS={food:'Thai, fresh market bowls, pizza, Mexican, casserole and Italian',outings:'predictable, budget-friendly places like TJ Maxx, Dave & Buster’s and a simple walk, plus farmers markets and craft fairs'};
 let BD=0,B={};
+const mq=a=>{const g=[],c=[];let l='';a.forEach(k=>{const m=M[k];if(m){m.g&&g.push(m.g);m.c&&c.push(m.c);m.l&&(l=m.l)}});return(g.length?`&with_genres=${g.join(',')}`:'')+(c.length?`&with_companies=${c.join(',')}`:'')+(l?`&with_original_language=${l}`:'')};
 function buildv(){
   BD=0;document.body.className='';const m=S.ty=='movies';
   ui(`<h1>Swipe Night</h1>${tabs(2)}<h3>Build our library</h3><p class="sub">Swipe right to add, left to skip, up for not now.</p>
   ${Object.keys(TY).map(k=>ch('ty2',k,TY[k],S.ty==k)).join('')}
-  ${m?`<h3>Movie mood</h3>${Object.keys(MF).map(k=>ch('bf',k,MF[k],S.bf==k)).join('')}<h3>TMDB API key</h3><input data-k="tmdb" type="password" placeholder="Paste your TMDB v3 API key" value="${E(S.k.tmdb)}" style="width:100%">`
+  ${m?`<h3>Movie moods (pick any)</h3>${Object.keys(MF).map(k=>ch('bf',k,MF[k],S.bfs.includes(k))).join('')}${S.bfs.length>1?`<div class="tip" style="text-align:left;margin:6px 0">Match</div>${ch('bm','any','Any of these',S.bm!='all')+ch('bm','all','All of these',S.bm=='all')}`:''}<h3>TMDB API key</h3><input data-k="tmdb" type="password" placeholder="Paste your TMDB v3 API key" value="${E(S.k.tmdb)}" style="width:100%">`
   :`<h3>Vibe (optional)</h3><input id="bv" placeholder="cheap, cozy, rainy day…" maxlength="60" value="${E(S.bv)}" style="width:100%"><h3>Claude API key</h3><input data-k="ai" type="password" placeholder="Paste your Anthropic API key" value="${E(S.k.ai)}" style="width:100%">`}
   <p class="tip">Keys stay on this phone. Use a free or spend-limited key.</p><button class="go" data-a="bgo">Start swiping →</button>`);
 }
@@ -194,8 +196,8 @@ async function more(){
   const ty=S.ty,all=[...LIB[ty].map(P),...S.cu[ty]].map(x=>x.t.toLowerCase()),sn=new Set([...(S.seen[ty]||[]),...B.q.map(x=>x.k),...all]);let r;
   if(ty=='movies'){
     if(!S.k.tmdb)throw Error('Add your TMDB key first.');
-    const u=S.bf=='like'&&S.last?`/movie/${S.last}/recommendations?`:`/discover/movie?sort_by=popularity.desc&vote_count.gte=300&include_adult=false&${M[S.bf]||''}&`;
-    const j=await(await fetch(`https://api.themoviedb.org/3${u}api_key=${S.k.tmdb}&page=${B.pg++}`)).json();
+    const fs=S.bfs,both=S.bm=='all'&&fs.length>1,k=both?'and':fs[B.rr++%fs.length],pg=B.pgs[k]=(B.pgs[k]||0)+1,u=k=='like'&&S.last?`/movie/${S.last}/recommendations?`:`/discover/movie?sort_by=popularity.desc&vote_count.gte=300&include_adult=false${mq(both?fs:[k])}&`;
+    const j=await(await fetch(`https://api.themoviedb.org/3${u}api_key=${S.k.tmdb}&page=${pg}`)).json();
     if(!j.results)throw Error(j.status_message||'TMDB hiccup');
     r=j.results.map(m=>({e:'🎬',t:m.title,c:-1,id:m.id,k:'m'+m.id,img:m.poster_path&&'https://image.tmdb.org/t/p/w342'+m.poster_path,s:(m.release_date||'').slice(0,4)+' · ⭐'+(m.vote_average||0).toFixed(1)}));
   }else{
@@ -237,8 +239,8 @@ const A={
   undo:()=>{if(G.i>0){G.i--;swipe()}},
   win:(v,b)=>{if(b.dataset.ok)return;b.dataset.ok=1;const x=G.R[+v].x,d=Date.now();S.done[x.t]=d;S.log.unshift({e:x.e,t:x.t,ty:S.ty,d});save();b.textContent='✓ Locked in!';b.closest('.rc').classList.add('won')},
   tab:v=>{BD=0;[setup,logv,buildv][+v]()},
-  ty2:v=>{S.ty=v;save();buildv()},bf:v=>{S.bf=v;save();buildv()},bdone:()=>{BD=0;buildv()},
-  bgo:()=>{if(S.ty!='movies')S.bv=$('#bv').value.trim();B={q:[],pg:1,n:0,t:0,err:'',busy:0};save();bsw()},
+  ty2:v=>{S.ty=v;save();buildv()},bf:v=>{let a=S.bfs.includes(v)?S.bfs.filter(x=>x!=v):[...S.bfs.filter(x=>x!='pop'),v];if(v=='pop'||!a.length)a=['pop'];S.bfs=a;save();buildv()},bm:v=>{S.bm=v;save();buildv()},bdone:()=>{BD=0;buildv()},
+  bgo:()=>{if(S.ty!='movies')S.bv=$('#bv').value.trim();B={q:[],pgs:{},rr:0,n:0,t:0,err:'',busy:0};save();bsw()},
   logdel:v=>{const t=S.log[+v].t;S.log.splice(+v,1);const m=S.log.filter(x=>x.t==t).map(x=>x.d);m.length?S.done[t]=Math.max(...m):delete S.done[t];save();logv()},
   pick:()=>{const r=[...document.querySelectorAll('.rc')],T=r.length*3+Math.random()*r.length|0;let i=0;
     (function f(){r.forEach((e,j)=>e.classList.toggle('hl',j==i%r.length));if(i++<T)setTimeout(f,50+i*i*.8)})()},
