@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<!--
+  SWIPE NIGHT  v1.6   (file: swipe-night-v1.4.html)
+  Two people, one phone. Each swipes separately; only shared yeses get revealed.
+  Single file, no backend. Saves to localStorage (key "sn1"). Add to home screen to use like an app.
+  Swipe: right = yes, left = no, up = maybe. Scores: no 0, maybe 1, yes 2.
+  v1.4: Build tab movie moods are multi-select (match any or all).
+  v1.3: Build tab. Endless swipe to grow the library (TMDB for movies, Claude API for food/outings).
+  v1.2: install fix. App id/start/scope use this file's own URL; bigger icon.
+  v1.1: neon intro animation, full swipe breakdown on results, Log tab of chosen picks.
+  Keep this version in sync with the file name on every update.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Swipe Night">
+<meta name="theme-color" content="#FFF4DC">
+<title>Swipe Night</title>
+<link rel="apple-touch-icon" id="ai">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&amp;display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FFF4DC;--ink:#3A1F2E;--card:#FFFDF6;--mut:#8C6E7A;--p0:#E8466B;--p1:#1F9E8F;--ac:#3A1F2E;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#241520;--ink:#FFEFD2;--card:#34202F;--mut:#C2A3B0}}
+:root[data-theme="dark"]{--bg:#241520;--ink:#FFEFD2;--card:#34202F;--mut:#C2A3B0}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
+body.p0{--ac:var(--p0)}body.p1{--ac:var(--p1)}
+#app{height:100%;max-width:480px;margin:0 auto;padding:16px 20px;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
+h1,h2,h3{font-family:"DM Serif Display",Georgia,serif;font-weight:400;margin:0}
+h1{font-size:44px;line-height:1}h2{font-size:30px;line-height:1.1}h3{font-size:19px;margin:18px 0 8px}
+p{margin:6px 0}.sub{color:var(--mut)}
+.ch{padding:10px 15px;border-radius:999px;border:2px solid var(--ink);background:none;color:var(--ink);font:inherit;margin:0 6px 6px 0}
+.ch.on{background:var(--ink);color:var(--bg)}
+.go{width:100%;border:0;border-radius:18px;padding:16px;background:var(--ac);color:#fff;font:22px "DM Serif Display",Georgia,serif;margin-top:16px}
+.go:disabled{opacity:.4}
+input,select{font:inherit;color:var(--ink);background:var(--card);border:2px solid var(--ink);border-radius:12px;padding:9px 11px;min-width:0;-webkit-user-select:text;user-select:text}
+.row{display:flex;gap:8px;margin-bottom:8px}.row>*{flex:1}
+.li{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed var(--mut)}
+.li button{border:0;background:none;color:var(--p0);font-size:20px}
+.bar{display:flex;justify-content:space-between;align-items:baseline;color:var(--ac)}
+.prog{height:6px;border-radius:3px;background:#0002;margin:8px 0}.prog i{display:block;height:100%;background:var(--ac);border-radius:3px;transition:width .2s}
+.eyes{text-align:center;color:var(--mut);font-size:14px}
+.stack{position:relative;flex:1;min-height:250px;margin:12px 0}
+.card{position:absolute;inset:0;background:var(--card);border:3px solid var(--ac);border-radius:28px;box-shadow:0 10px 0 var(--ac);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;touch-action:none}
+.back{transform:scale(.94) translateY(14px);opacity:.55;box-shadow:none}.poster{max-height:58%;max-width:100%;object-fit:contain;border-radius:12px;pointer-events:none}.flipnote{font-size:13px;color:var(--mut);margin-top:8px}.card.flipped{overflow-y:auto}.poster-title{font:26px/1.15 "DM Serif Display",Georgia,serif;margin:10px 0}.overview{font-size:14px;line-height:1.35;text-align:left;overflow:auto;max-height:65%}.poster{max-height:58%;max-width:100%;object-fit:contain;border-radius:12px;pointer-events:none}.flipnote{font-size:13px;color:var(--mut);margin-top:8px}.card.flipped{overflow-y:auto}.poster-title{font:26px/1.15 "DM Serif Display",Georgia,serif;margin:10px 0}.overview{font-size:14px;line-height:1.35;text-align:left;overflow:auto;max-height:65%}
+.em{font-size:84px;line-height:1}
+.ti{font:30px/1.15 "DM Serif Display",Georgia,serif;margin:14px 0 8px}
+.cost{border:2px solid var(--mut);color:var(--mut);border-radius:999px;padding:1px 10px;font-size:14px}
+.st{position:absolute;top:20px;font:24px "DM Serif Display",Georgia,serif;border:3px solid;border-radius:10px;padding:0 10px;opacity:0}
+.st.y{left:16px;color:var(--p1);rotate:-12deg;opacity:var(--y,0)}
+.st.n{right:16px;color:var(--p0);rotate:12deg;opacity:var(--n,0)}
+.st.m{top:auto;bottom:20px;color:#C98A00;opacity:var(--m,0)}
+.btns{display:flex;gap:14px;justify-content:center;margin-top:8px}
+.btns button{width:80px;height:80px;border-radius:50%;border:3px solid var(--ink);background:var(--card);color:var(--ink);font-size:28px;line-height:1}
+.btns small{display:block;font-size:12px}
+.tip{text-align:center;color:var(--mut);font-size:13px;margin:8px 0 0}
+.undo{border:0;background:none;color:var(--mut);font:inherit;text-decoration:underline}
+.cv{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center}
+.sl{position:relative;height:60px;border-radius:30px;background:var(--ac);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;margin:26px 0 0}
+.kn{position:absolute;left:4px;top:4px;width:52px;height:52px;border-radius:50%;background:#fff;color:var(--ac);display:grid;place-items:center;font-size:24px;touch-action:none;transition:transform .25s}
+.rc{display:flex;align-items:center;gap:12px;background:var(--card);border:3px solid var(--ink);border-radius:20px;padding:12px;margin:8px 0}
+.rc.hl{background:#F2B134;color:#3A1F2E;transform:scale(1.03)}
+.rc .em{font-size:40px}.rc b{font:20px "DM Serif Display",Georgia,serif;font-weight:400}
+.rc button{margin-left:auto;border:2px solid currentColor;background:none;color:inherit;border-radius:12px;padding:6px 9px;font:inherit;font-size:13px;max-width:96px}
+.rc.won{background:#F2B134}
+#sp{position:fixed;inset:0;z-index:9;background:#14081C;display:grid;place-content:center;text-align:center;animation:out .6s cubic-bezier(.7,0,.3,1) 2.4s forwards}
+#sp h1{font-size:68px;line-height:1.05;margin:0}#sp span{display:block}
+.np{color:#ffe1f1;text-shadow:0 0 7px #ff2d95,0 0 20px #ff2d95,0 0 46px #ff2d95;animation:fl 2.2s steps(1) both}
+.ng{color:#e2ffe9;text-shadow:0 0 7px #25ff7a,0 0 20px #25ff7a,0 0 46px #25ff7a;animation:fl 2.2s steps(1) .25s both}
+@keyframes fl{0%{opacity:0}8%{opacity:1}12%{opacity:.15}16%{opacity:1}22%{opacity:.4}26%{opacity:1}70%{opacity:1}72%{opacity:.3}74%,100%{opacity:1}}
+@keyframes out{to{transform:translateY(-100%);visibility:hidden}}
+.tabs{margin:12px 0 0}
+details{margin-top:10px}summary{margin:14px 0 6px;font:19px "DM Serif Display",Georgia,serif;cursor:pointer}
+.tb{display:grid;grid-template-columns:minmax(0,1fr) 54px 54px 62px;gap:4px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--mut);font-size:14px;text-align:center}
+.tb span{text-align:left}.tb b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tb i{font-style:normal;font-weight:700}
+.a0{color:var(--p0)}.a1{color:#C98A00}.a2{color:var(--p1)}.th{color:var(--mut);font-size:12px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}.np,.ng{animation:none}}
+</style>
+</head>
+<body>
+<div id="sp"><h1><span class="np">Swipe</span><span class="ng">Night</span></h1></div>
+<div id="app"></div>
+<script>
+const $=s=>document.querySelector(s),ui=h=>$('#app').innerHTML=h,E=s=>String(s).replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
+// Library entries: "emoji|title|cost" where cost 0=Free 1=$ 2=$$ 3=$$$ (omit for none)
+const LIB={
+movies:['🕷️|Spider-Man: Into the Spider-Verse','🧹|Kiki’s Delivery Service','🏰|Howl’s Moving Castle','☄️|Your Name','🐉|Spirited Away','🤖|WALL·E','🦸|Big Hero 6','🚀|Guardians of the Galaxy','⚡|Thor: Ragnarok','🐜|Ant-Man','🔮|Doctor Strange','🥋|Shang-Chi','🗡️|The Princess Bride','✨|Stardust','🎮|Ready Player One','🤖|The Mitchells vs. the Machines','🐱|Puss in Boots: The Last Wish','🐼|Turning Red','🌸|Encanto','🌊|Moana','🐲|How to Train Your Dragon','💀|Coco','🧸|Paddington 2','🛸|Lilo & Stitch'],
+food:['🍜|Pad Thai night|2','🍛|Thai green curry|2','🥭|Mango sticky rice treat|1','🥗|Fresh market bowls|2','🥪|Sandwich + salad combo|2','🍕|Pizza night|2','🔥|Wood-fired pizza|3','🌮|Taco spot|1','🌯|Burrito bowls|2','🧀|Enchiladas|2','🍲|Cozy casserole at home|1','🧀|Baked mac & cheese|1','🍝|Italian pasta|2','🥘|Lasagna|2','🥖|Garlic bread + pasta at home|1'],
+outings:[ '🛍️|TJ Maxx treasure hunt|1','🎮|Dave & Buster’s|3','🚶|Neighborhood walk|0','🥕|Farmers market|1','🧶|Craft fair|1','🌲|Park or trail wander|0','📚|Bookstore browse|1','☕|Coffee + people-watching|1','🎳|Bowling|2','🏛️|Free museum day|0','⛳|Mini golf|2','🌇|Sunset drive|0','🧺|Picnic|1','🪴|Plant nursery stroll|0']};
+const TY={movies:'🎬 Movies',food:'🍽️ Food',outings:'🧭 Outings'};
+const P=x=>{const[e,t,c]=x.split('|');return{e,t,c:c==null?-1:+c}};
+const cl=c=>c<0?'':['Free','$','$$','$$$'][c];
+let S={n:['Isaiah','Zack'],ty:'movies',src:'lib',mode:'match',cu:{movies:[],food:[],outings:[]},done:{},log:[],seen:{},k:{tmdb:'',ai:''},bfs:['pop'],bm:'any',bv:'',last:0,movieMeta:{}},G={};
+try{Object.assign(S,JSON.parse(localStorage.sn1||'{}'))}catch(e){}
+S.movieMeta=S.movieMeta||{};
+const save=()=>{try{localStorage.sn1=JSON.stringify(S)}catch(e){}};
+const normTitle=t=>String(t||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const metaFor=x=>{const m=S.movieMeta[normTitle(x.t)]||{};return {...x,...m,e:x.e||'🎬',c:x.c==null?-1:x.c}};
+const pool=()=>(S.src=='own'?[]:LIB[S.ty].map(P)).concat(S.src=='lib'?[]:S.cu[S.ty]).map(x=>S.ty==='movies'?metaFor(x):x);
+async function enrichMovieTitle(title){
+  const key=normTitle(title);if(S.movieMeta[key]?.overview!==undefined&&S.movieMeta[key]?.img)return S.movieMeta[key];
+  if(!S.k.tmdb)return null;
+  const url=`https://api.themoviedb.org/3/search/movie?api_key=${encodeURIComponent(S.k.tmdb)}&query=${encodeURIComponent(title)}&include_adult=false`;
+  const response=await fetch(url);const data=await response.json();
+  if(!response.ok||data.success===false)throw Error(data.status_message||'TMDB could not look up library movies. Check your API key.');
+  const wanted=normTitle(title),results=data.results||[];
+  const m=results.find(r=>normTitle(r.title)===wanted)||results[0];
+  if(!m)return null;
+  const meta={id:m.id,img:m.poster_path?'https://image.tmdb.org/t/p/w500'+m.poster_path:'',overview:m.overview||'',s:(m.release_date||'').slice(0,4)+(m.vote_average?' · ⭐'+m.vote_average.toFixed(1):'')};
+  S.movieMeta[key]=meta;save();return meta;
+}
+async function enrichMovieLibrary(){
+  if(!S.k.tmdb)return;
+  const titles=[...new Set([...LIB.movies.map(x=>P(x).t),...S.cu.movies.map(x=>x.t)])];
+  // Small batches avoid overwhelming TMDB and cache each successful lookup.
+  for(let i=0;i<titles.length;i+=4){await Promise.all(titles.slice(i,i+4).map(t=>enrichMovieTitle(t).catch(()=>null)));}
+  save();
+}
+// one shuffle+sort: recently chosen items (30 days) sink to the end, then take 15
+const deal=()=>pool().map(x=>[x,Math.random()+(Date.now()-(S.done[x.t]||0)<2592e6?1:0)]).sort((a,b)=>a[1]-b[1]).slice(0,15).map(x=>x[0]);
+const ch=(a,v,t,on)=>`<button class="ch${on?' on':''}" data-a="${a}" data-v="${v}">${t}</button>`;
+const sli=t=>`<div class="sl"><div class="kn">➜</div>${t}</div>`;
+const ic=['✕','↑','♥'],tabs=n=>`<div class="tabs">${ch('tab',0,'💞 Swipe',!n)+ch('tab',2,'🔨 Build',n==2)+ch('tab',1,'📖 Log',n==1)}</div>`;
+function logv(){
+  document.body.className='';
+  ui(`<h1>Swipe Night</h1>${tabs(1)}<h3>What we chose</h3>${S.log.map((x,i)=>`<div class="rc"><span class="em">${E(x.e)}</span><div><b>${E(x.t)}</b><br><small class="sub">${TY[x.ty]} · ${new Date(x.d).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</small></div><button data-a="logdel" data-v="${i}" aria-label="Remove">×</button></div>`).join('')||'<p class="sub">Nothing yet. Tap “We’re going with this” on a result to log it.</p>'}`);
+}
+
+function setup(){
+  document.body.className='';
+  const n=pool().length,mine=S.cu[S.ty];
+  ui(`<h1>Swipe Night</h1><p class="sub">Swipe separately. See only what you both love. 💞</p>${tabs(0)}
+  <h3>Who’s swiping?</h3><div class="row"><input data-n="0" value="${E(S.n[0])}" maxlength="14"><input data-n="1" value="${E(S.n[1])}" maxlength="14"></div>
+  <h3>What are we picking?</h3>${Object.keys(TY).map(k=>ch('ty',k,TY[k],S.ty==k)).join('')}
+  <h3>Which list?</h3>${ch('src','lib','Library',S.src=='lib')+ch('src','own','Our own',S.src=='own')+ch('src','both','Both',S.src=='both')}
+  <h3>Show results as</h3>${ch('mode','match','💘 Matches',S.mode=='match')+ch('mode','top','🏆 Top 3',S.mode=='top')}
+  ${S.src=='lib'?'':`<h3>Our ${TY[S.ty].split(' ')[1].toLowerCase()} list</h3>${mine.map((x,i)=>`<div class="li"><span>${E(x.e)} ${E(x.t)} <small class="sub">${cl(x.c)}</small></span><button data-a="del" data-v="${i}" aria-label="Remove">×</button></div>`).join('')||'<p class="sub">Nothing here yet. Add a few!</p>'}
+  <div class="row" style="margin-top:10px"><input id="ne" placeholder="🍩" maxlength="4" style="flex:.5"><input id="nt" placeholder="Add a pick" maxlength="40" style="flex:2"><select id="nc" style="flex:.8"><option value="-1">—</option><option value="0">Free</option><option value="1">$</option><option value="2">$$</option><option value="3">$$$</option></select></div><button class="ch" data-a="add">+ Add</button>`}
+  <button class="go" data-a="start"${n<2?' disabled':''}>${n<2?'Add at least 2 picks':'Start swiping →'}</button>
+  <p class="tip">${n} picks in the pile · deals up to 15 · v1.6</p>`);
+}
+function cover(p,kind){
+  const[a,b]=S.n.map(E);document.body.className=kind=='ready'?'':'p'+p;
+  const m={start:['👀',`${a}’s turn!`,`${b}, look away until the phone is handed over. No peeking!`,'Slide when only you are looking'],
+    pass:['🤝',`Pass it to ${b}!`,`${a} is done. ${b}, no peeking at ${a}’s picks. They’re hidden anyway 🙈`,`Slide when you’re holding the phone`],
+    ready:['🎉','Both done!','Ready for the results? Gather round together first.','Slide to reveal']}[kind];
+  ui(`<div class="cv"><div class="em">${m[0]}</div><h2 style="margin:12px 0 4px">${m[1]}</h2><p>${m[2]}</p>${sli(m[3])}</div>`);
+  slide(()=>kind=='ready'?results():swipe());
+}
+function slide(cb){
+  const t=$('.sl'),k=t.firstChild;let x0=null;const m=()=>t.clientWidth-k.offsetWidth-8;
+  k.onpointerdown=e=>{x0=e.clientX;k.setPointerCapture(e.pointerId);k.style.transition='none'};
+  k.onpointermove=e=>{if(x0!=null)k.style.transform=`translateX(${Math.max(0,Math.min(m(),e.clientX-x0))}px)`};
+  k.onpointerup=k.onpointercancel=e=>{if(x0==null)return;const d=e.clientX-x0;x0=null;k.style.transition='';d>m()*.85?cb():k.style.transform=''};
+}
+function card(x,c){const flipped=!!G.flipped&&c=='top';return`<div class="card ${c}${flipped?' flipped':''}" data-movie-card="${c}"><b class="st y">YES</b><b class="st n">NOPE</b><b class="st m">MAYBE</b>${flipped?`<div class="poster-title">${E(x.t)}</div><div class="overview">${E(x.overview||'No TMDB summary is available for this title.')}</div><div class="flipnote">Tap to see poster ↻</div>`:`${x.img?`<img class="poster" src="${E(x.img)}" alt="${E(x.t)} poster" draggable="false">`:`<div class="em">${x.e}</div>`}<div class="ti">${E(x.t)}</div>${x.c<0?'':`<span class="cost">${cl(x.c)}</span>`}${(x.img||x.overview||x.id)?'<div class="flipnote">Tap poster for summary ↻</div>':''}`}</div>`}
+function swipe(){
+  const{deck:d,p,i}=G,nm=E(S.n[p]);document.body.className='p'+p;
+  ui(`<div class="bar"><h2>${nm}’s picks</h2><span>${i+1} / ${d.length}</span></div><div class="prog"><i style="width:${i/d.length*100}%"></i></div>
+  <p class="eyes">👀 ${nm}’s eyes only</p>
+  <div class="stack">${d[i+1]?card(d[i+1],'back'):''}${card(d[i],'top')}</div>
+  <div class="btns"><button data-a="ans" data-v="0" aria-label="No">✕<small>nope</small></button><button data-a="ans" data-v="1" aria-label="Maybe">↑<small>maybe</small></button><button data-a="ans" data-v="2" aria-label="Yes">♥<small>yes</small></button></div>
+  <p class="tip">swipe ← no · ↑ maybe · → yes ${i?'· <button class="undo" data-a="undo">undo</button>':''}</p>`);
+  drag();
+}
+function drag(){
+  const c=$('.top');let x0,y0,dx=0,dy=0,on=0,moved=false;
+  const up=()=>-dy>Math.abs(dx),sv=(y,n,m)=>{c.style.setProperty('--y',y);c.style.setProperty('--n',n);c.style.setProperty('--m',m)};
+  c.onpointerdown=e=>{on=1;moved=false;x0=e.clientX;y0=e.clientY;dx=dy=0;c.setPointerCapture(e.pointerId);c.style.transition='none'};
+  c.onpointermove=e=>{if(!on)return;dx=e.clientX-x0;dy=Math.min(0,e.clientY-y0);if(Math.abs(dx)>8||Math.abs(dy)>8)moved=true;c.style.transform=`translate(${dx}px,${dy}px) rotate(${dx/18}deg)`;
+    const u=up();sv(!u&&dx>0?Math.min(1,dx/90):0,!u&&dx<0?Math.min(1,-dx/90):0,u?Math.min(1,-dy/90):0)};
+  c.onpointerup=c.onpointercancel=()=>{if(!on)return;on=0;if(up()&&-dy>90)fly(1);else if(!up()&&dx>90)fly(2);else if(!up()&&dx<-90)fly(0);
+    else{c.style.transition='transform .2s';c.style.transform='';sv(0,0,0)}};
+}
+function fly(v){
+  const c=$('.top');if(!c||G.busy)return;G.busy=1;
+  c.style.transition='transform .25s,opacity .25s';c.style.opacity=0;
+  c.style.transform=v==2?'translateX(120vw) rotate(25deg)':v==0?'translateX(-120vw) rotate(-25deg)':'translateY(-120vh)';
+  setTimeout(()=>{if(BD){G.busy=0;bnext(v);return}G.flipped=false;G.a[G.p][G.i++]=v;G.busy=0;
+    if(G.i<G.deck.length)swipe();else if(G.p==0){G.p=1;G.i=0;cover(1,'pass')}else cover(1,'ready')},230);
+}
+const MF={pop:'🔥 Popular',anime:'🎌 Anime',animated:'🎨 Animated',marvel:'🦸 Marvel',scifi:'🚀 Sci-fi',fantasy:'🧙 Fantasy',family:'🏠 Family',action:'💥 Action',thriller:'🔪 Thriller',like:'💞 Like my picks'},
+M={anime:{g:'16',l:'ja'},animated:{g:'16'},marvel:{c:'420'},scifi:{g:'878'},fantasy:{g:'14'},family:{g:'10751,12'},action:{g:'28'},thriller:{g:'53'}},
+TS={food:'Thai, fresh market bowls, pizza, Mexican, casserole and Italian',outings:'predictable, budget-friendly places like TJ Maxx, Dave & Buster’s and a simple walk, plus farmers markets and craft fairs'};
+let BD=0,B={};
+const mq=a=>{const g=[],c=[];let l='';a.forEach(k=>{const m=M[k];if(m){m.g&&g.push(m.g);m.c&&c.push(m.c);m.l&&(l=m.l)}});return(g.length?`&with_genres=${g.join(',')}`:'')+(c.length?`&with_companies=${c.join(',')}`:'')+(l?`&with_original_language=${l}`:'')};
+function buildv(){
+  BD=0;document.body.className='';const m=S.ty=='movies';
+  ui(`<h1>Swipe Night</h1>${tabs(2)}<h3>Build our library</h3><p class="sub">Swipe right to add, left to skip, up for not now.</p>
+  ${Object.keys(TY).map(k=>ch('ty2',k,TY[k],S.ty==k)).join('')}
+  ${m?`<h3>Movie moods (pick any)</h3>${Object.keys(MF).map(k=>ch('bf',k,MF[k],S.bfs.includes(k))).join('')}${S.bfs.length>1?`<div class="tip" style="text-align:left;margin:6px 0">Match</div>${ch('bm','any','Any of these',S.bm!='all')+ch('bm','all','All of these',S.bm=='all')}`:''}<h3>TMDB API key</h3><input data-k="tmdb" type="password" placeholder="Paste your TMDB v3 API key" value="${E(S.k.tmdb)}" style="width:100%">`
+  :`<h3>Vibe (optional)</h3><input id="bv" placeholder="cheap, cozy, rainy day…" maxlength="60" value="${E(S.bv)}" style="width:100%"><h3>Claude API key</h3><input data-k="ai" type="password" placeholder="Paste your Anthropic API key" value="${E(S.k.ai)}" style="width:100%">`}
+  <details><summary>Our saved ${m?'movies':'ideas'} (${S.cu[S.ty].length})</summary>${S.cu[S.ty].map((raw,i)=>{const x=S.ty==='movies'?metaFor(raw):raw;return `<div class="li">${x.img?`<img src="${E(x.img)}" alt="" style="width:42px;height:60px;object-fit:cover;border-radius:6px;margin-right:8px">`:''}<span style="flex:1">${E(x.e||'⭐')} ${E(x.t)}</span><button data-a="delbuild" data-v="${i}" aria-label="Remove">×</button></div>`}).join('')||'<p class="sub">Nothing saved yet.</p>'}</details>
+  <p class="tip">Keys stay on this phone. Use a free or spend-limited key.</p><button class="go" data-a="bgo">Start swiping →</button>`);
+}
+const bc=(x,c)=>`<div class="card ${c}" data-movie-card="${c}"><b class="st y">ADD</b><b class="st n">SKIP</b><b class="st m">LATER</b>${x.img?`<img src="${E(x.img)}" alt="${E(x.t)} poster" draggable="false" class="poster">`:`<div class="em">${x.e}</div>`}<div class="ti">${E(x.t)}</div>${x.s?`<span class="cost">${E(x.s)}</span>`:x.c>=0?`<span class="cost">${cl(x.c)}</span>`:''}</div>`;
+function bsw(){
+  BD=1;document.body.className='p0';const c=B.q[0];
+  if(!c){ui(B.err?`<div class="cv"><div class="em">😅</div><p>${E(B.err)}</p><button class="go" data-a="bdone">Back</button></div>`:`<div class="cv"><div class="em">⏳</div><p>Finding picks…</p></div>`);if(!B.err)bfill();return}
+  const n=B.q[1];
+  ui(`<div class="bar"><h2>Build: ${TY[S.ty]}</h2><span>+${B.n} added</span></div>
+  <div class="stack">${n?bc(n,'back'):''}${bc(c,'top')}</div>
+  <div class="btns"><button data-a="ans" data-v="0" aria-label="Skip">✕<small>skip</small></button><button data-a="ans" data-v="1" aria-label="Not now">↑<small>not now</small></button><button data-a="ans" data-v="2" aria-label="Add">♥<small>add</small></button></div>
+  <p class="tip">swipe → add · ← skip · ↑ not now · <button class="undo" data-a="bdone">done</button></p>`);
+  drag();
+}
+async function bfill(){
+  if(B.busy)return;B.busy=1;const w=!B.q.length;let n=0;
+  try{const r=await more();n=r.length;B.q.push(...r)}catch(e){B.err=e.message||'Network hiccup'}
+  B.busy=0;B.t=n?0:B.t+1;if(B.t>4&&!B.q.length)B.err=B.err||'Nothing new here. Try another mood!';
+  if(BD&&w)bsw();
+}
+async function more(){
+  const ty=S.ty,all=[...LIB[ty].map(P),...S.cu[ty]].map(x=>x.t.toLowerCase()),sn=new Set([...(S.seen[ty]||[]),...(B.sessionSkip||[]),...B.q.map(x=>x.k),...all]);let r;
+  if(ty=='movies'){
+    if(!S.k.tmdb)throw Error('Add your TMDB key first.');
+    const fs=S.bfs,both=S.bm=='all'&&fs.length>1,k=both?'and':fs[B.rr++%fs.length],pg=B.pgs[k]=(B.pgs[k]||0)+1,u=k=='like'&&S.last?`/movie/${S.last}/recommendations?`:`/discover/movie?sort_by=popularity.desc&vote_count.gte=300&include_adult=false${mq(both?fs:[k])}&`;
+    const j=await(await fetch(`https://api.themoviedb.org/3${u}api_key=${S.k.tmdb}&page=${pg}`)).json();
+    if(!j.results)throw Error(j.status_message||'TMDB hiccup');
+    r=j.results.map(m=>({e:'🎬',t:m.title,c:-1,id:m.id,k:'m'+m.id,img:m.poster_path&&'https://image.tmdb.org/t/p/w342'+m.poster_path,overview:m.overview||'',s:(m.release_date||'').slice(0,4)+' · ⭐'+(m.vote_average||0).toFixed(1)}));
+  }else{
+    if(!S.k.ai)throw Error('Add your Claude API key first.');
+    const av=[...all,...(S.seen[ty]||[])].slice(-45).join('; ');
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.k.ai,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1200,messages:[{role:'user',content:`Suggest 12 ${ty=='food'?'dinner ideas (restaurant types or home meals)':'date or weekend outing ideas'} for a couple who like ${TS[ty]}. Budget-conscious, predictable, low-risk. ${S.bv?'Vibe: '+S.bv+'. ':''}Avoid: ${av}. Reply with ONLY a JSON array of {"e":"one emoji","t":"title, max 5 words","c":cost tier 0 free to 3 pricey}.`}]})});
+    const j=await resp.json();
+    if(!resp.ok||j.error)throw Error(j.error?.message||`Idea API request failed (${resp.status}). Check your API key and access.`);
+    const t=j.content?.find(x=>x.type==='text')?.text;
+    if(!t)throw Error('The idea API returned no text. Check your key, model access, and spending limit.');
+    const start=t.indexOf('['),end=t.lastIndexOf(']');if(start<0||end<start)throw Error('The idea API returned an unexpected format. Tap Start swiping to try again.');
+    r=JSON.parse(t.slice(start,end+1)).map(x=>({e:x.e||'⭐',t:String(x.t||'').trim(),c:x.c>=0&&x.c<=3?Math.round(x.c):-1,k:String(x.t||'').toLowerCase()}));
+  }
+  return r.filter(x=>x.t&&!sn.has(x.k)&&!sn.has(x.t.toLowerCase()));
+}
+function bnext(v){
+  const c=B.q.shift();
+  if(v==0)S.seen[S.ty]=(S.seen[S.ty]||[]).concat(c.k||c.t.toLowerCase()).slice(-1200);else if(v==1){const key=c.k||c.t.toLowerCase();B.sessionSkip=(B.sessionSkip||[]).concat(key);B.q=B.q.filter(x=>(x.k||x.t.toLowerCase())!==key)}
+  if(v==2){S.cu[S.ty].push({e:c.e,t:c.t,c:c.c,id:c.id,img:c.img||'',overview:c.overview||'',k:c.k||''});B.n++;if(S.src=='lib')S.src='both';if(c.id)S.last=c.id}
+  save();if(B.q.length<5)bfill();bsw();
+}
+const lst=()=>G.deck.map((x,i)=>({x,s:G.a[0][i]+G.a[1][i],v:!G.a[0][i]||!G.a[1][i],a:[G.a[0][i],G.a[1][i]]}));
+function results(){
+  document.body.className='';const L=lst();let note='',
+  R=S.mode=='match'?L.filter(r=>r.s==4):L.filter(r=>!r.v).sort((a,b)=>b.s-a.s).slice(0,3);
+  if(!R.length){R=L.filter(r=>r.s==3&&!r.v);note=R.length?'No perfect matches 😅 Closest calls (one yes + one maybe):':'Nothing in common this round 🫠 Try another list or category!'}
+  else if(R.length>5)note='Lots of matches! 🎉 Let fate pick?';
+  G.R=R;
+  ui(`<h2>${S.mode=='match'?'It’s a match! 💘':'Your top picks 🏆'}</h2><div style="margin:12px 0 4px">${ch('rm','match','Matches',S.mode=='match')+ch('rm','top','Top 3',S.mode=='top')}</div>
+  ${note?`<p>${note}</p>`:''}${R.map((r,i)=>`<div class="rc"><span class="em">${S.mode=='top'&&R.length>1?['🥇','🥈','🥉'][i]||r.x.e:r.x.e}</span><div><b>${E(r.x.t)}</b><br><small class="sub">${cl(r.x.c)} ${E(S.n[0])} ${ic[r.a[0]]} · ${E(S.n[1])} ${ic[r.a[1]]} · ${r.s}/4</small></div><button data-a="win" data-v="${i}">We’re going with this</button></div>`).join('')}
+  ${R.length>1?'<button class="go" data-a="pick">Pick for us 🎲</button>':''}
+  <details><summary>See all swipes</summary><p class="sub">${L.filter(r=>r.s==4).length} matches · ${L.filter(r=>r.v).length} vetoed · ${L.length} cards</p>
+  <div class="tb th"><span></span><b>${E(S.n[0])}</b><b>${E(S.n[1])}</b><b>Score</b></div>${L.slice().sort((a,b)=>b.s-a.s).map(r=>`<div class="tb"><span>${r.x.e} ${E(r.x.t)}</span><i class="a${r.a[0]}">${ic[r.a[0]]}</i><i class="a${r.a[1]}">${ic[r.a[1]]}</i><b>${r.s}/4${r.v?' 🚫':''}</b></div>`).join('')}</details><button class="ch" style="margin-top:14px" data-a="again">↺ New round</button>`);
+}
+const A={
+  ty:v=>{S.ty=v;save();setup()},src:v=>{S.src=v;save();setup()},mode:v=>{S.mode=v;save();setup()},
+  rm:v=>{S.mode=v;save();results()},
+  del:v=>{S.cu[S.ty].splice(+v,1);save();setup()},
+  add:()=>{const t=$('#nt').value.trim();if(!t)return;S.cu[S.ty].push({e:$('#ne').value.trim()||'⭐',t,c:+$('#nc').value});save();setup()},
+  start:async()=>{BD=0;if(S.ty==='movies'&&S.k.tmdb){ui('<div class="cv"><div class="em">🎬</div><h2>Preparing movie night…</h2><p class="sub">Loading posters and summaries for your library.</p></div>');try{await enrichMovieLibrary()}catch(e){console.warn('TMDB library enrichment:',e.message)} }G={deck:deal(),a:[[],[]],p:0,i:0};cover(0,'start')},
+  ans:v=>fly(+v),
+  undo:()=>{if(G.i>0){G.i--;swipe()}},
+  win:(v,b)=>{if(b.dataset.ok)return;b.dataset.ok=1;const x=G.R[+v].x,d=Date.now();S.done[x.t]=d;S.log.unshift({e:x.e,t:x.t,ty:S.ty,d});save();b.textContent='✓ Locked in!';b.closest('.rc').classList.add('won')},
+  tab:v=>{BD=0;[setup,logv,buildv][+v]()},
+  ty2:v=>{S.ty=v;save();buildv()},bf:v=>{let a=S.bfs.includes(v)?S.bfs.filter(x=>x!=v):[...S.bfs.filter(x=>x!='pop'),v];if(v=='pop'||!a.length)a=['pop'];S.bfs=a;save();buildv()},bm:v=>{S.bm=v;save();buildv()},bdone:()=>{BD=0;buildv()},delbuild:v=>{S.cu[S.ty].splice(+v,1);save();buildv()},
+  bgo:async()=>{const keyInput=$('[data-k="tmdb"]')||$('[data-k="ai"]');if(keyInput)S.k[keyInput.dataset.k]=keyInput.value.trim();if(S.ty!='movies')S.bv=$('#bv').value.trim();if(S.ty=='movies'&&!S.k.tmdb){alert('Paste your TMDB API key first.');return}if(S.ty!='movies'&&!S.k.ai){alert('Paste your Anthropic API key first.');return}B={q:[],pgs:{},rr:0,n:0,t:0,err:'',busy:0,sessionSkip:[],flip:false};save();if(S.ty==='movies'){ui('<div class="cv"><div class="em">🎬</div><h2>Preparing movie picks…</h2><p class="sub">Loading your library posters and summaries.</p></div>');try{await enrichMovieLibrary()}catch(e){console.warn(e.message)}}bsw()},
+  logdel:v=>{const t=S.log[+v].t;S.log.splice(+v,1);const m=S.log.filter(x=>x.t==t).map(x=>x.d);m.length?S.done[t]=Math.max(...m):delete S.done[t];save();logv()},
+  pick:()=>{const r=[...document.querySelectorAll('.rc')],T=r.length*3+Math.random()*r.length|0;let i=0;
+    (function f(){r.forEach((e,j)=>e.classList.toggle('hl',j==i%r.length));if(i++<T)setTimeout(f,50+i*i*.8)})()},
+  again:setup
+};
+$('#app').onclick=e=>{const card=e.target.closest('[data-movie-card="top"]');if(card&&S.ty=='movies'&&((BD&&(B.q[0]?.img||B.q[0]?.overview||B.q[0]?.id))||(!BD&&(G.deck?.[G.i]?.img||G.deck?.[G.i]?.overview||G.deck?.[G.i]?.id)))){if(BD){B.flip=!B.flip;card.outerHTML=B.flip?`<div class="card top flipped" data-movie-card="top"><b class="st y">ADD</b><b class="st n">SKIP</b><b class="st m">LATER</b><div class="poster-title">${E(B.q[0].t)}</div><div class="overview">${E(B.q[0].overview||'No TMDB summary is available.')}</div><div class="flipnote">Tap to see poster ↻</div></div>`:bc(B.q[0],'top');}else{G.flipped=!G.flipped;swipe();return}return}const b=e.target.closest('[data-a]');if(b)A[b.dataset.a](b.dataset.v,b)};
+$('#app').oninput=e=>{const k=e.target.dataset.k;if(k){S.k[k]=e.target.value.trim();save()}const n=e.target.dataset.n;if(n!=null){S.n[+n]=e.target.value||(n==0?'Partner 1':'Partner 2');save()}};
+// home-screen icon + manifest
+try{const c=document.createElement('canvas');c.width=c.height=512;const g=c.getContext('2d');g.fillStyle='#E8466B';g.fillRect(0,0,512,512);
+g.font='290px serif';g.textAlign='center';g.textBaseline='middle';g.fillText('💞',256,278);const u=c.toDataURL();$('#ai').href=u;
+const w=/^https?:/.test(location.protocol)?location.origin+location.pathname:'.',l=document.createElement('link');l.rel='manifest';l.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify({name:'Swipe Night',short_name:'Swipe Night',display:'standalone',start_url:w,id:w,scope:w,background_color:'#FFF4DC',theme_color:'#FFF4DC',icons:[{src:u,sizes:'192x192 512x512',type:'image/png'}]}));document.head.append(l)}catch(e){}
+setup();setTimeout(()=>{const s=$('#sp');s&&s.remove()},3200);
+</script>
+</body>
+</html>
