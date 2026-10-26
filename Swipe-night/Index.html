@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <!--
-  SWIPE NIGHT  v1.7   (file: Swipe_Night_v1.7.html)
+  SWIPE NIGHT  v1.9   (file: Swipe_Night_v1.9.html)
   Two people, one phone. Each swipes separately; only shared yeses get revealed.
   Single file, no backend. Saves to localStorage (key "sn1"). Add to home screen to use like an app.
   Swipe: right = yes, left = no, up = maybe. Scores: no 0, maybe 1, yes 2.
+  v1.9: System bars (status/nav) match the app's purple scheme: scheme-aware theme-color, purple manifest colors.
+  v1.8: Open/closed state of saved lists now sticks on add/delete; AI ideas follow the vibe and stay balanced; broader at-home library.
   v1.7: Adds At-home activities with a separate library, custom picks, and Claude API suggestions.
   v1.6: Collapsible custom lists and abandon-swipe-session control.
   v1.4: Build tab movie moods are multi-select (match any or all).
@@ -19,7 +21,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Swipe Night">
-<meta name="theme-color" content="#FFF4DC">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#FFF4DC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#241520" media="(prefers-color-scheme: dark)">
 <title>Swipe Night</title>
 <link rel="apple-touch-icon" id="ai">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&amp;display=swap" rel="stylesheet">
@@ -29,6 +33,7 @@
 :root[data-theme="dark"]{--bg:#241520;--ink:#FFEFD2;--card:#34202F;--mut:#C2A3B0}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
+html{background:var(--bg)}
 body{background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
 body.p0{--ac:var(--p0)}body.p1{--ac:var(--p1)}
 #app{height:100%;max-width:480px;margin:0 auto;padding:16px 20px;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
@@ -93,7 +98,7 @@ const LIB={
 movies:['🕷️|Spider-Man: Into the Spider-Verse','🧹|Kiki’s Delivery Service','🏰|Howl’s Moving Castle','☄️|Your Name','🐉|Spirited Away','🤖|WALL·E','🦸|Big Hero 6','🚀|Guardians of the Galaxy','⚡|Thor: Ragnarok','🐜|Ant-Man','🔮|Doctor Strange','🥋|Shang-Chi','🗡️|The Princess Bride','✨|Stardust','🎮|Ready Player One','🤖|The Mitchells vs. the Machines','🐱|Puss in Boots: The Last Wish','🐼|Turning Red','🌸|Encanto','🌊|Moana','🐲|How to Train Your Dragon','💀|Coco','🧸|Paddington 2','🛸|Lilo & Stitch'],
 food:['🍜|Pad Thai night|2','🍛|Thai green curry|2','🥭|Mango sticky rice treat|1','🥗|Fresh market bowls|2','🥪|Sandwich + salad combo|2','🍕|Pizza night|2','🔥|Wood-fired pizza|3','🌮|Taco spot|1','🌯|Burrito bowls|2','🧀|Enchiladas|2','🍲|Cozy casserole at home|1','🧀|Baked mac & cheese|1','🍝|Italian pasta|2','🥘|Lasagna|2','🥖|Garlic bread + pasta at home|1'],
 outings:[ '🛍️|TJ Maxx treasure hunt|1','🎮|Dave & Buster’s|3','🚶|Neighborhood walk|0','🥕|Farmers market|1','🧶|Craft fair|1','🌲|Park or trail wander|0','📚|Bookstore browse|1','☕|Coffee + people-watching|1','🎳|Bowling|2','🏛️|Free museum day|0','⛳|Mini golf|2','🌇|Sunset drive|0','🧺|Picnic|1','🪴|Plant nursery stroll|0'],
-home:[ '🎮|Co-op video game night|0','🃏|Two-player card game|0','📺|Watch Drag Race|0','🎨|Paint together|1','✂️|Try a new art project|1','🧩|Puzzle and snacks|1','🎲|Board game night|0','🍿|Movie and cozy snacks|1','🖌️|Paint mini canvases|1','🎧|Make each other a playlist|0','🧁|Bake something fun|1','🧶|Learn a simple craft|1','🕹️|Retro game night|0']};
+home:[ '🎮|Co-op video game night|0','🃏|Two-player card game|0','🎨|Paint together|1','✂️|Try a new art project|1','🧩|Puzzle and snacks|1','🎲|Board game night|0','🍿|Movie and cozy snacks|1','🖌️|Paint mini canvases|1','🎧|Make each other a playlist|0','🧁|Bake something fun|1','🧶|Learn a simple craft|1','🕹️|Retro game night|0','🍪|Cookie decorating night|1','🍳|Cook a new recipe together|1','💃|Living room dance party|0','🏕️|Blanket fort + stargazing|0','🧖|Spa night at home|1','📸|At-home photo shoot|0','🧠|Trivia night for two|0','🌱|Repot plants together|1','🧱|Build a LEGO set|2','📖|Read aloud to each other|0','🍹|Mocktail mixing night|1','✍️|Letters to future us|0','📺|Drag Race watch party|0']};
 const TY={movies:'🎬 Movies',food:'🍽️ Food',outings:'🧭 Outings',home:'🏡 At-home activities'};
 const P=x=>{const[e,t,c]=x.split('|');return{e,t,c:c==null?-1:+c}};
 const cl=c=>c<0?'':['Free','$','$$','$$$'][c];
@@ -101,7 +106,7 @@ let S={n:['Isaiah','Zack'],ty:'movies',src:'lib',mode:'match',cu:{movies:[],food
 try{Object.assign(S,JSON.parse(localStorage.sn1||'{}'))}catch(e){}
 // Backward-compatible defaults for categories added in newer versions.
 S.cu=S.cu||{};for(const k of Object.keys(TY))S.cu[k]=S.cu[k]||[];
-S.seen=S.seen||{};S.done=S.done||{};S.log=S.log||[];S.movieMeta=S.movieMeta||{};S.k=S.k||{tmdb:'',ai:''};
+S.lo=S.lo||{};S.seen=S.seen||{};S.done=S.done||{};S.log=S.log||[];S.movieMeta=S.movieMeta||{};S.k=S.k||{tmdb:'',ai:''};
 S.movieMeta=S.movieMeta||{};
 const save=()=>{try{localStorage.sn1=JSON.stringify(S)}catch(e){}};
 const normTitle=t=>String(t||'').toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -144,10 +149,10 @@ function setup(){
   <h3>What are we picking?</h3>${Object.keys(TY).map(k=>ch('ty',k,TY[k],S.ty==k)).join('')}
   <h3>Which list?</h3>${ch('src','lib','Library',S.src=='lib')+ch('src','own','Our own',S.src=='own')+ch('src','both','Both',S.src=='both')}
   <h3>Show results as</h3>${ch('mode','match','💘 Matches',S.mode=='match')+ch('mode','top','🏆 Top 3',S.mode=='top')}
-  ${S.src=='lib'?'':`<details><summary>Our ${S.ty=='home'?'at-home activities':TY[S.ty].split(' ')[1].toLowerCase()} list (${mine.length})</summary>${mine.map((x,i)=>`<div class="li"><span>${E(x.e)} ${E(x.t)} <small class="sub">${cl(x.c)}</small></span><button data-a="del" data-v="${i}" aria-label="Remove">×</button></div>`).join('')||'<p class="sub">Nothing here yet. Add a few!</p>'}
+  ${S.src=='lib'?'':`<details id="dsetup"${S.lo.dsetup?' open':''}><summary>Our ${S.ty=='home'?'at-home activities':TY[S.ty].split(' ')[1].toLowerCase()} list (${mine.length})</summary>${mine.map((x,i)=>`<div class="li"><span>${E(x.e)} ${E(x.t)} <small class="sub">${cl(x.c)}</small></span><button data-a="del" data-v="${i}" aria-label="Remove">×</button></div>`).join('')||'<p class="sub">Nothing here yet. Add a few!</p>'}
   <div class="row" style="margin-top:10px"><input id="ne" placeholder="🍩" maxlength="4" style="flex:.5"><input id="nt" placeholder="Add an activity" maxlength="40" style="flex:2"><select id="nc" style="flex:.8"><option value="-1">—</option><option value="0">Free</option><option value="1">$</option><option value="2">$$</option><option value="3">$$$</option></select></div><button class="ch" data-a="add">+ Add</button></details>`}
   <button class="go" data-a="start"${n<2?' disabled':''}>${n<2?'Add at least 2 picks':'Start swiping →'}</button>
-  <p class="tip">${n} picks in the pile · deals up to 15 · v1.7</p>`);
+  <p class="tip">${n} picks in the pile · deals up to 15 · v1.9</p>`);
 }
 function cover(p,kind){
   const[a,b]=S.n.map(E);document.body.className=kind=='ready'?'':'p'+p;
@@ -192,7 +197,15 @@ function fly(v){
 }
 const MF={pop:'🔥 Popular',anime:'🎌 Anime',animated:'🎨 Animated',marvel:'🦸 Marvel',scifi:'🚀 Sci-fi',fantasy:'🧙 Fantasy',family:'🏠 Family',action:'💥 Action',thriller:'🔪 Thriller',like:'💞 Like my picks'},
 M={anime:{g:'16',l:'ja'},animated:{g:'16'},marvel:{c:'420'},scifi:{g:'878'},fantasy:{g:'14'},family:{g:'10751,12'},action:{g:'28'},thriller:{g:'53'}},
-TS={food:'Thai food, fresh market bowls, pizza, Mexican, casserole and Italian',outings:'predictable, budget-friendly places like TJ Maxx, Dave & Buster’s and a simple walk, plus farmers markets and craft fairs',home:'video games, co-op games, card games, board games, RuPaul’s Drag Race, painting, drawing, crafts, creative art projects, cozy low-cost date nights at home'};
+TS={food:'Thai food, fresh market bowls, pizza, Mexican, casserole and Italian',outings:'predictable, budget-friendly places like TJ Maxx, Dave & Buster’s and a simple walk, plus farmers markets and craft fairs',home:'cozy, creative, hands-on, low-cost things to do together at home (games, art, cooking, music, and more)'};
+const AH=['cooking or baking together','art or crafts','card or board games','video or phone games','a movie, show, or music night','dancing or music-making','DIY or home projects','pampering or a spa night','learning something new together','cozy snacks and drinks','writing, photos, or scrapbooking','indoor plants or tidying up together','puzzles or trivia','redecorating or organizing','building or making something'],
+SYS='You generate swipe-card ideas for a couple. Follow the VIBE above all else: every idea must clearly fit it, even if that differs from the background tastes. Give real variety, so no two ideas are the same kind of activity. Never name a specific TV show, streamer, or video game unless the vibe asks for it. Reply with ONLY a JSON array, no other text.',
+aiPrompt=(ty,av)=>{const what=ty=='food'?'dinner ideas (restaurant types or home meals)':ty=='home'?'at-home activities for two people':'date or weekend outing ideas',mix=[...AH].sort(()=>Math.random()-.5).slice(0,6).join('; ');
+  return `Suggest 12 ${what}.\n`
+  +(S.bv?`VIBE (most important): ${S.bv}. Every idea must clearly fit this vibe. Vary the type of activity within it.\n`:(ty=='home'?`Spread the ideas across different types, such as: ${mix}.\n`:''))
+  +`Background tastes (use lightly, never let them override the vibe): ${TS[ty]}.\n`
+  +(ty=='home'?'Be specific and doable tonight, not broad categories. At most 2 ideas may be video games or screen-based.':'Keep ideas budget-conscious, predictable, and low-risk.')
+  +`\nAvoid repeating: ${av}.\nReply with ONLY a JSON array of {"e":"one emoji","t":"title, max 5 words","c":cost tier 0 free to 3 pricey}.`};
 let BD=0,B={};
 const mq=a=>{const g=[],c=[];let l='';a.forEach(k=>{const m=M[k];if(m){m.g&&g.push(m.g);m.c&&c.push(m.c);m.l&&(l=m.l)}});return(g.length?`&with_genres=${g.join(',')}`:'')+(c.length?`&with_companies=${c.join(',')}`:'')+(l?`&with_original_language=${l}`:'')};
 function buildv(){
@@ -201,7 +214,7 @@ function buildv(){
   ${Object.keys(TY).map(k=>ch('ty2',k,TY[k],S.ty==k)).join('')}
   ${m?`<h3>Movie moods (pick any)</h3>${Object.keys(MF).map(k=>ch('bf',k,MF[k],S.bfs.includes(k))).join('')}${S.bfs.length>1?`<div class="tip" style="text-align:left;margin:6px 0">Match</div>${ch('bm','any','Any of these',S.bm!='all')+ch('bm','all','All of these',S.bm=='all')}`:''}<h3>TMDB API key</h3><input data-k="tmdb" type="password" placeholder="Paste your TMDB v3 API key" value="${E(S.k.tmdb)}" style="width:100%">`
   :`<h3>Vibe (optional)</h3><input id="bv" placeholder="cheap, cozy, rainy day…" maxlength="60" value="${E(S.bv)}" style="width:100%"><h3>Claude API key</h3><input data-k="ai" type="password" placeholder="Paste your Anthropic API key" value="${E(S.k.ai)}" style="width:100%">`}
-  <details><summary>Our saved ${m?'movies':S.ty=='home'?'at-home activities':'ideas'} (${S.cu[S.ty].length})</summary>${S.cu[S.ty].map((raw,i)=>{const x=S.ty==='movies'?metaFor(raw):raw;return `<div class="li">${x.img?`<img src="${E(x.img)}" alt="" style="width:42px;height:60px;object-fit:cover;border-radius:6px;margin-right:8px">`:''}<span style="flex:1">${E(x.e||'⭐')} ${E(x.t)}</span><button data-a="delbuild" data-v="${i}" aria-label="Remove">×</button></div>`}).join('')||'<p class="sub">Nothing saved yet.</p>'}</details>
+  <details id="dbuild"${S.lo.dbuild?' open':''}><summary>Our saved ${m?'movies':S.ty=='home'?'at-home activities':'ideas'} (${S.cu[S.ty].length})</summary>${S.cu[S.ty].map((raw,i)=>{const x=S.ty==='movies'?metaFor(raw):raw;return `<div class="li">${x.img?`<img src="${E(x.img)}" alt="" style="width:42px;height:60px;object-fit:cover;border-radius:6px;margin-right:8px">`:''}<span style="flex:1">${E(x.e||'⭐')} ${E(x.t)}</span><button data-a="delbuild" data-v="${i}" aria-label="Remove">×</button></div>`}).join('')||'<p class="sub">Nothing saved yet.</p>'}</details>
   <p class="tip">Keys stay on this phone. Use a free or spend-limited key.</p><button class="go" data-a="bgo">Start swiping →</button>`);
 }
 const bc=(x,c)=>`<div class="card ${c}" data-movie-card="${c}"><b class="st y">ADD</b><b class="st n">SKIP</b><b class="st m">LATER</b>${x.img?`<img src="${E(x.img)}" alt="${E(x.t)} poster" draggable="false" class="poster">`:`<div class="em">${x.e}</div>`}<div class="ti">${E(x.t)}</div>${x.s?`<span class="cost">${E(x.s)}</span>`:x.c>=0?`<span class="cost">${cl(x.c)}</span>`:''}</div>`;
@@ -232,7 +245,7 @@ async function more(){
   }else{
     if(!S.k.ai)throw Error('Add your Claude API key first.');
     const av=[...all,...(S.seen[ty]||[])].slice(-45).join('; ');
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.k.ai,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1200,messages:[{role:'user',content:`Suggest 12 ${ty=='food'?'dinner ideas (restaurant types or home meals)':ty=='home'?'at-home activities or cozy date-night ideas':'date or weekend outing ideas'} for a couple who like ${TS[ty]}. ${ty=='home'?'Include a mix of video games, card/board games, watching RuPaul’s Drag Race, painting, and other hands-on art; suggest specific playable/creative activities, not just broad categories. Keep ideas realistic for two people at home.':'Keep ideas budget-conscious, predictable, and low-risk.'} ${S.bv?'Vibe: '+S.bv+'. ':''}Avoid: ${av}. Reply with ONLY a JSON array of {"e":"one emoji","t":"title, max 5 words","c":cost tier 0 free to 3 pricey}.`}]})});
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.k.ai,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1200,system:SYS,messages:[{role:'user',content:aiPrompt(ty,av)}]})});
     const j=await resp.json();
     if(!resp.ok||j.error)throw Error(j.error?.message||`Idea API request failed (${resp.status}). Check your API key and access.`);
     const t=j.content?.find(x=>x.type==='text')?.text;
@@ -279,12 +292,13 @@ const A={
     (function f(){r.forEach((e,j)=>e.classList.toggle('hl',j==i%r.length));if(i++<T)setTimeout(f,50+i*i*.8)})()},
   again:setup
 };
+$('#app').addEventListener('toggle',e=>{const d=e.target;if(d.tagName=='DETAILS'&&d.id&&d.id[0]=='d'){S.lo[d.id]=d.open;save()}},true);
 $('#app').onclick=e=>{const card=e.target.closest('[data-movie-card="top"]');if(card&&S.ty=='movies'&&((BD&&(B.q[0]?.img||B.q[0]?.overview||B.q[0]?.id))||(!BD&&(G.deck?.[G.i]?.img||G.deck?.[G.i]?.overview||G.deck?.[G.i]?.id)))){if(BD){B.flip=!B.flip;card.outerHTML=B.flip?`<div class="card top flipped" data-movie-card="top"><b class="st y">ADD</b><b class="st n">SKIP</b><b class="st m">LATER</b><div class="poster-title">${E(B.q[0].t)}</div><div class="overview">${E(B.q[0].overview||'No TMDB summary is available.')}</div><div class="flipnote">Tap to see poster ↻</div></div>`:bc(B.q[0],'top');}else{G.flipped=!G.flipped;swipe();return}return}const b=e.target.closest('[data-a]');if(b)A[b.dataset.a](b.dataset.v,b)};
 $('#app').oninput=e=>{const k=e.target.dataset.k;if(k){S.k[k]=e.target.value.trim();save()}const n=e.target.dataset.n;if(n!=null){S.n[+n]=e.target.value||(n==0?'Partner 1':'Partner 2');save()}};
 // home-screen icon + manifest
 try{const c=document.createElement('canvas');c.width=c.height=512;const g=c.getContext('2d');g.fillStyle='#E8466B';g.fillRect(0,0,512,512);
 g.font='290px serif';g.textAlign='center';g.textBaseline='middle';g.fillText('💞',256,278);const u=c.toDataURL();$('#ai').href=u;
-const w=/^https?:/.test(location.protocol)?location.origin+location.pathname:'.',l=document.createElement('link');l.rel='manifest';l.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify({name:'Swipe Night',short_name:'Swipe Night',display:'standalone',start_url:w,id:w,scope:w,background_color:'#FFF4DC',theme_color:'#FFF4DC',icons:[{src:u,sizes:'192x192 512x512',type:'image/png'}]}));document.head.append(l)}catch(e){}
+const w=/^https?:/.test(location.protocol)?location.origin+location.pathname:'.',l=document.createElement('link');l.rel='manifest';l.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify({name:'Swipe Night',short_name:'Swipe Night',display:'standalone',start_url:w,id:w,scope:w,background_color:'#241520',theme_color:'#241520',icons:[{src:u,sizes:'192x192 512x512',type:'image/png'}]}));document.head.append(l)}catch(e){}
 setup();setTimeout(()=>{const s=$('#sp');s&&s.remove()},3200);
 </script>
 </body>
