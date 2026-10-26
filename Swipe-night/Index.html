@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <!--
-  SWIPE NIGHT  v2.1   (file: Swipe_Night_v2.1.html)
+  SWIPE NIGHT  v2.3   (file: Swipe_Night_v2.3.html)
   Two people, one phone. Each swipes separately; only shared yeses get revealed.
   Single file, no backend. Saves to localStorage (key "sn1"). Add to home screen to use like an app.
   Swipe: right = yes, left = no, up = maybe. Scores: no 0, maybe 1, yes 2.
+  v2.3: Two-phone sync via Firebase Realtime Database REST (couple code, merge, tombstones, skipped history), export/import backup, API key + sync UI tucked away, plum safe-area fill.
+  v2.2: Fix. Flipped movie cards can be swiped again (summary no longer scrolls; Build flip re-attaches swipe handling and resets flip state).
   v2.1: Fix. Loader keyframes renamed (ld*) so they no longer override the neon intro's flicker animation.
   v2.0: Card Sorters loading animation (blobs flick cards into yes/nope bins, rotating messages) on Finding picks and poster loading.
   v1.9: System bars (status/nav) match the app's purple scheme: scheme-aware theme-color, purple manifest colors.
@@ -35,7 +37,7 @@
 :root[data-theme="dark"]{--bg:#241520;--ink:#FFEFD2;--card:#34202F;--mut:#C2A3B0}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;margin:0}
-html{background:var(--bg)}
+html{background:#241520}
 body{background:var(--bg);color:var(--ink);font:16px/1.4 system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
 body.p0{--ac:var(--p0)}body.p1{--ac:var(--p1)}
 #app{height:100%;max-width:480px;margin:0 auto;padding:16px 20px;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
@@ -55,7 +57,7 @@ input,select{font:inherit;color:var(--ink);background:var(--card);border:2px sol
 .eyes{text-align:center;color:var(--mut);font-size:14px}
 .stack{position:relative;flex:1;min-height:250px;margin:12px 0}
 .card{position:absolute;inset:0;background:var(--card);border:3px solid var(--ac);border-radius:28px;box-shadow:0 10px 0 var(--ac);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;touch-action:none}
-.back{transform:scale(.94) translateY(14px);opacity:.55;box-shadow:none}.poster{max-height:58%;max-width:100%;object-fit:contain;border-radius:12px;pointer-events:none}.flipnote{font-size:13px;color:var(--mut);margin-top:8px}.card.flipped{overflow-y:auto}.poster-title{font:26px/1.15 "DM Serif Display",Georgia,serif;margin:10px 0}.overview{font-size:14px;line-height:1.35;text-align:left;overflow:auto;max-height:65%}.poster{max-height:58%;max-width:100%;object-fit:contain;border-radius:12px;pointer-events:none}.flipnote{font-size:13px;color:var(--mut);margin-top:8px}.card.flipped{overflow-y:auto}.poster-title{font:26px/1.15 "DM Serif Display",Georgia,serif;margin:10px 0}.overview{font-size:14px;line-height:1.35;text-align:left;overflow:auto;max-height:65%}
+.back{transform:scale(.94) translateY(14px);opacity:.55;box-shadow:none}.poster{max-height:58%;max-width:100%;object-fit:contain;border-radius:12px;pointer-events:none}.flipnote{font-size:13px;color:var(--mut);margin-top:8px}.card.flipped,.card.flipped *{touch-action:none}.card.flipped{overflow:hidden}.poster-title{font:26px/1.15 "DM Serif Display",Georgia,serif;margin:10px 0}.overview{font-size:14px;line-height:1.35;text-align:left;overflow:hidden;max-height:65%;display:-webkit-box;-webkit-line-clamp:9;-webkit-box-orient:vertical}.poster{max-height:58%;max-width:100%;object-fit:contain;border-radius:12px;pointer-events:none}.flipnote{font-size:13px;color:var(--mut);margin-top:8px}.card.flipped,.card.flipped *{touch-action:none}.card.flipped{overflow:hidden}.poster-title{font:26px/1.15 "DM Serif Display",Georgia,serif;margin:10px 0}.overview{font-size:14px;line-height:1.35;text-align:left;overflow:hidden;max-height:65%;display:-webkit-box;-webkit-line-clamp:9;-webkit-box-orient:vertical}
 .em{font-size:84px;line-height:1}
 .ti{font:30px/1.15 "DM Serif Display",Georgia,serif;margin:14px 0 8px}
 .cost{border:2px solid var(--mut);color:var(--mut);border-radius:999px;padding:1px 10px;font-size:14px}
@@ -125,9 +127,9 @@ let S={n:['Isaiah','Zack'],ty:'movies',src:'lib',mode:'match',cu:{movies:[],food
 try{Object.assign(S,JSON.parse(localStorage.sn1||'{}'))}catch(e){}
 // Backward-compatible defaults for categories added in newer versions.
 S.cu=S.cu||{};for(const k of Object.keys(TY))S.cu[k]=S.cu[k]||[];
-S.lo=S.lo||{};S.seen=S.seen||{};S.done=S.done||{};S.log=S.log||[];S.movieMeta=S.movieMeta||{};S.k=S.k||{tmdb:'',ai:''};
+const FB_DEFAULT='';S.sy=S.sy||{on:false,code:'',url:FB_DEFAULT,t:0};S.tomb=S.tomb||{};S.lo=S.lo||{};S.seen=S.seen||{};S.done=S.done||{};S.log=S.log||[];S.movieMeta=S.movieMeta||{};S.k=S.k||{tmdb:'',ai:''};
 S.movieMeta=S.movieMeta||{};
-const save=()=>{try{localStorage.sn1=JSON.stringify(S)}catch(e){}};
+const SY={},qs=()=>{if(S.sy&&S.sy.on){clearTimeout(SY.tm);SY.tm=setTimeout(sync,2500)}},save=()=>{try{localStorage.sn1=JSON.stringify(S)}catch(e){}if(!SY.q)qs()};
 const normTitle=t=>String(t||'').toLowerCase().replace(/[^a-z0-9]/g,'');
 const metaFor=x=>{const m=S.movieMeta[normTitle(x.t)]||{};return {...x,...m,e:x.e||'🎬',c:x.c==null?-1:x.c}};
 const pool=()=>(S.src=='own'?[]:LIB[S.ty].map(P)).concat(S.src=='lib'?[]:S.cu[S.ty]).map(x=>S.ty==='movies'?metaFor(x):x);
@@ -155,9 +157,47 @@ const deal=()=>pool().map(x=>[x,Math.random()+(Date.now()-(S.done[x.t]||0)<2592e
 const ch=(a,v,t,on)=>`<button class="ch${on?' on':''}" data-a="${a}" data-v="${v}">${t}</button>`;
 const sli=t=>`<div class="sl"><div class="kn">➜</div>${t}</div>`;
 const ic=['✕','↑','♥'],tabs=n=>`<div class="tabs">${ch('tab',0,'💞 Swipe',!n)+ch('tab',2,'🔨 Build',n==2)+ch('tab',1,'📖 Log',n==1)}</div>`;
+const nk=x=>normTitle(x.t),ago=t=>t?new Date(t).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'never',
+snap=()=>{const cu={};for(const c of Object.keys(TY))cu[c]=(S.cu[c]||[]).map(x=>x.ts?x:{...x,ts:1});return JSON.parse(JSON.stringify({cu,tomb:S.tomb,log:S.log,done:S.done,seen:S.seen}))},
+put=m=>Object.assign(S,{cu:m.cu,tomb:m.tomb,log:m.log,done:m.done,seen:m.seen});
+function merge(a,b){
+  const o={cu:{},tomb:{},log:[],done:{},seen:{}},ta=a.tomb||{},tb=b.tomb||{};
+  for(const k of new Set([...Object.keys(ta),...Object.keys(tb)]))o.tomb[k]=Math.max(ta[k]||0,tb[k]||0);
+  for(const c of Object.keys(TY)){const m=new Map();
+    [...((a.cu||{})[c]||[]),...((b.cu||{})[c]||[])].forEach(x=>{const k=nk(x),p=m.get(k);if(!p||(x.ts||0)>(p.ts||0))m.set(k,x)});
+    o.cu[c]=[...m].filter(([k,x])=>!(o.tomb[c+'|'+k]>=(x.ts||0))).map(e=>e[1]);
+    o.seen[c]=[...new Set([...((a.seen||{})[c]||[]),...((b.seen||{})[c]||[])])].slice(-1200)}
+  const lm=new Map();[...(a.log||[]),...(b.log||[])].forEach(x=>{const k='log|'+x.t+'|'+x.d;if(!o.tomb[k])lm.set(k,x)});
+  o.log=[...lm.values()].sort((x,y)=>y.d-x.d);
+  for(const d of [a.done||{},b.done||{}])for(const t in d)o.done[t]=Math.max(o.done[t]||0,d[t]);
+  return o}
+async function sync(){
+  const y=S.sy;if(!y.on||SY.busy)return;SY.busy=1;
+  try{
+    const u=y.url.replace(/\/+$/,'')+'/rooms/'+y.code+'.json',r=await fetch(u);
+    if(!r.ok)throw Error('Could not reach the database ('+r.status+')');
+    const j=await r.json();let rem=null;try{rem=j&&j.d?JSON.parse(j.d):null}catch(e){}
+    const m=rem?merge(snap(),rem):snap();put(m);
+    let str=JSON.stringify(m);if(str.length>290000){for(const c in m.cu)m.cu[c].forEach(x=>delete x.overview);put(m);str=JSON.stringify(m)}
+    const w=await fetch(u,{method:'PUT',body:JSON.stringify({d:str,t:Date.now()})});
+    if(!w.ok)throw Error('Could not save to the database ('+w.status+')');
+    y.t=Date.now();SY.err='';
+  }catch(e){SY.err=e.message||'Sync failed'}
+  SY.busy=0;SY.q=1;save();SY.q=0;
+}
+const gen=()=>{const a='abcdefghjkmnpqrstuvwxyz23456789';return[...crypto.getRandomValues(new Uint8Array(24))].map(x=>a[x%a.length]).join('')},
+b64=o=>btoa(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+function joinHash(){try{const m=location.hash.match(/^#j=(.+)$/);if(!m)return;const j=JSON.parse(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')));history.replaceState(null,'',location.pathname);
+  if(j.c&&j.c.length>=20&&/^https:\/\//.test(j.u)&&confirm('Join the shared Swipe Night library?')){S.sy={on:true,code:j.c,url:j.u,t:0};save();return 1}}catch(e){}}
+function syncCard(){const y=S.sy;
+  return `<details id="dsync"${S.lo.dsync?' open':''}><summary>☁️ Sync &amp; backup</summary>`+(y.on
+  ?`<p class="sub">Synced across phones. Last sync: ${ago(y.t)}${SY.err?' · '+E(SY.err):''}</p>${ch('syncnow','','↻ Sync now')+ch('invite','','🔗 Copy invite link')+ch('showcode','','👁 Show code')}<p id="cc" class="tip" style="text-align:left;word-break:break-all"></p>${ch('syncoff','','Stop syncing')}`
+  :`<p class="sub">Share your libraries between two phones. Needs the database address from your Firebase setup.</p><input id="fu" placeholder="https://…firebaseio.com" value="${E(y.url||'')}" style="width:100%;margin-bottom:8px">${ch('syncnew','','✨ Start a new couple code')}<input id="jc" placeholder="Or paste a couple code to join" style="width:100%;margin:8px 0">${ch('syncjoin','','Join')}`)
+  +`<p class="sub" style="margin-top:12px">Backup file</p>${ch('bk','','⬇ Export')+ch('rs','','⬆ Import')}<input type="file" id="imp" accept=".json,application/json" hidden></details>`}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.sy.on)sync()});
 function logv(){
   document.body.className='';
-  ui(`<h1>Swipe Night</h1>${tabs(1)}<h3>What we chose</h3>${S.log.map((x,i)=>`<div class="rc"><span class="em">${E(x.e)}</span><div><b>${E(x.t)}</b><br><small class="sub">${TY[x.ty]} · ${new Date(x.d).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</small></div><button data-a="logdel" data-v="${i}" aria-label="Remove">×</button></div>`).join('')||'<p class="sub">Nothing yet. Tap “We’re going with this” on a result to log it.</p>'}`);
+  ui(`<h1>Swipe Night</h1>${tabs(1)}<h3>What we chose</h3>${S.log.map((x,i)=>`<div class="rc"><span class="em">${E(x.e)}</span><div><b>${E(x.t)}</b><br><small class="sub">${TY[x.ty]} · ${new Date(x.d).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</small></div><button data-a="logdel" data-v="${i}" aria-label="Remove">×</button></div>`).join('')||'<p class="sub">Nothing yet. Tap “We’re going with this” on a result to log it.</p>'}${syncCard()}`);
 }
 
 function setup(){
@@ -171,7 +211,7 @@ function setup(){
   ${S.src=='lib'?'':`<details id="dsetup"${S.lo.dsetup?' open':''}><summary>Our ${S.ty=='home'?'at-home activities':TY[S.ty].split(' ')[1].toLowerCase()} list (${mine.length})</summary>${mine.map((x,i)=>`<div class="li"><span>${E(x.e)} ${E(x.t)} <small class="sub">${cl(x.c)}</small></span><button data-a="del" data-v="${i}" aria-label="Remove">×</button></div>`).join('')||'<p class="sub">Nothing here yet. Add a few!</p>'}
   <div class="row" style="margin-top:10px"><input id="ne" placeholder="🍩" maxlength="4" style="flex:.5"><input id="nt" placeholder="Add an activity" maxlength="40" style="flex:2"><select id="nc" style="flex:.8"><option value="-1">—</option><option value="0">Free</option><option value="1">$</option><option value="2">$$</option><option value="3">$$$</option></select></div><button class="ch" data-a="add">+ Add</button></details>`}
   <button class="go" data-a="start"${n<2?' disabled':''}>${n<2?'Add at least 2 picks':'Start swiping →'}</button>
-  <p class="tip">${n} picks in the pile · deals up to 15 · v2.1</p>`);
+  <p class="tip">${n} picks in the pile · deals up to 15 · v2.3</p>`);
 }
 function cover(p,kind){
   const[a,b]=S.n.map(E);document.body.className=kind=='ready'?'':'p'+p;
@@ -227,7 +267,7 @@ aiPrompt=(ty,av)=>{const what=ty=='food'?'dinner ideas (restaurant types or home
   +`\nAvoid repeating: ${av}.\nReply with ONLY a JSON array of {"e":"one emoji","t":"title, max 5 words","c":cost tier 0 free to 3 pricey}.`};
 let BD=0,B={};
 const mq=a=>{const g=[],c=[];let l='';a.forEach(k=>{const m=M[k];if(m){m.g&&g.push(m.g);m.c&&c.push(m.c);m.l&&(l=m.l)}});return(g.length?`&with_genres=${g.join(',')}`:'')+(c.length?`&with_companies=${c.join(',')}`:'')+(l?`&with_original_language=${l}`:'')};
-const LM=['Shuffling the deck…','Asking the picks nicely…','Sorting the maybes…','Teaching the blobs to swipe…','Polishing the posters…','Counting cozy points…','Warming up the popcorn…','Flicking cards into bins…'],
+const LM=['Shuffling the deck…','Asking the picks nicely…','Sorting the maybes…','Teaching the blobs to swipe…','Polishing the posters…','Counting cozy points…','Warming up the popcorn…','Flicking cards into bins…','Merging the piles…','Waving at the other phone…'],
 SCENE=`<svg viewBox="0 0 300 190" role="img" aria-label="A little blob sorting cards into yes and nope bins"><rect width="300" height="190" rx="22" fill="#1F1030"/>
 <g fill="#fff"><circle class="tw" cx="30" cy="28" r="1.6"/><circle class="tw d2" cx="258" cy="36" r="1.4"/><circle class="tw d3" cx="90" cy="16" r="1.2"/><circle class="tw" cx="212" cy="20" r="1.6"/><circle class="tw d2" cx="150" cy="30" r="1.2"/></g>
 <rect y="172" width="300" height="18" fill="#2A1742"/><line class="belt" x1="0" y1="178" x2="300" y2="178" stroke="#5B3A8A" stroke-width="4" stroke-dasharray="10 8"/>
@@ -249,8 +289,8 @@ function buildv(){
   BD=0;document.body.className='';const m=S.ty=='movies';
   ui(`<h1>Swipe Night</h1>${tabs(2)}<h3>Build our library</h3><p class="sub">Swipe right to add, left to skip, up for not now.</p>
   ${Object.keys(TY).map(k=>ch('ty2',k,TY[k],S.ty==k)).join('')}
-  ${m?`<h3>Movie moods (pick any)</h3>${Object.keys(MF).map(k=>ch('bf',k,MF[k],S.bfs.includes(k))).join('')}${S.bfs.length>1?`<div class="tip" style="text-align:left;margin:6px 0">Match</div>${ch('bm','any','Any of these',S.bm!='all')+ch('bm','all','All of these',S.bm=='all')}`:''}<h3>TMDB API key</h3><input data-k="tmdb" type="password" placeholder="Paste your TMDB v3 API key" value="${E(S.k.tmdb)}" style="width:100%">`
-  :`<h3>Vibe (optional)</h3><input id="bv" placeholder="cheap, cozy, rainy day…" maxlength="60" value="${E(S.bv)}" style="width:100%"><h3>Claude API key</h3><input data-k="ai" type="password" placeholder="Paste your Anthropic API key" value="${E(S.k.ai)}" style="width:100%">`}
+  ${m?`<h3>Movie moods (pick any)</h3>${Object.keys(MF).map(k=>ch('bf',k,MF[k],S.bfs.includes(k))).join('')}${S.bfs.length>1?`<div class="tip" style="text-align:left;margin:6px 0">Match</div>${ch('bm','any','Any of these',S.bm!='all')+ch('bm','all','All of these',S.bm=='all')}`:''}<details id="dkeys"${S.lo.dkeys?' open':''}><summary>🔑 TMDB key ${S.k.tmdb?'✓':'(needed)'}</summary><input data-k="tmdb" type="password" placeholder="Paste your TMDB v3 API key" value="${E(S.k.tmdb)}" style="width:100%"></details>`
+  :`<h3>Vibe (optional)</h3><input id="bv" placeholder="cheap, cozy, rainy day…" maxlength="60" value="${E(S.bv)}" style="width:100%"><details id="dkeys"${S.lo.dkeys?' open':''}><summary>🔑 Claude key ${S.k.ai?'✓':'(needed)'}</summary><input data-k="ai" type="password" placeholder="Paste your Anthropic API key" value="${E(S.k.ai)}" style="width:100%"></details>`}
   <details id="dbuild"${S.lo.dbuild?' open':''}><summary>Our saved ${m?'movies':S.ty=='home'?'at-home activities':'ideas'} (${S.cu[S.ty].length})</summary>${S.cu[S.ty].map((raw,i)=>{const x=S.ty==='movies'?metaFor(raw):raw;return `<div class="li">${x.img?`<img src="${E(x.img)}" alt="" style="width:42px;height:60px;object-fit:cover;border-radius:6px;margin-right:8px">`:''}<span style="flex:1">${E(x.e||'⭐')} ${E(x.t)}</span><button data-a="delbuild" data-v="${i}" aria-label="Remove">×</button></div>`}).join('')||'<p class="sub">Nothing saved yet.</p>'}</details>
   <p class="tip">Keys stay on this phone. Use a free or spend-limited key.</p><button class="go" data-a="bgo">Start swiping →</button>`);
 }
@@ -293,9 +333,9 @@ async function more(){
   return r.filter(x=>x.t&&!sn.has(x.k)&&!sn.has(x.t.toLowerCase()));
 }
 function bnext(v){
-  const c=B.q.shift();
+  const c=B.q.shift();B.flip=false;
   if(v==0)S.seen[S.ty]=(S.seen[S.ty]||[]).concat(c.k||c.t.toLowerCase()).slice(-1200);else if(v==1){const key=c.k||c.t.toLowerCase();B.sessionSkip=(B.sessionSkip||[]).concat(key);B.q=B.q.filter(x=>(x.k||x.t.toLowerCase())!==key)}
-  if(v==2){S.cu[S.ty].push({e:c.e,t:c.t,c:c.c,id:c.id,img:c.img||'',overview:c.overview||'',k:c.k||''});B.n++;if(S.src=='lib')S.src='both';if(c.id)S.last=c.id}
+  if(v==2){S.cu[S.ty].push({e:c.e,t:c.t,c:c.c,id:c.id,img:c.img||'',overview:c.overview||'',k:c.k||'',ts:Date.now()});B.n++;if(S.src=='lib')S.src='both';if(c.id)S.last=c.id}
   save();if(B.q.length<5)bfill();bsw();
 }
 const lst=()=>G.deck.map((x,i)=>({x,s:G.a[0][i]+G.a[1][i],v:!G.a[0][i]||!G.a[1][i],a:[G.a[0][i],G.a[1][i]]}));
@@ -314,29 +354,39 @@ function results(){
 const A={
   ty:v=>{S.ty=v;save();setup()},src:v=>{S.src=v;save();setup()},mode:v=>{S.mode=v;save();setup()},
   rm:v=>{S.mode=v;save();results()},
-  del:v=>{S.cu[S.ty].splice(+v,1);save();setup()},
-  add:()=>{const t=$('#nt').value.trim();if(!t)return;S.cu[S.ty].push({e:$('#ne').value.trim()||'⭐',t,c:+$('#nc').value});save();setup()},
+  del:v=>{const x=S.cu[S.ty].splice(+v,1)[0];if(x)S.tomb[S.ty+'|'+normTitle(x.t)]=Date.now();save();setup()},
+  add:()=>{const t=$('#nt').value.trim();if(!t)return;S.cu[S.ty].push({e:$('#ne').value.trim()||'⭐',t,c:+$('#nc').value,ts:Date.now()});save();setup()},
   start:async()=>{BD=0;if(S.ty==='movies'&&S.k.tmdb){loader('Preparing movie night…','Loading posters and summaries');try{await enrichMovieLibrary()}catch(e){console.warn('TMDB library enrichment:',e.message)} }G={deck:deal(),a:[[],[]],p:0,i:0};cover(0,'start')},
   ans:v=>fly(+v),
   undo:()=>{if(G.i>0){G.i--;swipe()}},
   abandon:()=>{if(confirm('Abandon this swipe session? Your answers from this unfinished round will be discarded. Your saved library and past results will stay.')){G={};BD=0;setup()}},
   win:(v,b)=>{if(b.dataset.ok)return;b.dataset.ok=1;const x=G.R[+v].x,d=Date.now();S.done[x.t]=d;S.log.unshift({e:x.e,t:x.t,ty:S.ty,d});save();b.textContent='✓ Locked in!';b.closest('.rc').classList.add('won')},
   tab:v=>{BD=0;[setup,logv,buildv][+v]()},
-  ty2:v=>{S.ty=v;save();buildv()},bf:v=>{let a=S.bfs.includes(v)?S.bfs.filter(x=>x!=v):[...S.bfs.filter(x=>x!='pop'),v];if(v=='pop'||!a.length)a=['pop'];S.bfs=a;save();buildv()},bm:v=>{S.bm=v;save();buildv()},bdone:()=>{BD=0;buildv()},delbuild:v=>{S.cu[S.ty].splice(+v,1);save();buildv()},
-  bgo:async()=>{const keyInput=$('[data-k="tmdb"]')||$('[data-k="ai"]');if(keyInput)S.k[keyInput.dataset.k]=keyInput.value.trim();if(S.ty!='movies')S.bv=$('#bv').value.trim();if(S.ty=='movies'&&!S.k.tmdb){alert('Paste your TMDB API key first.');return}if(S.ty!='movies'&&!S.k.ai){alert('Paste your Anthropic API key first.');return}B={q:[],pgs:{},rr:0,n:0,t:0,err:'',busy:0,sessionSkip:[],flip:false};save();if(S.ty==='movies'){loader('Preparing movie picks…','Loading posters and summaries');try{await enrichMovieLibrary()}catch(e){console.warn(e.message)}}bsw()},
-  logdel:v=>{const t=S.log[+v].t;S.log.splice(+v,1);const m=S.log.filter(x=>x.t==t).map(x=>x.d);m.length?S.done[t]=Math.max(...m):delete S.done[t];save();logv()},
+  ty2:v=>{S.ty=v;save();buildv()},bf:v=>{let a=S.bfs.includes(v)?S.bfs.filter(x=>x!=v):[...S.bfs.filter(x=>x!='pop'),v];if(v=='pop'||!a.length)a=['pop'];S.bfs=a;save();buildv()},bm:v=>{S.bm=v;save();buildv()},bdone:()=>{BD=0;buildv()},delbuild:v=>{const x=S.cu[S.ty].splice(+v,1)[0];if(x)S.tomb[S.ty+'|'+normTitle(x.t)]=Date.now();save();buildv()},
+  bgo:async()=>{const keyInput=$('[data-k="tmdb"]')||$('[data-k="ai"]');if(keyInput)S.k[keyInput.dataset.k]=keyInput.value.trim();if(S.ty!='movies')S.bv=$('#bv').value.trim();if(S.ty=='movies'&&!S.k.tmdb){alert('Paste your TMDB API key first.');S.lo.dkeys=true;buildv();return}if(S.ty!='movies'&&!S.k.ai){alert('Paste your Anthropic API key first.');S.lo.dkeys=true;buildv();return}B={q:[],pgs:{},rr:0,n:0,t:0,err:'',busy:0,sessionSkip:[],flip:false};save();if(S.ty==='movies'){loader('Preparing movie picks…','Loading posters and summaries');try{await enrichMovieLibrary()}catch(e){console.warn(e.message)}}bsw()},
+  syncnow:async()=>{if(!S.sy.on)return;loader('Syncing libraries…','Merging your lists');await sync();logv()},
+  invite:(v,b)=>{const l=location.origin+location.pathname+'#j='+b64({c:S.sy.code,u:S.sy.url});navigator.clipboard.writeText(l).then(()=>{b.textContent='✓ Copied!'},()=>prompt('Copy this link:',l))},
+  showcode:()=>{$('#cc').textContent=S.sy.code},
+  syncoff:()=>{if(confirm('Stop syncing on this phone? Your lists stay.')){S.sy.on=false;save();logv()}},
+  syncnew:async()=>{const u=($('#fu').value||'').trim();if(!/^https:\/\/.{6,}/.test(u)){alert('Paste the database address first.');return}S.sy={on:true,url:u.replace(/\/+$/,''),code:gen(),t:0};save();loader('Starting sync…','Setting up your couple code');await sync();logv()},
+  syncjoin:async()=>{const u=($('#fu')?$('#fu').value:'').trim(),c=($('#jc').value||'').trim().toLowerCase();if(!/^https:\/\/.{6,}/.test(u)||c.length<20){alert('Add the database address and a full couple code.');return}S.sy={on:true,url:u.replace(/\/+$/,''),code:c,t:0};save();loader('Joining sync…','Pulling in your shared lists');await sync();logv()},
+  bk:()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(snap())],{type:'application/json'}));a.download='swipe-night-backup.json';a.click()},
+  rs:()=>$('#imp').click(),
+  logdel:v=>{const t=S.log[+v].t;S.tomb['log|'+t+'|'+S.log[+v].d]=Date.now();S.log.splice(+v,1);const m=S.log.filter(x=>x.t==t).map(x=>x.d);m.length?S.done[t]=Math.max(...m):delete S.done[t];save();logv()},
   pick:()=>{const r=[...document.querySelectorAll('.rc')],T=r.length*3+Math.random()*r.length|0;let i=0;
     (function f(){r.forEach((e,j)=>e.classList.toggle('hl',j==i%r.length));if(i++<T)setTimeout(f,50+i*i*.8)})()},
   again:setup
 };
 $('#app').addEventListener('toggle',e=>{const d=e.target;if(d.tagName=='DETAILS'&&d.id&&d.id[0]=='d'){S.lo[d.id]=d.open;save()}},true);
-$('#app').onclick=e=>{const card=e.target.closest('[data-movie-card="top"]');if(card&&S.ty=='movies'&&((BD&&(B.q[0]?.img||B.q[0]?.overview||B.q[0]?.id))||(!BD&&(G.deck?.[G.i]?.img||G.deck?.[G.i]?.overview||G.deck?.[G.i]?.id)))){if(BD){B.flip=!B.flip;card.outerHTML=B.flip?`<div class="card top flipped" data-movie-card="top"><b class="st y">ADD</b><b class="st n">SKIP</b><b class="st m">LATER</b><div class="poster-title">${E(B.q[0].t)}</div><div class="overview">${E(B.q[0].overview||'No TMDB summary is available.')}</div><div class="flipnote">Tap to see poster ↻</div></div>`:bc(B.q[0],'top');}else{G.flipped=!G.flipped;swipe();return}return}const b=e.target.closest('[data-a]');if(b)A[b.dataset.a](b.dataset.v,b)};
+$('#app').onclick=e=>{const card=e.target.closest('[data-movie-card="top"]');if(card&&S.ty=='movies'&&((BD&&(B.q[0]?.img||B.q[0]?.overview||B.q[0]?.id))||(!BD&&(G.deck?.[G.i]?.img||G.deck?.[G.i]?.overview||G.deck?.[G.i]?.id)))){if(BD){B.flip=!B.flip;card.outerHTML=B.flip?`<div class="card top flipped" data-movie-card="top"><b class="st y">ADD</b><b class="st n">SKIP</b><b class="st m">LATER</b><div class="poster-title">${E(B.q[0].t)}</div><div class="overview">${E(B.q[0].overview||'No TMDB summary is available.')}</div><div class="flipnote">Tap to see poster ↻</div></div>`:bc(B.q[0],'top');drag();}else{G.flipped=!G.flipped;swipe();return}return}const b=e.target.closest('[data-a]');if(b)A[b.dataset.a](b.dataset.v,b)};
 $('#app').oninput=e=>{const k=e.target.dataset.k;if(k){S.k[k]=e.target.value.trim();save()}const n=e.target.dataset.n;if(n!=null){S.n[+n]=e.target.value||(n==0?'Partner 1':'Partner 2');save()}};
 // home-screen icon + manifest
 try{const c=document.createElement('canvas');c.width=c.height=512;const g=c.getContext('2d');g.fillStyle='#E8466B';g.fillRect(0,0,512,512);
 g.font='290px serif';g.textAlign='center';g.textBaseline='middle';g.fillText('💞',256,278);const u=c.toDataURL();$('#ai').href=u;
 const w=/^https?:/.test(location.protocol)?location.origin+location.pathname:'.',l=document.createElement('link');l.rel='manifest';l.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify({name:'Swipe Night',short_name:'Swipe Night',display:'standalone',start_url:w,id:w,scope:w,background_color:'#241520',theme_color:'#241520',icons:[{src:u,sizes:'192x192 512x512',type:'image/png'}]}));document.head.append(l)}catch(e){}
-setup();setTimeout(()=>{const s=$('#sp');s&&s.remove()},3200);
+$('#app').addEventListener('change',e=>{const f=e.target;if(f.id=='imp'&&f.files[0])f.files[0].text().then(t=>{try{put(merge(snap(),JSON.parse(t)));save();logv()}catch(x){alert('That file could not be read.')}})});
+setup();if(joinHash())setTimeout(async()=>{loader('Joining sync…','Pulling in your shared lists');await sync();setup()},60);else if(S.sy.on)sync();
+setTimeout(()=>{const s=$('#sp');s&&s.remove()},3200);
 </script>
 </body>
 </html>
