@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <!--
-  SWIPE NIGHT  v1.9   (file: Swipe_Night_v1.9.html)
+  SWIPE NIGHT  v2.1   (file: Swipe_Night_v2.1.html)
   Two people, one phone. Each swipes separately; only shared yeses get revealed.
   Single file, no backend. Saves to localStorage (key "sn1"). Add to home screen to use like an app.
   Swipe: right = yes, left = no, up = maybe. Scores: no 0, maybe 1, yes 2.
+  v2.1: Fix. Loader keyframes renamed (ld*) so they no longer override the neon intro's flicker animation.
+  v2.0: Card Sorters loading animation (blobs flick cards into yes/nope bins, rotating messages) on Finding picks and poster loading.
   v1.9: System bars (status/nav) match the app's purple scheme: scheme-aware theme-color, purple manifest colors.
   v1.8: Open/closed state of saved lists now sticks on add/delete; AI ideas follow the vibe and stay balanced; broader at-home library.
   v1.7: Adds At-home activities with a separate library, custom picks, and Claude API suggestions.
@@ -86,13 +88,30 @@ details{margin-top:10px}summary{margin:14px 0 6px;font:19px "DM Serif Display",G
 .tb span{text-align:left}.tb b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tb i{font-style:normal;font-weight:700}
 .a0{color:var(--p0)}.a1{color:#C98A00}.a2{color:var(--p1)}.th{color:var(--mut);font-size:12px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}.np,.ng{animation:none}}
+/* Card Sorters loader */
+.ld svg{display:block;width:100%;max-width:320px;margin:0 auto 6px}
+.ld svg *{transform-box:fill-box}
+.k{transform-origin:center}.k1,.k3{animation:ldfr 8s linear infinite backwards}.k2,.k4{animation:ldfl 8s linear infinite backwards}
+.k2{animation-delay:2s}.k3{animation-delay:4s}.k4{animation-delay:6s}
+@keyframes ldfr{0%{transform:translate(0,-70px);opacity:0}3%{opacity:1}8%,16%{transform:translate(0,0)}22%{transform:translate(92px,28px) rotate(35deg) scale(.5);opacity:1}24%,100%{transform:translate(92px,28px) rotate(40deg) scale(.4);opacity:0}}
+@keyframes ldfl{0%{transform:translate(0,-70px);opacity:0}3%{opacity:1}8%,16%{transform:translate(0,0)}22%{transform:translate(-92px,28px) rotate(-35deg) scale(.5);opacity:1}24%,100%{transform:translate(-92px,28px) rotate(-40deg) scale(.4);opacity:0}}
+.sb{transform-origin:50% 100%;animation:ldtl 8s ease-in-out infinite}
+@keyframes ldtl{0%,14%{transform:rotate(0)}17%{transform:rotate(9deg)}23%,39%{transform:rotate(0)}42%{transform:rotate(-9deg)}48%,64%{transform:rotate(0)}67%{transform:rotate(9deg)}73%,89%{transform:rotate(0)}92%{transform:rotate(-9deg)}98%,100%{transform:rotate(0)}}
+.ey{transform-origin:center;animation:ldbk 4s infinite}@keyframes ldbk{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.yr,.nl{transform-origin:50% 100%}.yr{animation:ldpr 8s infinite}.nl{animation:ldpl 8s infinite}
+@keyframes ldpr{0%,22%,28%,72%,78%,100%{transform:scale(1)}24%,74%{transform:scale(1.12)}}
+@keyframes ldpl{0%,47%,53%,97%,100%{transform:scale(1)}49%,99%{transform:scale(1.12)}}
+.tw{animation:ldtw 2s ease-in-out infinite}.d2{animation-delay:-.7s}.d3{animation-delay:-1.3s}@keyframes ldtw{50%{opacity:.2}}
+.belt{animation:ldbt 1s linear infinite}@keyframes ldbt{to{stroke-dashoffset:-18}}
+#lm{transition:opacity .2s;min-height:1.4em}
+@media(prefers-reduced-motion:reduce){.ld svg *{animation:none!important}.k2,.k3,.k4{display:none}}
 </style>
 </head>
 <body>
 <div id="sp"><h1><span class="np">Swipe</span><span class="ng">Night</span></h1></div>
 <div id="app"></div>
 <script>
-const $=s=>document.querySelector(s),ui=h=>$('#app').innerHTML=h,E=s=>String(s).replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
+const $=s=>document.querySelector(s),ui=h=>{clearInterval(window.LT);$('#app').innerHTML=h},E=s=>String(s).replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';');
 // Library entries: "emoji|title|cost" where cost 0=Free 1=$ 2=$$ 3=$$$ (omit for none)
 const LIB={
 movies:['🕷️|Spider-Man: Into the Spider-Verse','🧹|Kiki’s Delivery Service','🏰|Howl’s Moving Castle','☄️|Your Name','🐉|Spirited Away','🤖|WALL·E','🦸|Big Hero 6','🚀|Guardians of the Galaxy','⚡|Thor: Ragnarok','🐜|Ant-Man','🔮|Doctor Strange','🥋|Shang-Chi','🗡️|The Princess Bride','✨|Stardust','🎮|Ready Player One','🤖|The Mitchells vs. the Machines','🐱|Puss in Boots: The Last Wish','🐼|Turning Red','🌸|Encanto','🌊|Moana','🐲|How to Train Your Dragon','💀|Coco','🧸|Paddington 2','🛸|Lilo & Stitch'],
@@ -152,7 +171,7 @@ function setup(){
   ${S.src=='lib'?'':`<details id="dsetup"${S.lo.dsetup?' open':''}><summary>Our ${S.ty=='home'?'at-home activities':TY[S.ty].split(' ')[1].toLowerCase()} list (${mine.length})</summary>${mine.map((x,i)=>`<div class="li"><span>${E(x.e)} ${E(x.t)} <small class="sub">${cl(x.c)}</small></span><button data-a="del" data-v="${i}" aria-label="Remove">×</button></div>`).join('')||'<p class="sub">Nothing here yet. Add a few!</p>'}
   <div class="row" style="margin-top:10px"><input id="ne" placeholder="🍩" maxlength="4" style="flex:.5"><input id="nt" placeholder="Add an activity" maxlength="40" style="flex:2"><select id="nc" style="flex:.8"><option value="-1">—</option><option value="0">Free</option><option value="1">$</option><option value="2">$$</option><option value="3">$$$</option></select></div><button class="ch" data-a="add">+ Add</button></details>`}
   <button class="go" data-a="start"${n<2?' disabled':''}>${n<2?'Add at least 2 picks':'Start swiping →'}</button>
-  <p class="tip">${n} picks in the pile · deals up to 15 · v1.9</p>`);
+  <p class="tip">${n} picks in the pile · deals up to 15 · v2.1</p>`);
 }
 function cover(p,kind){
   const[a,b]=S.n.map(E);document.body.className=kind=='ready'?'':'p'+p;
@@ -208,6 +227,24 @@ aiPrompt=(ty,av)=>{const what=ty=='food'?'dinner ideas (restaurant types or home
   +`\nAvoid repeating: ${av}.\nReply with ONLY a JSON array of {"e":"one emoji","t":"title, max 5 words","c":cost tier 0 free to 3 pricey}.`};
 let BD=0,B={};
 const mq=a=>{const g=[],c=[];let l='';a.forEach(k=>{const m=M[k];if(m){m.g&&g.push(m.g);m.c&&c.push(m.c);m.l&&(l=m.l)}});return(g.length?`&with_genres=${g.join(',')}`:'')+(c.length?`&with_companies=${c.join(',')}`:'')+(l?`&with_original_language=${l}`:'')};
+const LM=['Shuffling the deck…','Asking the picks nicely…','Sorting the maybes…','Teaching the blobs to swipe…','Polishing the posters…','Counting cozy points…','Warming up the popcorn…','Flicking cards into bins…'],
+SCENE=`<svg viewBox="0 0 300 190" role="img" aria-label="A little blob sorting cards into yes and nope bins"><rect width="300" height="190" rx="22" fill="#1F1030"/>
+<g fill="#fff"><circle class="tw" cx="30" cy="28" r="1.6"/><circle class="tw d2" cx="258" cy="36" r="1.4"/><circle class="tw d3" cx="90" cy="16" r="1.2"/><circle class="tw" cx="212" cy="20" r="1.6"/><circle class="tw d2" cx="150" cy="30" r="1.2"/></g>
+<rect y="172" width="300" height="18" fill="#2A1742"/><line class="belt" x1="0" y1="178" x2="300" y2="178" stroke="#5B3A8A" stroke-width="4" stroke-dasharray="10 8"/>
+<g class="nl" style="filter:drop-shadow(0 0 6px #FF2D95)"><path d="M22 124h58l-7 48H29z" fill="#FF2D95"/><text x="51" y="156" text-anchor="middle" font-size="20" font-weight="700" fill="#1F1030">✕</text></g>
+<g class="yr" style="filter:drop-shadow(0 0 6px #25FF7A)"><path d="M220 124h58l-7 48h-44z" fill="#25FF7A"/><text x="249" y="156" text-anchor="middle" font-size="20" font-weight="700" fill="#1F1030">♥</text></g>
+<g class="sb"><path d="M122 172c0-32 12-52 28-52s28 20 28 52z" fill="#F2B134"/><path d="M124 152q-13 5-15 17M176 152q13 5 15 17" stroke="#F2B134" stroke-width="7" stroke-linecap="round" fill="none"/>
+<g class="ey"><circle cx="141" cy="146" r="5" fill="#fff"/><circle cx="159" cy="146" r="5" fill="#fff"/><circle cx="141" cy="147" r="2.4" fill="#1F1030"/><circle cx="159" cy="147" r="2.4" fill="#1F1030"/></g>
+<path d="M143 158q7 6 14 0" stroke="#1F1030" stroke-width="2.4" stroke-linecap="round" fill="none"/><circle cx="133" cy="157" r="3.2" fill="#FF7BAE" opacity=".7"/><circle cx="167" cy="157" r="3.2" fill="#FF7BAE" opacity=".7"/></g>
+<g class="k k1"><rect x="138" y="84" width="24" height="32" rx="5" fill="#FFFDF6"/><text x="150" y="106" text-anchor="middle" font-size="16">🎬</text></g>
+<g class="k k2"><rect x="138" y="84" width="24" height="32" rx="5" fill="#FFFDF6"/><text x="150" y="106" text-anchor="middle" font-size="16">🍕</text></g>
+<g class="k k3"><rect x="138" y="84" width="24" height="32" rx="5" fill="#FFFDF6"/><text x="150" y="106" text-anchor="middle" font-size="16">🧭</text></g>
+<g class="k k4"><rect x="138" y="84" width="24" height="32" rx="5" fill="#FFFDF6"/><text x="150" y="106" text-anchor="middle" font-size="16">🏡</text></g></svg>`;
+function loader(h,sub){
+  let i=Math.random()*LM.length|0;
+  ui(`<div class="cv ld">${SCENE}<h2 id="lh" style="margin:14px 0 4px">${h}</h2><p class="sub" id="lm">${LM[i]}</p>${sub?`<p class="tip">${sub}</p>`:''}</div>`);
+  const el=$('#lm');window.LT=setInterval(()=>{i=(i+1)%LM.length;el.style.opacity=0;setTimeout(()=>{el.textContent=LM[i];el.style.opacity=1},200)},1800);
+}
 function buildv(){
   BD=0;document.body.className='';const m=S.ty=='movies';
   ui(`<h1>Swipe Night</h1>${tabs(2)}<h3>Build our library</h3><p class="sub">Swipe right to add, left to skip, up for not now.</p>
@@ -220,7 +257,7 @@ function buildv(){
 const bc=(x,c)=>`<div class="card ${c}" data-movie-card="${c}"><b class="st y">ADD</b><b class="st n">SKIP</b><b class="st m">LATER</b>${x.img?`<img src="${E(x.img)}" alt="${E(x.t)} poster" draggable="false" class="poster">`:`<div class="em">${x.e}</div>`}<div class="ti">${E(x.t)}</div>${x.s?`<span class="cost">${E(x.s)}</span>`:x.c>=0?`<span class="cost">${cl(x.c)}</span>`:''}</div>`;
 function bsw(){
   BD=1;document.body.className='p0';const c=B.q[0];
-  if(!c){ui(B.err?`<div class="cv"><div class="em">😅</div><p>${E(B.err)}</p><button class="go" data-a="bdone">Back</button></div>`:`<div class="cv"><div class="em">⏳</div><p>Finding picks…</p></div>`);if(!B.err)bfill();return}
+  if(!c){if(B.err){ui(`<div class="cv"><div class="em">😅</div><p>${E(B.err)}</p><button class="go" data-a="bdone">Back</button></div>`)}else{const h=$('#lh');if(h)h.textContent='Finding picks…';else loader('Finding picks…');bfill()}return}
   const n=B.q[1];
   ui(`<div class="bar"><h2>Build: ${TY[S.ty]}</h2><span>+${B.n} added</span></div>
   <div class="stack">${n?bc(n,'back'):''}${bc(c,'top')}</div>
@@ -279,14 +316,14 @@ const A={
   rm:v=>{S.mode=v;save();results()},
   del:v=>{S.cu[S.ty].splice(+v,1);save();setup()},
   add:()=>{const t=$('#nt').value.trim();if(!t)return;S.cu[S.ty].push({e:$('#ne').value.trim()||'⭐',t,c:+$('#nc').value});save();setup()},
-  start:async()=>{BD=0;if(S.ty==='movies'&&S.k.tmdb){ui('<div class="cv"><div class="em">🎬</div><h2>Preparing movie night…</h2><p class="sub">Loading posters and summaries for your library.</p></div>');try{await enrichMovieLibrary()}catch(e){console.warn('TMDB library enrichment:',e.message)} }G={deck:deal(),a:[[],[]],p:0,i:0};cover(0,'start')},
+  start:async()=>{BD=0;if(S.ty==='movies'&&S.k.tmdb){loader('Preparing movie night…','Loading posters and summaries');try{await enrichMovieLibrary()}catch(e){console.warn('TMDB library enrichment:',e.message)} }G={deck:deal(),a:[[],[]],p:0,i:0};cover(0,'start')},
   ans:v=>fly(+v),
   undo:()=>{if(G.i>0){G.i--;swipe()}},
   abandon:()=>{if(confirm('Abandon this swipe session? Your answers from this unfinished round will be discarded. Your saved library and past results will stay.')){G={};BD=0;setup()}},
   win:(v,b)=>{if(b.dataset.ok)return;b.dataset.ok=1;const x=G.R[+v].x,d=Date.now();S.done[x.t]=d;S.log.unshift({e:x.e,t:x.t,ty:S.ty,d});save();b.textContent='✓ Locked in!';b.closest('.rc').classList.add('won')},
   tab:v=>{BD=0;[setup,logv,buildv][+v]()},
   ty2:v=>{S.ty=v;save();buildv()},bf:v=>{let a=S.bfs.includes(v)?S.bfs.filter(x=>x!=v):[...S.bfs.filter(x=>x!='pop'),v];if(v=='pop'||!a.length)a=['pop'];S.bfs=a;save();buildv()},bm:v=>{S.bm=v;save();buildv()},bdone:()=>{BD=0;buildv()},delbuild:v=>{S.cu[S.ty].splice(+v,1);save();buildv()},
-  bgo:async()=>{const keyInput=$('[data-k="tmdb"]')||$('[data-k="ai"]');if(keyInput)S.k[keyInput.dataset.k]=keyInput.value.trim();if(S.ty!='movies')S.bv=$('#bv').value.trim();if(S.ty=='movies'&&!S.k.tmdb){alert('Paste your TMDB API key first.');return}if(S.ty!='movies'&&!S.k.ai){alert('Paste your Anthropic API key first.');return}B={q:[],pgs:{},rr:0,n:0,t:0,err:'',busy:0,sessionSkip:[],flip:false};save();if(S.ty==='movies'){ui('<div class="cv"><div class="em">🎬</div><h2>Preparing movie picks…</h2><p class="sub">Loading your library posters and summaries.</p></div>');try{await enrichMovieLibrary()}catch(e){console.warn(e.message)}}bsw()},
+  bgo:async()=>{const keyInput=$('[data-k="tmdb"]')||$('[data-k="ai"]');if(keyInput)S.k[keyInput.dataset.k]=keyInput.value.trim();if(S.ty!='movies')S.bv=$('#bv').value.trim();if(S.ty=='movies'&&!S.k.tmdb){alert('Paste your TMDB API key first.');return}if(S.ty!='movies'&&!S.k.ai){alert('Paste your Anthropic API key first.');return}B={q:[],pgs:{},rr:0,n:0,t:0,err:'',busy:0,sessionSkip:[],flip:false};save();if(S.ty==='movies'){loader('Preparing movie picks…','Loading posters and summaries');try{await enrichMovieLibrary()}catch(e){console.warn(e.message)}}bsw()},
   logdel:v=>{const t=S.log[+v].t;S.log.splice(+v,1);const m=S.log.filter(x=>x.t==t).map(x=>x.d);m.length?S.done[t]=Math.max(...m):delete S.done[t];save();logv()},
   pick:()=>{const r=[...document.querySelectorAll('.rc')],T=r.length*3+Math.random()*r.length|0;let i=0;
     (function f(){r.forEach((e,j)=>e.classList.toggle('hl',j==i%r.length));if(i++<T)setTimeout(f,50+i*i*.8)})()},
