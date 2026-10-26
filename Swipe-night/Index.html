@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <!--
-  SWIPE NIGHT  v2.3   (file: Swipe_Night_v2.3.html)
+  SWIPE NIGHT  v2.4   (file: Swipe_Night_v2.4.html)
   Two people, one phone. Each swipes separately; only shared yeses get revealed.
   Single file, no backend. Saves to localStorage (key "sn1"). Add to home screen to use like an app.
   Swipe: right = yes, left = no, up = maybe. Scores: no 0, maybe 1, yes 2.
+  v2.4: Sync fix. Database address is cleaned up (accepts the Firebase console link), prefilled, and editable; friendlier errors; single plum theme-color.
   v2.3: Two-phone sync via Firebase Realtime Database REST (couple code, merge, tombstones, skipped history), export/import backup, API key + sync UI tucked away, plum safe-area fill.
   v2.2: Fix. Flipped movie cards can be swiped again (summary no longer scrolls; Build flip re-attaches swipe handling and resets flip state).
   v2.1: Fix. Loader keyframes renamed (ld*) so they no longer override the neon intro's flicker animation.
@@ -26,8 +27,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Swipe Night">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#FFF4DC" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#241520" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#241520">
 <title>Swipe Night</title>
 <link rel="apple-touch-icon" id="ai">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&amp;display=swap" rel="stylesheet">
@@ -127,7 +127,9 @@ let S={n:['Isaiah','Zack'],ty:'movies',src:'lib',mode:'match',cu:{movies:[],food
 try{Object.assign(S,JSON.parse(localStorage.sn1||'{}'))}catch(e){}
 // Backward-compatible defaults for categories added in newer versions.
 S.cu=S.cu||{};for(const k of Object.keys(TY))S.cu[k]=S.cu[k]||[];
-const FB_DEFAULT='';S.sy=S.sy||{on:false,code:'',url:FB_DEFAULT,t:0};S.tomb=S.tomb||{};S.lo=S.lo||{};S.seen=S.seen||{};S.done=S.done||{};S.log=S.log||[];S.movieMeta=S.movieMeta||{};S.k=S.k||{tmdb:'',ai:''};
+const FB_DEFAULT='https://swipe-night-703d1-87b55-default-rtdb.firebaseio.com',
+fbUrl=x=>{x=String(x||'').trim();let m=x.match(/\/database\/([a-z0-9-]+)\/data/i)||x.match(/^([a-z0-9-]+-rtdb)$/i);if(m)return'https://'+m[1]+'.firebaseio.com';m=x.match(/^https:\/\/[a-z0-9.-]+\.(?:firebaseio\.com|firebasedatabase\.app)/i);return m?m[0]:''};
+S.sy=S.sy||{on:false,code:'',url:FB_DEFAULT,t:0};S.sy.url=fbUrl(S.sy.url)||FB_DEFAULT;S.tomb=S.tomb||{};S.lo=S.lo||{};S.seen=S.seen||{};S.done=S.done||{};S.log=S.log||[];S.movieMeta=S.movieMeta||{};S.k=S.k||{tmdb:'',ai:''};
 S.movieMeta=S.movieMeta||{};
 const SY={},qs=()=>{if(S.sy&&S.sy.on){clearTimeout(SY.tm);SY.tm=setTimeout(sync,2500)}},save=()=>{try{localStorage.sn1=JSON.stringify(S)}catch(e){}if(!SY.q)qs()};
 const normTitle=t=>String(t||'').toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -182,16 +184,16 @@ async function sync(){
     const w=await fetch(u,{method:'PUT',body:JSON.stringify({d:str,t:Date.now()})});
     if(!w.ok)throw Error('Could not save to the database ('+w.status+')');
     y.t=Date.now();SY.err='';
-  }catch(e){SY.err=e.message||'Sync failed'}
+  }catch(e){SY.err=/Failed to fetch|NetworkError|Load failed/i.test(e.message||'')?'Couldn’t reach the database. Check the address below and your connection.':(e.message||'Sync failed')}
   SY.busy=0;SY.q=1;save();SY.q=0;
 }
 const gen=()=>{const a='abcdefghjkmnpqrstuvwxyz23456789';return[...crypto.getRandomValues(new Uint8Array(24))].map(x=>a[x%a.length]).join('')},
 b64=o=>btoa(JSON.stringify(o)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 function joinHash(){try{const m=location.hash.match(/^#j=(.+)$/);if(!m)return;const j=JSON.parse(atob(m[1].replace(/-/g,'+').replace(/_/g,'/')));history.replaceState(null,'',location.pathname);
-  if(j.c&&j.c.length>=20&&/^https:\/\//.test(j.u)&&confirm('Join the shared Swipe Night library?')){S.sy={on:true,code:j.c,url:j.u,t:0};save();return 1}}catch(e){}}
+  if(j.c&&j.c.length>=20&&fbUrl(j.u)&&confirm('Join the shared Swipe Night library?')){S.sy={on:true,code:j.c,url:fbUrl(j.u),t:0};save();return 1}}catch(e){}}
 function syncCard(){const y=S.sy;
   return `<details id="dsync"${S.lo.dsync?' open':''}><summary>☁️ Sync &amp; backup</summary>`+(y.on
-  ?`<p class="sub">Synced across phones. Last sync: ${ago(y.t)}${SY.err?' · '+E(SY.err):''}</p>${ch('syncnow','','↻ Sync now')+ch('invite','','🔗 Copy invite link')+ch('showcode','','👁 Show code')}<p id="cc" class="tip" style="text-align:left;word-break:break-all"></p>${ch('syncoff','','Stop syncing')}`
+  ?`<p class="sub">Synced across phones. Last sync: ${ago(y.t)}${SY.err?' · '+E(SY.err):''}</p><input id="fu" value="${E(y.url)}" aria-label="Database address" style="width:100%;margin-bottom:8px">${ch('syncnow','','↻ Sync now')+ch('invite','','🔗 Copy invite link')+ch('showcode','','👁 Show code')}<p id="cc" class="tip" style="text-align:left;word-break:break-all"></p>${ch('syncoff','','Stop syncing')}`
   :`<p class="sub">Share your libraries between two phones. Needs the database address from your Firebase setup.</p><input id="fu" placeholder="https://…firebaseio.com" value="${E(y.url||'')}" style="width:100%;margin-bottom:8px">${ch('syncnew','','✨ Start a new couple code')}<input id="jc" placeholder="Or paste a couple code to join" style="width:100%;margin:8px 0">${ch('syncjoin','','Join')}`)
   +`<p class="sub" style="margin-top:12px">Backup file</p>${ch('bk','','⬇ Export')+ch('rs','','⬆ Import')}<input type="file" id="imp" accept=".json,application/json" hidden></details>`}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.sy.on)sync()});
@@ -211,7 +213,7 @@ function setup(){
   ${S.src=='lib'?'':`<details id="dsetup"${S.lo.dsetup?' open':''}><summary>Our ${S.ty=='home'?'at-home activities':TY[S.ty].split(' ')[1].toLowerCase()} list (${mine.length})</summary>${mine.map((x,i)=>`<div class="li"><span>${E(x.e)} ${E(x.t)} <small class="sub">${cl(x.c)}</small></span><button data-a="del" data-v="${i}" aria-label="Remove">×</button></div>`).join('')||'<p class="sub">Nothing here yet. Add a few!</p>'}
   <div class="row" style="margin-top:10px"><input id="ne" placeholder="🍩" maxlength="4" style="flex:.5"><input id="nt" placeholder="Add an activity" maxlength="40" style="flex:2"><select id="nc" style="flex:.8"><option value="-1">—</option><option value="0">Free</option><option value="1">$</option><option value="2">$$</option><option value="3">$$$</option></select></div><button class="ch" data-a="add">+ Add</button></details>`}
   <button class="go" data-a="start"${n<2?' disabled':''}>${n<2?'Add at least 2 picks':'Start swiping →'}</button>
-  <p class="tip">${n} picks in the pile · deals up to 15 · v2.3</p>`);
+  <p class="tip">${n} picks in the pile · deals up to 15 · v2.4</p>`);
 }
 function cover(p,kind){
   const[a,b]=S.n.map(E);document.body.className=kind=='ready'?'':'p'+p;
@@ -364,12 +366,12 @@ const A={
   tab:v=>{BD=0;[setup,logv,buildv][+v]()},
   ty2:v=>{S.ty=v;save();buildv()},bf:v=>{let a=S.bfs.includes(v)?S.bfs.filter(x=>x!=v):[...S.bfs.filter(x=>x!='pop'),v];if(v=='pop'||!a.length)a=['pop'];S.bfs=a;save();buildv()},bm:v=>{S.bm=v;save();buildv()},bdone:()=>{BD=0;buildv()},delbuild:v=>{const x=S.cu[S.ty].splice(+v,1)[0];if(x)S.tomb[S.ty+'|'+normTitle(x.t)]=Date.now();save();buildv()},
   bgo:async()=>{const keyInput=$('[data-k="tmdb"]')||$('[data-k="ai"]');if(keyInput)S.k[keyInput.dataset.k]=keyInput.value.trim();if(S.ty!='movies')S.bv=$('#bv').value.trim();if(S.ty=='movies'&&!S.k.tmdb){alert('Paste your TMDB API key first.');S.lo.dkeys=true;buildv();return}if(S.ty!='movies'&&!S.k.ai){alert('Paste your Anthropic API key first.');S.lo.dkeys=true;buildv();return}B={q:[],pgs:{},rr:0,n:0,t:0,err:'',busy:0,sessionSkip:[],flip:false};save();if(S.ty==='movies'){loader('Preparing movie picks…','Loading posters and summaries');try{await enrichMovieLibrary()}catch(e){console.warn(e.message)}}bsw()},
-  syncnow:async()=>{if(!S.sy.on)return;loader('Syncing libraries…','Merging your lists');await sync();logv()},
+  syncnow:async()=>{if(!S.sy.on)return;const f=$('#fu');if(f){const u=fbUrl(f.value);if(!u){alert('That doesn’t look like a Firebase database address. Copy the one at the top of the Data tab.');return}S.sy.url=u;save()}loader('Syncing libraries…','Merging your lists');await sync();logv()},
   invite:(v,b)=>{const l=location.origin+location.pathname+'#j='+b64({c:S.sy.code,u:S.sy.url});navigator.clipboard.writeText(l).then(()=>{b.textContent='✓ Copied!'},()=>prompt('Copy this link:',l))},
   showcode:()=>{$('#cc').textContent=S.sy.code},
   syncoff:()=>{if(confirm('Stop syncing on this phone? Your lists stay.')){S.sy.on=false;save();logv()}},
-  syncnew:async()=>{const u=($('#fu').value||'').trim();if(!/^https:\/\/.{6,}/.test(u)){alert('Paste the database address first.');return}S.sy={on:true,url:u.replace(/\/+$/,''),code:gen(),t:0};save();loader('Starting sync…','Setting up your couple code');await sync();logv()},
-  syncjoin:async()=>{const u=($('#fu')?$('#fu').value:'').trim(),c=($('#jc').value||'').trim().toLowerCase();if(!/^https:\/\/.{6,}/.test(u)||c.length<20){alert('Add the database address and a full couple code.');return}S.sy={on:true,url:u.replace(/\/+$/,''),code:c,t:0};save();loader('Joining sync…','Pulling in your shared lists');await sync();logv()},
+  syncnew:async()=>{const u=fbUrl($('#fu').value);if(!u){alert('That doesn’t look like a Firebase database address. Copy the one at the top of the Data tab (it ends in firebaseio.com or firebasedatabase.app).');return}S.sy={on:true,url:u,code:gen(),t:0};save();loader('Starting sync…','Setting up your couple code');await sync();logv()},
+  syncjoin:async()=>{const u=fbUrl($('#fu')?$('#fu').value:''),c=($('#jc').value||'').trim().toLowerCase();if(!u||c.length<20){alert('Add a valid database address and a full couple code.');return}S.sy={on:true,url:u,code:c,t:0};save();loader('Joining sync…','Pulling in your shared lists');await sync();logv()},
   bk:()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(snap())],{type:'application/json'}));a.download='swipe-night-backup.json';a.click()},
   rs:()=>$('#imp').click(),
   logdel:v=>{const t=S.log[+v].t;S.tomb['log|'+t+'|'+S.log[+v].d]=Date.now();S.log.splice(+v,1);const m=S.log.filter(x=>x.t==t).map(x=>x.d);m.length?S.done[t]=Math.max(...m):delete S.done[t];save();logv()},
