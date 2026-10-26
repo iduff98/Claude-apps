@@ -1,10 +1,12 @@
 <!doctype html>
 <!--
-  TONIGHT’S ENTRY TICKET — VERSION 2.8
-  File name: entry-ticket-v2.8.html
+  TONIGHT’S ENTRY TICKET — VERSION 3.0
+  File name: entry-ticket-v3.0.html
   On every update, keep these three in sync: this header, VERSION in the script, and the file name.
 
   Changelog (newest first)
+  3.0  Splash: removed the opening ticket parade; scan and punch start sooner so the “Entry Ticket” finish stays up longer
+  2.9  3-second Kurzgesagt-style splash: tickets fly in, get scanned, punched and torn, ending on “Entry Ticket” (tap to skip)
   2.8  install fix: manifest scope/id/start_url use this file's own URL
   2.7  Fix: words no longer overlap “FEELING” when plans are added (words get a reserved zone); faster share (reuses the on-screen card, lighter JPEG, earlier pre-render)
   2.6  Card: footer shrunk to one small line (ADMIT ONE · No.), perforation moved down; emoji window and plans area use the freed space so nothing overlaps
@@ -100,9 +102,47 @@ nav button.on{color:var(--gold)}
 #md .btn{flex:1;margin:0;padding:12px 6px;font-size:15px;white-space:nowrap}
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--gold);color:#0f2a20;padding:10px 18px;border-radius:999px;font-size:15px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:10}
 #toast.on{opacity:1}
+#sp2{position:fixed;inset:0;z-index:20;overflow:hidden;background:#0f2a20;display:grid;place-items:center;animation:spOut .3s 2.7s both}
+#sp2 svg{width:min(100%,430px);height:100%;overflow:visible}
+#sp2 .a{transform-box:fill-box;transform-origin:center}
+#sp2 .stub{transform-origin:86px 27px}
+#sp2 .s{animation:tw 1.8s infinite}
+#sp2 .sc{animation:show var(--l) var(--d) both}
+@keyframes spOut{to{opacity:0;visibility:hidden}}
+@keyframes show{0%{opacity:0}12%,88%{opacity:1}100%{opacity:0}}
+@keyframes slideIn{0%{transform:translateX(-200px)}100%{transform:none}}
+@keyframes inR{0%{transform:translateX(160px)}100%{transform:none}}
+@keyframes beam{0%,100%{transform:translateY(0)}50%{transform:translateY(95px)}}
+@keyframes ring{0%{transform:scale(.3);opacity:.9}100%{transform:scale(5);opacity:0}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{0%{transform:scale(.3) rotate(-6deg);opacity:0}70%{transform:scale(1.1) rotate(1deg);opacity:1}100%{transform:none;opacity:1}}
+@keyframes chomp{0%,50%{transform:translateY(-10px)}62%{transform:translateY(8px)}78%,100%{transform:translateY(-10px)}}
+@keyframes burst{0%{transform:translate(0,0) scale(.3);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1);opacity:0}}
+@keyframes tear{to{transform:translate(34px,86px) rotate(38deg);opacity:0}}
+@keyframes starIn{0%{transform:scale(0)}100%{transform:scale(1.6)}}
+@keyframes tw{0%,100%{opacity:.25}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){#sp2,#sp2 *{animation:none!important}#sp2 .sc{display:none}}
 </style>
 </head>
 <body>
+<div id="sp2" aria-hidden="true"><svg viewBox="0 0 360 640" role="img" aria-label="Entry Ticket">
+<defs><g id="tk"><rect width="120" height="54" rx="12" fill="currentColor"/><path d="M0 30H120v12a12 12 0 0 1-12 12H12A12 12 0 0 1 0 42z" fill="#000" opacity=".16"/><circle cx="0" cy="27" r="7" fill="#0f2a20"/><circle cx="120" cy="27" r="7" fill="#0f2a20"/><path d="M86 6v42" stroke="#0f2a20" stroke-width="2.5" stroke-dasharray="3 5" opacity=".55"/></g>
+<clipPath id="cm"><rect width="86" height="54"/></clipPath><clipPath id="cs"><rect x="86" width="34" height="54"/></clipPath></defs>
+<circle cx="310" cy="80" r="70" fill="#D4AF5A" opacity=".07"/><circle cx="40" cy="570" r="90" fill="#2FB5A6" opacity=".07"/>
+<g fill="#F6EFDC"><circle class="s" cx="40" cy="40" r="1.6"/><circle class="s" cx="120" cy="70" r="1.2" style="animation-delay:-.4s"/><circle class="s" cx="300" cy="30" r="1.8" style="animation-delay:-.9s"/><circle class="s" cx="335" cy="170" r="1.3" style="animation-delay:-1.3s"/><circle class="s" cx="28" cy="230" r="1.5" style="animation-delay:-.2s"/><circle class="s" cx="60" cy="420" r="1.2" style="animation-delay:-1.1s"/><circle class="s" cx="332" cy="405" r="1.7" style="animation-delay:-.6s"/><circle class="s" cx="280" cy="595" r="1.4" style="animation-delay:-1.5s"/><circle class="s" cx="150" cy="608" r="1.6" style="animation-delay:-.7s"/><circle class="s" cx="210" cy="18" r="1.2" style="animation-delay:-1s"/></g>
+<g class="sc" style="--d:0s;--l:1s">
+<rect x="86" y="215" width="188" height="14" rx="7" fill="#D4AF5A"/><rect x="86" y="215" width="8" height="130" rx="4" fill="#D4AF5A" opacity=".9"/><rect x="266" y="215" width="8" height="130" rx="4" fill="#D4AF5A" opacity=".9"/>
+<g transform="translate(120 273)" style="color:#2FB5A6"><g style="animation:slideIn .35s 0s both"><use href="#tk"/><g fill="#F6EFDC"><rect x="18" y="14" width="4" height="26"/><rect x="27" y="14" width="7" height="26"/><rect x="39" y="14" width="3" height="26"/><rect x="47" y="14" width="6" height="26"/><rect x="58" y="14" width="4" height="26"/></g></g></g>
+<g style="animation:beam .5s .2s both"><rect x="96" y="229" width="168" height="3" fill="#7CFFD8"/><rect x="96" y="226" width="168" height="12" fill="#7CFFD8" opacity=".18"/></g>
+<circle class="a" cx="180" cy="300" r="14" fill="none" stroke="#7CFFD8" stroke-width="4" style="animation:ring .45s .65s both"/>
+<path d="M152 298l20 20 38-42" fill="none" stroke="#F6EFDC" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="90" stroke-dashoffset="90" style="animation:draw .25s .7s both"/></g>
+<g class="sc" style="--d:.9s;--l:.95s">
+<g transform="translate(120 273)" style="color:#F7C948"><g class="a" style="animation:pop .25s .9s both"><g clip-path="url(#cm)"><use href="#tk"/></g><g class="stub" style="animation:tear .4s 1.55s both"><g clip-path="url(#cs)"><use href="#tk"/></g></g></g></g>
+<polygon class="a" points="150,290 152.5,296.6 159.5,296.9 154,301.3 155.9,308.1 150,304.2 144.1,308.1 146,301.3 140.5,296.9 147.5,296.6" fill="#0f2a20" style="animation:starIn .2s 1.4s both"/>
+<g transform="translate(150 300)"><g style="animation:inR .25s .95s both"><rect x="-12" y="14" width="96" height="16" rx="8" fill="#F26B5B"/><rect x="64" y="-30" width="20" height="60" rx="10" fill="#C94A3E"/><g style="animation:chomp .35s 1.2s both"><rect x="-12" y="-30" width="96" height="16" rx="8" fill="#F26B5B"/><rect x="-5" y="-14" width="10" height="14" rx="3" fill="#C94A3E"/></g></g></g>
+<g transform="translate(150 300)"><circle class="a" r="4" fill="#F26B5B" style="--dx:-38px;--dy:-52px;animation:burst .5s 1.4s both"/><circle class="a" r="3" fill="#F7C948" style="--dx:-14px;--dy:-62px;animation:burst .5s 1.42s both"/><circle class="a" r="4" fill="#2FB5A6" style="--dx:-54px;--dy:-18px;animation:burst .5s 1.4s both"/><circle class="a" r="3" fill="#F6EFDC" style="--dx:-48px;--dy:34px;animation:burst .5s 1.45s both"/><circle class="a" r="4" fill="#D4AF5A" style="--dx:-8px;--dy:58px;animation:burst .5s 1.42s both"/><circle class="a" r="3" fill="#7CFFD8" style="--dx:-60px;--dy:10px;animation:burst .5s 1.45s both"/></g></g>
+<g class="a" style="animation:pop .4s 1.8s both"><rect x="28" y="262" width="304" height="116" rx="26" fill="#D4AF5A"/><path d="M28 330H332V352a26 26 0 0 1-26 26H54a26 26 0 0 1-26-26z" fill="#000" opacity=".14"/><circle cx="28" cy="320" r="15" fill="#0f2a20"/><circle cx="332" cy="320" r="15" fill="#0f2a20"/><rect x="42" y="276" width="276" height="88" rx="16" fill="none" stroke="#0f2a20" stroke-width="2" stroke-dasharray="6 6" opacity=".35"/><text x="180" y="334" text-anchor="middle" font-size="46" font-style="italic" fill="#0f2a20" font-family="Georgia,'Times New Roman',serif">Entry Ticket</text></g>
+</svg></div>
 <main id="v1">
   <h1>Tonight’s Entry Ticket</h1>
   <p class="sub">Pick a feeling, a color, and a few words.</p>
@@ -132,7 +172,7 @@ nav button.on{color:var(--gold)}
 <div id="es" class="hide"><div class="sheet"><div class="sh-h"><b>Pick an emoji</b><button id="esx">Close</button></div><div id="eg2"></div><input type="text" id="et" placeholder="or type one with your keyboard" aria-label="Type an emoji"></div></div>
 <div id="toast"></div>
 <script>
-const VERSION='2.8',$=s=>document.querySelector(s),SERIF='Georgia,"Times New Roman",serif',
+const VERSION='3.0',$=s=>document.querySelector(s),SERIF='Georgia,"Times New Roman",serif',
 EMO='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif',
 EM=['😊','🥰','😌','🤩','😎','🥳','🙃','🫠','😴','🥲','😔','😰','😤','😵‍💫','🤯','😭'],
 CO=[['#F5D76E','Joyful'],['#F2A1B3','Loved'],['#F4A56A','Energized'],['#A8D08D','Hopeful'],['#8FD1C4','Calm'],['#8CA6D1','Sad'],['#B9A4DC','Anxious'],['#E88B8B','Angry'],['#B8BCC4','Tired']],K='entryTickets';
@@ -194,6 +234,7 @@ $('#ce').onclick=()=>pickEmoji(g=>{cur.emoji=g;$('#ce').value=g;pick('.em',null)
 $('#wd').oninput=e=>{cur.words=e.target.value;paint();mark()};
 $('#ci').onchange=e=>{cur.ci=e.target.checked;paint()};
 $('#ver').textContent='Version '+VERSION;
+(function(){const s=$('#sp2');if(!s)return;const end=()=>s.remove();s.onclick=end;setTimeout(end,matchMedia('(prefers-reduced-motion:reduce)').matches?1200:3000)})();
 let view=1;const fit=()=>document.documentElement.style.setProperty('--nh',$('nav').offsetHeight+'px');fit();addEventListener('resize',fit);
 const AC=[['🔥','Have a fire'],['🌶️','Spicy times'],['🎬','Movie night'],['👑','Watch Drag Race'],['🎮','Play a video game together'],['🃏','Play a card game together'],['🧘','Some me time'],['🎨','Do art together'],['🚶','Go on a walk'],['🍳','Cook together'],['🛁','Take a bath']],AK='entryTicketsCustom';let cu=[];try{cu=JSON.parse(localStorage.getItem(AK)||'[]')}catch(_){}
 function bnSync(){const n=cur.pl.length;$('#bn').classList.toggle('hide',!(cur.sp&&view==1));$('#bs').textContent=n?n+' chosen · tap to edit':'Tap to choose'}
