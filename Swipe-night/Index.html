@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <!--
-  SWIPE NIGHT  v2.4   (file: Swipe_Night_v2.4.html)
+  SWIPE NIGHT  v2.5   (file: Swipe_Night_v2.5.html)
   Two people, one phone. Each swipes separately; only shared yeses get revealed.
   Single file, no backend. Saves to localStorage (key "sn1"). Add to home screen to use like an app.
   Swipe: right = yes, left = no, up = maybe. Scores: no 0, maybe 1, yes 2.
+  v2.5: Pick-the-deck flow ("Anything specific?"), Help-us-decide rating flow, rebalanced AI prompts (type rotation + per-type cap, skips as dislikes, season, area, own rules).
   v2.4: Sync fix. Database address is cleaned up (accepts the Firebase console link), prefilled, and editable; friendlier errors; single plum theme-color.
   v2.3: Two-phone sync via Firebase Realtime Database REST (couple code, merge, tombstones, skipped history), export/import backup, API key + sync UI tucked away, plum safe-area fill.
   v2.2: Fix. Flipped movie cards can be swiped again (summary no longer scrolls; Build flip re-attaches swipe handling and resets flip state).
@@ -107,6 +108,17 @@ details{margin-top:10px}summary{margin:14px 0 6px;font:19px "DM Serif Display",G
 .belt{animation:ldbt 1s linear infinite}@keyframes ldbt{to{stroke-dashoffset:-18}}
 #lm{transition:opacity .2s;min-height:1.4em}
 @media(prefers-reduced-motion:reduce){.ld svg *{animation:none!important}.k2,.k3,.k4{display:none}}
+/* v2.5 picker + rating */
+.pk{justify-content:flex-start;gap:12px;cursor:pointer}.pk input{width:22px;height:22px;accent-color:var(--ac);flex:none}
+.rt{background:var(--card);border:3px solid var(--ink);border-radius:18px;padding:12px 14px;margin:10px 0}
+.rv{float:right;font:26px "DM Serif Display",Georgia,serif;color:var(--ac)}
+.rng{-webkit-appearance:none;appearance:none;display:block;width:100%;height:14px;border-radius:7px;background:linear-gradient(90deg,#FF2D95,#F2B134,#25FF7A);outline:none;margin:14px 0 4px;touch-action:pan-y}
+.rng::-webkit-slider-thumb{-webkit-appearance:none;width:32px;height:32px;border-radius:50%;background:#fff;border:3px solid var(--ink)}
+.rng::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid var(--ink)}
+.rng.unset::-webkit-slider-thumb,.rng.unset::-moz-range-thumb{opacity:.35}
+.bb{height:6px;border-radius:3px;background:#0002;margin:4px 0}.bb i{display:block;height:100%;border-radius:3px}
+.rc.tie{outline:3px dashed var(--ac)}
+textarea{font:inherit;color:var(--ink);background:var(--card);border:2px solid var(--ink);border-radius:12px;padding:9px 11px;-webkit-user-select:text;user-select:text}
 </style>
 </head>
 <body>
@@ -129,7 +141,7 @@ try{Object.assign(S,JSON.parse(localStorage.sn1||'{}'))}catch(e){}
 S.cu=S.cu||{};for(const k of Object.keys(TY))S.cu[k]=S.cu[k]||[];
 const FB_DEFAULT='https://swipe-night-703d1-87b55-default-rtdb.firebaseio.com',
 fbUrl=x=>{x=String(x||'').trim();let m=x.match(/\/database\/([a-z0-9-]+)\/data/i)||x.match(/^([a-z0-9-]+-rtdb)$/i);if(m)return'https://'+m[1]+'.firebaseio.com';m=x.match(/^https:\/\/[a-z0-9.-]+\.(?:firebaseio\.com|firebasedatabase\.app)/i);return m?m[0]:''};
-S.sy=S.sy||{on:false,code:'',url:FB_DEFAULT,t:0};S.sy.url=fbUrl(S.sy.url)||FB_DEFAULT;S.tomb=S.tomb||{};S.lo=S.lo||{};S.seen=S.seen||{};S.done=S.done||{};S.log=S.log||[];S.movieMeta=S.movieMeta||{};S.k=S.k||{tmdb:'',ai:''};
+S.sy=S.sy||{on:false,code:'',url:FB_DEFAULT,t:0};S.sy.url=fbUrl(S.sy.url)||FB_DEFAULT;S.xi=S.xi||{};S.area=S.area||'';S.tomb=S.tomb||{};S.lo=S.lo||{};S.seen=S.seen||{};S.done=S.done||{};S.log=S.log||[];S.movieMeta=S.movieMeta||{};S.k=S.k||{tmdb:'',ai:''};
 S.movieMeta=S.movieMeta||{};
 const SY={},qs=()=>{if(S.sy&&S.sy.on){clearTimeout(SY.tm);SY.tm=setTimeout(sync,2500)}},save=()=>{try{localStorage.sn1=JSON.stringify(S)}catch(e){}if(!SY.q)qs()};
 const normTitle=t=>String(t||'').toLowerCase().replace(/[^a-z0-9]/g,'');
@@ -155,7 +167,11 @@ async function enrichMovieLibrary(){
   save();
 }
 // one shuffle+sort: recently chosen items (30 days) sink to the end, then take 15
-const deal=()=>pool().map(x=>[x,Math.random()+(Date.now()-(S.done[x.t]||0)<2592e6?1:0)]).sort((a,b)=>a[1]-b[1]).slice(0,15).map(x=>x[0]);
+const rnd=l=>l.map(x=>[x,Math.random()+(Date.now()-(S.done[x.t]||0)<2592e6?1:0)]).sort((a,b)=>a[1]-b[1]).map(x=>x[0]),
+PK={sel:new Set(),size:15,fill:true,q:'',use:false},D={items:[],r:[[],[]],p:0},
+deal=pk=>{const p=pool(),n=pk?pk.size:15;if(!pk)return rnd(p).slice(0,n);
+  const pins=p.filter(x=>pk.sel.has(normTitle(x.t))),rest=pk.fill?rnd(p.filter(x=>!pk.sel.has(normTitle(x.t)))).slice(0,Math.max(0,n-pins.length)):[];
+  return[...pins,...rest].sort(()=>Math.random()-.5)};
 const ch=(a,v,t,on)=>`<button class="ch${on?' on':''}" data-a="${a}" data-v="${v}">${t}</button>`;
 const sli=t=>`<div class="sl"><div class="kn">➜</div>${t}</div>`;
 const ic=['✕','↑','♥'],tabs=n=>`<div class="tabs">${ch('tab',0,'💞 Swipe',!n)+ch('tab',2,'🔨 Build',n==2)+ch('tab',1,'📖 Log',n==1)}</div>`;
@@ -213,7 +229,7 @@ function setup(){
   ${S.src=='lib'?'':`<details id="dsetup"${S.lo.dsetup?' open':''}><summary>Our ${S.ty=='home'?'at-home activities':TY[S.ty].split(' ')[1].toLowerCase()} list (${mine.length})</summary>${mine.map((x,i)=>`<div class="li"><span>${E(x.e)} ${E(x.t)} <small class="sub">${cl(x.c)}</small></span><button data-a="del" data-v="${i}" aria-label="Remove">×</button></div>`).join('')||'<p class="sub">Nothing here yet. Add a few!</p>'}
   <div class="row" style="margin-top:10px"><input id="ne" placeholder="🍩" maxlength="4" style="flex:.5"><input id="nt" placeholder="Add an activity" maxlength="40" style="flex:2"><select id="nc" style="flex:.8"><option value="-1">—</option><option value="0">Free</option><option value="1">$</option><option value="2">$$</option><option value="3">$$$</option></select></div><button class="ch" data-a="add">+ Add</button></details>`}
   <button class="go" data-a="start"${n<2?' disabled':''}>${n<2?'Add at least 2 picks':'Start swiping →'}</button>
-  <p class="tip">${n} picks in the pile · deals up to 15 · v2.4</p>`);
+  <p class="tip">${n} picks in the pile · deals up to 15 · v2.5</p>`);
 }
 function cover(p,kind){
   const[a,b]=S.n.map(E);document.body.className=kind=='ready'?'':'p'+p;
@@ -258,15 +274,24 @@ function fly(v){
 }
 const MF={pop:'🔥 Popular',anime:'🎌 Anime',animated:'🎨 Animated',marvel:'🦸 Marvel',scifi:'🚀 Sci-fi',fantasy:'🧙 Fantasy',family:'🏠 Family',action:'💥 Action',thriller:'🔪 Thriller',like:'💞 Like my picks'},
 M={anime:{g:'16',l:'ja'},animated:{g:'16'},marvel:{c:'420'},scifi:{g:'878'},fantasy:{g:'14'},family:{g:'10751,12'},action:{g:'28'},thriller:{g:'53'}},
-TS={food:'Thai food, fresh market bowls, pizza, Mexican, casserole and Italian',outings:'predictable, budget-friendly places like TJ Maxx, Dave & Buster’s and a simple walk, plus farmers markets and craft fairs',home:'cozy, creative, hands-on, low-cost things to do together at home (games, art, cooking, music, and more)'};
-const AH=['cooking or baking together','art or crafts','card or board games','video or phone games','a movie, show, or music night','dancing or music-making','DIY or home projects','pampering or a spa night','learning something new together','cozy snacks and drinks','writing, photos, or scrapbooking','indoor plants or tidying up together','puzzles or trivia','redecorating or organizing','building or making something'],
-SYS='You generate swipe-card ideas for a couple. Follow the VIBE above all else: every idea must clearly fit it, even if that differs from the background tastes. Give real variety, so no two ideas are the same kind of activity. Never name a specific TV show, streamer, or video game unless the vibe asks for it. Reply with ONLY a JSON array, no other text.',
-aiPrompt=(ty,av)=>{const what=ty=='food'?'dinner ideas (restaurant types or home meals)':ty=='home'?'at-home activities for two people':'date or weekend outing ideas',mix=[...AH].sort(()=>Math.random()-.5).slice(0,6).join('; ');
+TS={food:'Thai food, fresh market bowls, pizza, Mexican, casserole and Italian',outings:'low-cost, easy on short notice, good for two, a mix of indoor and outdoor, predictable and low-risk',home:'cozy, creative, hands-on, low-cost things to do together at home (games, art, cooking, music, and more)'};
+const AO=['outdoors or nature','markets or fairs','free museums, galleries, or libraries','arcades or games','thrift or browsing shops','cheap eats or a treat run','scenic drives or viewpoints','classes or workshops','active or sporty','seasonal events','bookstores or cafes','waterfront or parks','live music or shows','people-watching or strolling spots','volunteering or community events'],
+AF=['Thai','fresh bowls or salads','pizza','Mexican','casserole or comfort food at home','Italian pasta','soups or noodles','sandwiches or wraps','breakfast for dinner','grill or BBQ','Mediterranean','sushi or poke','another Asian cuisine','one-pot home meals','a snack-style dinner'],
+AH=['cooking or baking together','art or crafts','card or board games','video or phone games','a movie, show, or music night','dancing or music-making','DIY or home projects','pampering or a spa night','learning something new together','cozy snacks and drinks','writing, photos, or scrapbooking','indoor plants or tidying up together','puzzles or trivia','redecorating or organizing','building or making something'],
+SYS='You generate swipe-card ideas for a couple. Follow the VIBE above all else: every idea must clearly fit it, even if that differs from the background tastes. Give real variety, so no two ideas are the same kind of activity. Never name a specific TV show, streamer, or video game unless the vibe asks for it. Do not name chain stores or brands unless the vibe asks for it. Reply with ONLY a JSON array, no other text.',
+aiPrompt=(ty,av)=>{
+  const what={food:'dinner ideas (restaurant types or home meals)',home:'at-home activities for two people',outings:'outing ideas for two (date or weekend)'}[ty],
+  mix=[...({home:AH,outings:AO,food:AF}[ty])].sort(()=>Math.random()-.5).slice(0,6).join('; '),
+  mo=new Date().toLocaleString('en-US',{month:'long'}),sk=(S.seen[ty]||[]).slice(-20).join('; '),xi=(S.xi&&S.xi[ty])||'';
   return `Suggest 12 ${what}.\n`
-  +(S.bv?`VIBE (most important): ${S.bv}. Every idea must clearly fit this vibe. Vary the type of activity within it.\n`:(ty=='home'?`Spread the ideas across different types, such as: ${mix}.\n`:''))
+  +(S.bv?`VIBE (most important): ${S.bv}. Every idea must clearly fit this vibe. Vary the type of activity within it.\n`:`Spread the ideas across different types, such as: ${mix}.\n`)
+  +(xi?`The user's own rules (always follow): ${xi}\n`:'')
   +`Background tastes (use lightly, never let them override the vibe): ${TS[ty]}.\n`
-  +(ty=='home'?'Be specific and doable tonight, not broad categories. At most 2 ideas may be video games or screen-based.':'Keep ideas budget-conscious, predictable, and low-risk.')
-  +`\nAvoid repeating: ${av}.\nReply with ONLY a JSON array of {"e":"one emoji","t":"title, max 5 words","c":cost tier 0 free to 3 pricey}.`};
+  +`It is ${mo}; seasonal ideas are welcome but not required.${S.area?` We live around ${S.area}, so keep ideas local-friendly.`:''}\n`
+  +(ty=='home'?'Be specific and doable tonight, not broad categories. At most 2 ideas may be video games or screen-based.':ty=='outings'?'Mix indoor and outdoor, free and paid. At most 1 shopping idea and at most 1 arcade or game venue. Do not name chain stores or brands unless the vibe asks for it.':'Keep ideas budget-conscious and easy to find. Vary the cuisine or format.')
+  +`\nAt most 2 ideas of the same type.\n`
+  +(sk?`They skipped these, so avoid similar ideas: ${sk}.\n`:'')
+  +`Already have, do not repeat: ${av}.\nReply with ONLY a JSON array of {"e":"one emoji","t":"title, max 5 words","g":"type, 1-3 words","c":cost tier 0 free to 3 pricey}.`};
 let BD=0,B={};
 const mq=a=>{const g=[],c=[];let l='';a.forEach(k=>{const m=M[k];if(m){m.g&&g.push(m.g);m.c&&c.push(m.c);m.l&&(l=m.l)}});return(g.length?`&with_genres=${g.join(',')}`:'')+(c.length?`&with_companies=${c.join(',')}`:'')+(l?`&with_original_language=${l}`:'')};
 const LM=['Shuffling the deck…','Asking the picks nicely…','Sorting the maybes…','Teaching the blobs to swipe…','Polishing the posters…','Counting cozy points…','Warming up the popcorn…','Flicking cards into bins…','Merging the piles…','Waving at the other phone…'],
@@ -292,7 +317,7 @@ function buildv(){
   ui(`<h1>Swipe Night</h1>${tabs(2)}<h3>Build our library</h3><p class="sub">Swipe right to add, left to skip, up for not now.</p>
   ${Object.keys(TY).map(k=>ch('ty2',k,TY[k],S.ty==k)).join('')}
   ${m?`<h3>Movie moods (pick any)</h3>${Object.keys(MF).map(k=>ch('bf',k,MF[k],S.bfs.includes(k))).join('')}${S.bfs.length>1?`<div class="tip" style="text-align:left;margin:6px 0">Match</div>${ch('bm','any','Any of these',S.bm!='all')+ch('bm','all','All of these',S.bm=='all')}`:''}<details id="dkeys"${S.lo.dkeys?' open':''}><summary>🔑 TMDB key ${S.k.tmdb?'✓':'(needed)'}</summary><input data-k="tmdb" type="password" placeholder="Paste your TMDB v3 API key" value="${E(S.k.tmdb)}" style="width:100%"></details>`
-  :`<h3>Vibe (optional)</h3><input id="bv" placeholder="cheap, cozy, rainy day…" maxlength="60" value="${E(S.bv)}" style="width:100%"><details id="dkeys"${S.lo.dkeys?' open':''}><summary>🔑 Claude key ${S.k.ai?'✓':'(needed)'}</summary><input data-k="ai" type="password" placeholder="Paste your Anthropic API key" value="${E(S.k.ai)}" style="width:100%"></details>`}
+  :`<h3>Vibe (optional)</h3><input id="bv" placeholder="cheap, cozy, rainy day…" maxlength="60" value="${E(S.bv)}" style="width:100%"><details id="dopt"${S.lo.dopt?' open':''}><summary>⚙️ More options</summary><input id="ba" placeholder="Our area (optional), like a city" value="${E(S.area)}" maxlength="40" style="width:100%;margin:8px 0"><textarea id="bx" rows="3" placeholder="Your own rules, like: no chain stores, no screens" maxlength="300" style="width:100%">${E((S.xi||{})[S.ty]||'')}</textarea></details><details id="dkeys"${S.lo.dkeys?' open':''}><summary>🔑 Claude key ${S.k.ai?'✓':'(needed)'}</summary><input data-k="ai" type="password" placeholder="Paste your Anthropic API key" value="${E(S.k.ai)}" style="width:100%"></details>`}
   <details id="dbuild"${S.lo.dbuild?' open':''}><summary>Our saved ${m?'movies':S.ty=='home'?'at-home activities':'ideas'} (${S.cu[S.ty].length})</summary>${S.cu[S.ty].map((raw,i)=>{const x=S.ty==='movies'?metaFor(raw):raw;return `<div class="li">${x.img?`<img src="${E(x.img)}" alt="" style="width:42px;height:60px;object-fit:cover;border-radius:6px;margin-right:8px">`:''}<span style="flex:1">${E(x.e||'⭐')} ${E(x.t)}</span><button data-a="delbuild" data-v="${i}" aria-label="Remove">×</button></div>`}).join('')||'<p class="sub">Nothing saved yet.</p>'}</details>
   <p class="tip">Keys stay on this phone. Use a free or spend-limited key.</p><button class="go" data-a="bgo">Start swiping →</button>`);
 }
@@ -323,14 +348,14 @@ async function more(){
     r=j.results.map(m=>({e:'🎬',t:m.title,c:-1,id:m.id,k:'m'+m.id,img:m.poster_path&&'https://image.tmdb.org/t/p/w342'+m.poster_path,overview:m.overview||'',s:(m.release_date||'').slice(0,4)+' · ⭐'+(m.vote_average||0).toFixed(1)}));
   }else{
     if(!S.k.ai)throw Error('Add your Claude API key first.');
-    const av=[...all,...(S.seen[ty]||[])].slice(-45).join('; ');
+    const av=(S.cu[ty]||[]).map(x=>x.t).slice(-30).join('; ');
     const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':S.k.ai,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1200,system:SYS,messages:[{role:'user',content:aiPrompt(ty,av)}]})});
     const j=await resp.json();
     if(!resp.ok||j.error)throw Error(j.error?.message||`Idea API request failed (${resp.status}). Check your API key and access.`);
     const t=j.content?.find(x=>x.type==='text')?.text;
     if(!t)throw Error('The idea API returned no text. Check your key, model access, and spending limit.');
     const start=t.indexOf('['),end=t.lastIndexOf(']');if(start<0||end<start)throw Error('The idea API returned an unexpected format. Tap Start swiping to try again.');
-    r=JSON.parse(t.slice(start,end+1)).map(x=>({e:x.e||'⭐',t:String(x.t||'').trim(),c:x.c>=0&&x.c<=3?Math.round(x.c):-1,k:String(x.t||'').toLowerCase()}));
+    r=JSON.parse(t.slice(start,end+1)).map(x=>({e:x.e||'⭐',t:String(x.t||'').trim(),c:x.c>=0&&x.c<=3?Math.round(x.c):-1,k:String(x.t||'').toLowerCase(),g:String(x.g||'').trim().toLowerCase()}));const cnt={};r=r.filter(x=>!x.g||(cnt[x.g]=(cnt[x.g]||0)+1)<=2);
   }
   return r.filter(x=>x.t&&!sn.has(x.k)&&!sn.has(x.t.toLowerCase()));
 }
@@ -349,23 +374,55 @@ function results(){
   G.R=R;
   ui(`<h2>${S.mode=='match'?'It’s a match! 💘':'Your top picks 🏆'}</h2><div style="margin:12px 0 4px">${ch('rm','match','Matches',S.mode=='match')+ch('rm','top','Top 3',S.mode=='top')}</div>
   ${note?`<p>${note}</p>`:''}${R.map((r,i)=>`<div class="rc"><span class="em">${S.mode=='top'&&R.length>1?['🥇','🥈','🥉'][i]||r.x.e:r.x.e}</span><div><b>${E(r.x.t)}</b><br><small class="sub">${cl(r.x.c)} ${E(S.n[0])} ${ic[r.a[0]]} · ${E(S.n[1])} ${ic[r.a[1]]} · ${r.s}/4</small></div><button data-a="win" data-v="${i}">We’re going with this</button></div>`).join('')}
-  ${R.length>1?'<button class="go" data-a="pick">Pick for us 🎲</button>':''}
+  ${R.length>1?'<button class="go" data-a="pick">Pick for us 🎲</button><button class="go" data-a="decide" style="background:var(--ink);color:var(--bg)">🎚️ Help us decide</button>':''}
   <details><summary>See all swipes</summary><p class="sub">${L.filter(r=>r.s==4).length} matches · ${L.filter(r=>r.v).length} vetoed · ${L.length} cards</p>
   <div class="tb th"><span></span><b>${E(S.n[0])}</b><b>${E(S.n[1])}</b><b>Score</b></div>${L.slice().sort((a,b)=>b.s-a.s).map(r=>`<div class="tb"><span>${r.x.e} ${E(r.x.t)}</span><i class="a${r.a[0]}">${ic[r.a[0]]}</i><i class="a${r.a[1]}">${ic[r.a[1]]}</i><b>${r.s}/4${r.v?' 🚫':''}</b></div>`).join('')}</details><button class="ch" style="margin-top:14px" data-a="again">↺ New round</button>`);
+}
+const pkText=()=>`${PK.sel.size} picked${PK.fill&&PK.sel.size<PK.size?` · ${PK.size-PK.sel.size} more fill in randomly`:''}`,
+pkRows=()=>{const q=PK.q.trim().toLowerCase();return pool().filter(x=>!q||x.t.toLowerCase().includes(q)).map(x=>{const k=normTitle(x.t);return `<label class="li pk"><input type="checkbox" data-pk="${E(k)}"${PK.sel.has(k)?' checked':''}><span>${E(x.e||'')} ${E(x.t)} <small class="sub">${cl(x.c)}</small></span></label>`}).join('')||'<p class="sub">No matches.</p>'};
+function pickv(){document.body.className='';
+  ui(`<h2>Pick some cards</h2><p class="sub" id="pc">${pkText()}</p><input id="pq" placeholder="Search…" value="${E(PK.q)}" style="width:100%;margin:8px 0"><div>${[10,15,20].map(n=>ch('psz',n,'Deck of '+n,PK.size==n)).join('')}${ch('pfill','','🎲 Fill the rest',PK.fill)}${ch('pclr','','Clear')}</div><div id="pl">${pkRows()}</div><button class="go" data-a="pgo">Start with these →</button><button class="undo" style="display:block;margin:12px auto 0" data-a="again">← Back</button>`)}
+function dcover(kind){
+  const[a,b]=S.n.map(E);document.body.className=kind=='dready'?'':'p'+D.p;
+  const m={dstart:['🎚️',`${a}, you’re up!`,`${b}, look away. Rate each match from 1 to 10. Scores stay hidden until the reveal.`,'Slide when only you are looking'],
+    dpass:['🤝',`Pass it to ${b}!`,`${a} is done. ${b}, no peeking at ${a}’s scores 🙈`,'Slide when you’re holding the phone'],
+    dready:['🎉','Both rated!','Ready to see the scores? Gather round together first.','Slide to reveal']}[kind];
+  ui(`<div class="cv"><div class="em">${m[0]}</div><h2 style="margin:12px 0 4px">${m[1]}</h2><p>${m[2]}</p>${sli(m[3])}</div>${kind=='dready'?'':'<button class="undo" style="display:block;margin:12px auto 0" data-a="backres">← Back to results</button>'}`);
+  slide(()=>kind=='dready'?dreveal():rate());
+}
+function rate(){
+  const p=D.p,n=E(S.n[p]);D.r[p]=[];document.body.className='p'+p;
+  ui(`<h2>${n}, rate each match</h2><p class="sub">1 = nope, 10 = yes please. Move every slider.</p>${D.items.map((x,i)=>`<div class="rt"><b>${x.e} ${E(x.t)}</b><span class="rv" id="rv${i}">–</span><input type="range" class="rng unset" min="1" max="10" step="1" value="5" data-r="${i}" aria-label="Rating for ${E(x.t)}"></div>`).join('')}<button class="go" id="rdone" data-a="rdone" disabled>Done</button>`);
+}
+function rated(el){const i=+el.dataset.r,p=D.p;D.r[p][i]=+el.value;el.classList.remove('unset');$('#rv'+i).textContent=el.value;$('#rdone').disabled=!D.items.every((x,j)=>D.r[p][j]!=null)}
+function dreveal(){
+  document.body.className='';
+  const rows=D.items.map((x,i)=>({x,a:D.r[0][i],b:D.r[1][i],s:D.r[0][i]+D.r[1][i],m:Math.min(D.r[0][i],D.r[1][i])})).sort((u,v)=>v.s-u.s||v.m-u.m),
+  top=rows.filter(r=>r.s==rows[0].s&&r.m==rows[0].m);D.rows=rows;
+  ui(`<h2>${top.length==1?'And the winner is… 🏆':'It’s a tie! 🎲'}</h2>${rows.map((r,i)=>`<div class="rc${top.length==1&&i==0?' hl':top.includes(r)?' tie':''}"><span class="em">${r.x.e}</span><div style="flex:1;min-width:0"><b>${E(r.x.t)}</b><br><small class="sub">${E(S.n[0])} ${r.a} · ${E(S.n[1])} ${r.b} · total ${r.s}/20</small><div class="bb"><i style="width:${r.a*10}%;background:var(--p0)"></i></div><div class="bb"><i style="width:${r.b*10}%;background:var(--p1)"></i></div></div><button data-a="dwin" data-v="${i}">We’re going with this</button></div>`).join('')}${top.length>1?'<button class="go" data-a="dpick">Break the tie 🎲</button>':''}<button class="ch" style="margin-top:14px" data-a="backres">← Back to results</button>`);
 }
 const A={
   ty:v=>{S.ty=v;save();setup()},src:v=>{S.src=v;save();setup()},mode:v=>{S.mode=v;save();setup()},
   rm:v=>{S.mode=v;save();results()},
   del:v=>{const x=S.cu[S.ty].splice(+v,1)[0];if(x)S.tomb[S.ty+'|'+normTitle(x.t)]=Date.now();save();setup()},
   add:()=>{const t=$('#nt').value.trim();if(!t)return;S.cu[S.ty].push({e:$('#ne').value.trim()||'⭐',t,c:+$('#nc').value,ts:Date.now()});save();setup()},
-  start:async()=>{BD=0;if(S.ty==='movies'&&S.k.tmdb){loader('Preparing movie night…','Loading posters and summaries');try{await enrichMovieLibrary()}catch(e){console.warn('TMDB library enrichment:',e.message)} }G={deck:deal(),a:[[],[]],p:0,i:0};cover(0,'start')},
+  start:()=>{BD=0;PK.use=false;ui(`<div class="cv"><div class="em">🎯</div><h2 style="margin:12px 0 4px">Anything specific?</h2><p class="sub">Let us surprise you, or hand-pick some cards.</p><button class="go" data-a="go">🎲 Surprise us</button><button class="go" style="background:var(--ink);color:var(--bg)" data-a="pickdeck">✅ Pick some</button><button class="undo" style="display:block;margin:14px auto 0" data-a="again">← Back</button></div>`)},
+  pickdeck:()=>{PK.sel=new Set();PK.q='';pickv()},
+  psz:v=>{PK.size=+v;pickv()},pfill:()=>{PK.fill=!PK.fill;pickv()},pclr:()=>{PK.sel.clear();pickv()},
+  pgo:()=>{if(!PK.sel.size&&!PK.fill){alert('Pick at least one card.');return}PK.use=true;A.go()},
+  decide:()=>{D={items:G.R.slice().sort((a,b)=>b.s-a.s).slice(0,8).map(r=>r.x),r:[[],[]],p:0};dcover('dstart')},
+  rdone:()=>{if(D.p==0){D.p=1;D.r[1]=[];dcover('dpass')}else dcover('dready')},
+  dwin:(v,b)=>{if(b.dataset.ok)return;b.dataset.ok=1;const x=D.rows[+v].x,d=Date.now();S.done[x.t]=d;S.log.unshift({e:x.e,t:x.t,ty:S.ty,d});save();b.textContent='✓ Locked in!';b.closest('.rc').classList.add('won')},
+  dpick:()=>{const r=[...document.querySelectorAll('.rc.tie')],T=r.length*3+Math.random()*r.length|0;let i=0;(function f(){r.forEach((e,j)=>e.classList.toggle('hl',j==i%r.length));if(i++<T)setTimeout(f,50+i*i*.8)})()},
+  backres:()=>results(),
+  go:async()=>{BD=0;if(S.ty==='movies'&&S.k.tmdb){loader('Preparing movie night…','Loading posters and summaries');try{await enrichMovieLibrary()}catch(e){console.warn('TMDB library enrichment:',e.message)} }G={deck:deal(PK.use?PK:null),a:[[],[]],p:0,i:0};PK.use=false;cover(0,'start')},
   ans:v=>fly(+v),
   undo:()=>{if(G.i>0){G.i--;swipe()}},
   abandon:()=>{if(confirm('Abandon this swipe session? Your answers from this unfinished round will be discarded. Your saved library and past results will stay.')){G={};BD=0;setup()}},
   win:(v,b)=>{if(b.dataset.ok)return;b.dataset.ok=1;const x=G.R[+v].x,d=Date.now();S.done[x.t]=d;S.log.unshift({e:x.e,t:x.t,ty:S.ty,d});save();b.textContent='✓ Locked in!';b.closest('.rc').classList.add('won')},
   tab:v=>{BD=0;[setup,logv,buildv][+v]()},
   ty2:v=>{S.ty=v;save();buildv()},bf:v=>{let a=S.bfs.includes(v)?S.bfs.filter(x=>x!=v):[...S.bfs.filter(x=>x!='pop'),v];if(v=='pop'||!a.length)a=['pop'];S.bfs=a;save();buildv()},bm:v=>{S.bm=v;save();buildv()},bdone:()=>{BD=0;buildv()},delbuild:v=>{const x=S.cu[S.ty].splice(+v,1)[0];if(x)S.tomb[S.ty+'|'+normTitle(x.t)]=Date.now();save();buildv()},
-  bgo:async()=>{const keyInput=$('[data-k="tmdb"]')||$('[data-k="ai"]');if(keyInput)S.k[keyInput.dataset.k]=keyInput.value.trim();if(S.ty!='movies')S.bv=$('#bv').value.trim();if(S.ty=='movies'&&!S.k.tmdb){alert('Paste your TMDB API key first.');S.lo.dkeys=true;buildv();return}if(S.ty!='movies'&&!S.k.ai){alert('Paste your Anthropic API key first.');S.lo.dkeys=true;buildv();return}B={q:[],pgs:{},rr:0,n:0,t:0,err:'',busy:0,sessionSkip:[],flip:false};save();if(S.ty==='movies'){loader('Preparing movie picks…','Loading posters and summaries');try{await enrichMovieLibrary()}catch(e){console.warn(e.message)}}bsw()},
+  bgo:async()=>{const keyInput=$('[data-k="tmdb"]')||$('[data-k="ai"]');if(keyInput)S.k[keyInput.dataset.k]=keyInput.value.trim();if(S.ty!='movies'){S.bv=$('#bv').value.trim();S.area=($('#ba')||{value:S.area}).value.trim();S.xi=S.xi||{};S.xi[S.ty]=($('#bx')||{value:''}).value.trim()}if(S.ty=='movies'&&!S.k.tmdb){alert('Paste your TMDB API key first.');S.lo.dkeys=true;buildv();return}if(S.ty!='movies'&&!S.k.ai){alert('Paste your Anthropic API key first.');S.lo.dkeys=true;buildv();return}B={q:[],pgs:{},rr:0,n:0,t:0,err:'',busy:0,sessionSkip:[],flip:false};save();if(S.ty==='movies'){loader('Preparing movie picks…','Loading posters and summaries');try{await enrichMovieLibrary()}catch(e){console.warn(e.message)}}bsw()},
   syncnow:async()=>{if(!S.sy.on)return;const f=$('#fu');if(f){const u=fbUrl(f.value);if(!u){alert('That doesn’t look like a Firebase database address. Copy the one at the top of the Data tab.');return}S.sy.url=u;save()}loader('Syncing libraries…','Merging your lists');await sync();logv()},
   invite:(v,b)=>{const l=location.origin+location.pathname+'#j='+b64({c:S.sy.code,u:S.sy.url});navigator.clipboard.writeText(l).then(()=>{b.textContent='✓ Copied!'},()=>prompt('Copy this link:',l))},
   showcode:()=>{$('#cc').textContent=S.sy.code},
@@ -381,11 +438,13 @@ const A={
 };
 $('#app').addEventListener('toggle',e=>{const d=e.target;if(d.tagName=='DETAILS'&&d.id&&d.id[0]=='d'){S.lo[d.id]=d.open;save()}},true);
 $('#app').onclick=e=>{const card=e.target.closest('[data-movie-card="top"]');if(card&&S.ty=='movies'&&((BD&&(B.q[0]?.img||B.q[0]?.overview||B.q[0]?.id))||(!BD&&(G.deck?.[G.i]?.img||G.deck?.[G.i]?.overview||G.deck?.[G.i]?.id)))){if(BD){B.flip=!B.flip;card.outerHTML=B.flip?`<div class="card top flipped" data-movie-card="top"><b class="st y">ADD</b><b class="st n">SKIP</b><b class="st m">LATER</b><div class="poster-title">${E(B.q[0].t)}</div><div class="overview">${E(B.q[0].overview||'No TMDB summary is available.')}</div><div class="flipnote">Tap to see poster ↻</div></div>`:bc(B.q[0],'top');drag();}else{G.flipped=!G.flipped;swipe();return}return}const b=e.target.closest('[data-a]');if(b)A[b.dataset.a](b.dataset.v,b)};
-$('#app').oninput=e=>{const k=e.target.dataset.k;if(k){S.k[k]=e.target.value.trim();save()}const n=e.target.dataset.n;if(n!=null){S.n[+n]=e.target.value||(n==0?'Partner 1':'Partner 2');save()}};
+$('#app').oninput=e=>{if(e.target.id=='pq'){PK.q=e.target.value;const l=$('#pl');if(l)l.innerHTML=pkRows();return}if(e.target.dataset.r!=null){rated(e.target);return}const k=e.target.dataset.k;if(k){S.k[k]=e.target.value.trim();save()}const n=e.target.dataset.n;if(n!=null){S.n[+n]=e.target.value||(n==0?'Partner 1':'Partner 2');save()}};
 // home-screen icon + manifest
 try{const c=document.createElement('canvas');c.width=c.height=512;const g=c.getContext('2d');g.fillStyle='#E8466B';g.fillRect(0,0,512,512);
 g.font='290px serif';g.textAlign='center';g.textBaseline='middle';g.fillText('💞',256,278);const u=c.toDataURL();$('#ai').href=u;
 const w=/^https?:/.test(location.protocol)?location.origin+location.pathname:'.',l=document.createElement('link');l.rel='manifest';l.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify({name:'Swipe Night',short_name:'Swipe Night',display:'standalone',start_url:w,id:w,scope:w,background_color:'#241520',theme_color:'#241520',icons:[{src:u,sizes:'192x192 512x512',type:'image/png'}]}));document.head.append(l)}catch(e){}
+$('#app').addEventListener('pointerup',e=>{if(e.target.dataset&&e.target.dataset.r!=null)rated(e.target)});
+$('#app').addEventListener('change',e=>{const k=e.target.dataset.pk;if(k!=null){PK.sel[e.target.checked?'add':'delete'](k);const c=$('#pc');if(c)c.textContent=pkText()}});
 $('#app').addEventListener('change',e=>{const f=e.target;if(f.id=='imp'&&f.files[0])f.files[0].text().then(t=>{try{put(merge(snap(),JSON.parse(t)));save();logv()}catch(x){alert('That file could not be read.')}})});
 setup();if(joinHash())setTimeout(async()=>{loader('Joining sync…','Pulling in your shared lists');await sync();setup()},60);else if(S.sy.on)sync();
 setTimeout(()=>{const s=$('#sp');s&&s.remove()},3200);
